@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MOCK: buildwithamemory.com front page + Attention Hub section</title>
+<style>
+  /* Tokens lifted from the live site's lamplight world (index.astro), dark theme. */
+  :root {
+    color-scheme: dark;
+    --bg: #100a06; --bg-2: #160d07;
+    --panel: rgba(34, 24, 15, 0.55); --panel-solid: #1c120a;
+    --hair: rgba(224, 198, 150, 0.13); --hair-strong: rgba(224, 198, 150, 0.24);
+    --ink: #f2e9d7; --ink-muted: #b6a488; --ink-faint: #8a7a5f;
+    --ember: #f5a94b; --ember-hot: #ffd79a; --ember-deep: #d97f28;
+    --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --maxw: 1120px;
+    /* hub state colors (the hub's own ink-and-gold system) */
+    --st-need: #e05c4b; --st-run: #f5a94b; --st-done: #7fbf6a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+  .band { width: 100%; padding-left: clamp(20px, 5vw, 64px); padding-right: clamp(20px, 5vw, 64px); }
+  .col { max-width: var(--maxw); margin: 0 auto; }
+  section { padding-top: clamp(50px, 9vh, 110px); padding-bottom: clamp(50px, 9vh, 110px); }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 500; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); line-height: 1.04; }
+  h2 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.06; }
+  p { margin: 0; }
+  .lede { font-size: clamp(1.1rem, 1.7vw, 1.32rem); line-height: 1.55; }
+  .muted { color: var(--ink-muted); }
+  .eyebrow { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--ember); display: inline-flex; align-items: center; gap: 9px; }
+  .eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--ember); opacity: .7; }
+  a { color: inherit; }
+
+  /* mock annotation chrome (not part of the site) */
+  .mocknote {
+    position: sticky; top: 0; z-index: 60;
+    background: #2a1a0a; border-bottom: 1px solid var(--hair-strong);
+    font-family: var(--mono); font-size: 12px; color: var(--ember-hot);
+    padding: 8px clamp(20px, 5vw, 64px); display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .mocknote b { color: #fff; }
+  .newflag {
+    display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: #241606; background: var(--ember);
+    border-radius: 4px; padding: 2px 8px; margin-left: 10px; vertical-align: middle;
+  }
+  .dimmed { opacity: .38; pointer-events: none; position: relative; }
+  .dimlabel {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-faint); padding: 6px clamp(20px, 5vw, 64px);
+    border-top: 1px dashed var(--hair-strong); border-bottom: 1px dashed var(--hair-strong);
+  }
+
+  /* header (as-is) */
+  header {
+    position: relative; z-index: 40; padding: 12px clamp(16px, 5vw, 64px);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    border-bottom: 1px solid var(--hair);
+  }
+  .brandmark { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+  .brandmark svg { width: 22px; height: 22px; color: var(--ember); }
+  .brandmark b { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .navlinks { display: flex; align-items: center; gap: 6px; }
+  .navlinks a { font-family: var(--mono); font-size: 12.5px; color: var(--ink-muted); text-decoration: none; padding: 7px 12px; border-radius: 8px; }
+  .navlinks a:hover { color: var(--ink); background: var(--hair); }
+  .navlinks a.hub-nav { color: var(--ember); display: inline-flex; align-items: center; gap: 6px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 13.5px; text-decoration: none; cursor: pointer; border: 0; padding: 12px 18px; border-radius: 11px; transition: transform .25s var(--ease); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-primary { background: linear-gradient(180deg, var(--ember-hot), var(--ember)); color: #241606; font-weight: 600; box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--ember) 70%, transparent); }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-ghost { background: var(--panel); color: var(--ink); border: 1px solid var(--hair-strong); }
+  .btn-ghost:hover { transform: translateY(-2px); }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 20px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .chip { font-family: var(--mono); font-size: 12.5px; color: var(--ink); padding: 9px 14px; border-radius: 999px; background: var(--panel); border: 1px solid var(--hair-strong); display: inline-flex; align-items: center; gap: 8px; }
+  .chip svg { width: 14px; height: 14px; color: var(--ember); }
+
+  /* THE NEW SECTION */
+  .hub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+  @media (max-width: 920px) { .hub-grid { grid-template-columns: 1fr; } }
+  .hub-copy { display: grid; gap: 18px; align-content: start; }
+  .hub-copy h2 { max-width: 16ch; }
+  .hub-copy .lede { max-width: 44ch; }
+  .hub-copy .more { max-width: 46ch; }
+  .fineprint { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-top: 14px; line-height: 1.7; }
+  .fineprint a { color: var(--ember); }
+  .roadline { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--ink-muted); border: 1px solid var(--hair-strong); border-radius: 999px; padding: 5px 12px; width: fit-content; }
+  .roadline i { width: 7px; height: 7px; border-radius: 50%; background: var(--ember); display: inline-block; }
+
+  /* the mini hub UI */
+  .hubshot {
+    background: #0d0b08; border: 1px solid var(--hair-strong); border-radius: 18px;
+    box-shadow: var(--shadow); overflow: hidden; font-family: var(--mono); position: relative;
+  }
+  .hub-top { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--hair); font-size: 11px; color: var(--ink-muted); }
+  .hub-top .logo { color: var(--ember); font-weight: 700; letter-spacing: .08em; }
+  .hub-top .tab { color: var(--ink); border-bottom: 1px solid var(--ember); padding-bottom: 2px; }
+  .hub-top .stat { margin-left: auto; color: var(--ink-faint); }
+  .hub-top .stat b { color: var(--st-run); font-weight: 600; }
+  .hub-body { padding: 14px; display: grid; gap: 12px; font-size: 12px; }
+  .hub-card { background: var(--panel-solid); border: 1px solid var(--hair); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
+  .hub-card .hd { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); display: flex; align-items: center; gap: 8px; }
+  .hub-card.needs .hd { color: var(--st-need); }
+  .hub-card .hd .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .hub-item { display: grid; gap: 8px; border-left: 2px solid var(--hair-strong); padding-left: 10px; }
+  .hub-item .who { color: var(--ink-faint); font-size: 10.5px; }
+  .hub-item .ask { color: var(--ink); line-height: 1.5; }
+  .answer-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .achip { border: 1px solid var(--hair-strong); background: transparent; color: var(--ink-muted); font-family: var(--mono); font-size: 10.5px; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  .achip:hover { color: var(--ember); border-color: var(--ember); }
+  .achip.go { color: var(--ember); border-color: color-mix(in srgb, var(--ember) 50%, transparent); }
+  .hub-job { display: flex; align-items: center; gap: 8px; color: var(--ink-muted); font-size: 11px; }
+  .hub-job .st { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .hub-job .st.run { background: var(--st-run); box-shadow: 0 0 8px var(--st-run); }
+  .hub-job .st.done { background: var(--st-done); }
+  .hub-job .sha { color: var(--ink-faint); margin-left: auto; }
+  .hub-toast {
+    position: absolute; right: 12px; bottom: 12px; max-width: 78%;
+    background: #1a1108; border: 1px solid color-mix(in srgb, var(--ember) 45%, transparent);
+    border-radius: 10px; padding: 10px 12px; font-size: 11px; color: var(--ink);
+    box-shadow: 0 14px 34px -14px rgba(0,0,0,.8); display: grid; gap: 6px;
+  }
+  .hub-toast .t-hd { color: var(--ember); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .hub-toast .t-hd .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); }
+
+  /* the hub's own prompt card: collapsed by default, expand to read, then copy */
+  .hubprompt { background: var(--panel); border: 1px solid var(--hair-strong); border-radius: 14px; overflow: hidden; margin-top: 16px; }
+  .hubprompt summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; }
+  .hubprompt summary::-webkit-details-marker { display: none; }
+  .hp-file { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12.5px; color: var(--ink-muted); }
+  .hp-file svg { color: var(--ember); }
+  .hp-hint { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .hubprompt[open] summary { border-bottom: 1px solid var(--hair); }
+  .hp-body { margin: 0; padding: 16px 18px; max-height: 300px; overflow: auto; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: color-mix(in srgb, var(--ink) 86%, var(--ink-muted)); white-space: pre-wrap; word-break: break-word; }
+  .hp-actions { padding: 0 14px 14px; }
+</style>
+</head>
+<body>
+
+<div class="mocknote">
+  <span><b>MOCK</b> buildwithamemory.com front page, 2026-07-27</span>
+  <span>new: the Attention Hub section (full brightness) between THE PROMPT and THE PILLARS</span>
+  <span>existing sections shown dimmed and condensed</span>
+</div>
+
+<header>
+  <a class="brandmark" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="7" r="2"></circle><circle cx="12" cy="18" r="2"></circle><circle cx="12" cy="10" r="1.4"></circle>
+      <path d="M6.6 7 10.8 9.2M17.4 8 13.2 9.8M12 11.4V16"></path>
+    </svg>
+    <b>build with a memory</b>
+  </a>
+  <nav class="navlinks">
+    <a href="#">What's new</a>
+    <a href="#">The method</a>
+    <a class="hub-nav" href="#hub">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      Attention Hub<span class="newflag" style="margin-left:6px">new</span>
+    </a>
+    <a href="#">Why free</a>
+  </nav>
+</header>
+
+<div class="dimlabel">existing hero, unchanged (condensed for this mock)</div>
+<section class="band dimmed" style="padding-top:40px; padding-bottom:40px;">
+  <div class="col">
+    <span class="eyebrow">A method, not a product</span>
+    <h1 style="margin-top:14px;">Your AI agent forgets your project every session.</h1>
+    <p class="lede muted" style="margin-top:14px; max-width:46ch;">So it re-derives the same decisions, and you pay for it every time. The fix is a place to remember, and it is just files in your repo.</p>
+  </div>
+</section>
+
+<div class="dimlabel">existing prompt section, unchanged (condensed)</div>
+<section class="band dimmed" style="padding-top:40px; padding-bottom:40px;">
+  <div class="col">
+    <span class="eyebrow">The whole thing</span>
+    <h2 style="margin-top:14px;">One paste. Then your project remembers.</h2>
+  </div>
+</section>
+
+<!-- ============ THE NEW SECTION ============ -->
+<section class="band" id="hub">
+  <div class="col hub-grid">
+    <div class="hub-copy">
+      <span class="eyebrow">New, and free<span class="newflag">new section</span></span>
+      <h2>Your memory network gets a face.</h2>
+      <p class="lede muted">Attention Hub is a free command center that runs on your machine. It watches the work you and your agents have in flight, and tells you when something actually needs you.</p>
+      <p class="muted more">Honestly, you can do all of this from a terminal. The hub is for the moments between sessions. An agent hits a question and you answer it from a notification, in one click. Your GitHub issues on a board. Your sessions, your notes, your attention, in one place. And when you want the hub itself to do something new, you press one key and your own AI builds it.</p>
+      <div class="chips">
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4-3 6.5-7 8-4-1.5-7-4-7-8V7z"></path></svg> No telemetry, none</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14a9 3 0 0 0 18 0V5"></path><path d="M3 12a9 3 0 0 0 18 0"></path></svg> The database is yours</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.2"></circle><circle cx="6" cy="18" r="2.2"></circle><circle cx="18" cy="8" r="2.2"></circle><path d="M6 8.2v7.6M8.1 6.4C13 6.4 18 6.8 18 10.2"></path></svg> Claude Code, Codex, or Gemini</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg> It can build itself</span>
+      </div>
+      <span class="roadline"><i></i>Local-only today. Teams is being built, in the open.</span>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5M12 15V3"></path></svg>
+          Get Attention Hub
+        </a>
+        <a class="btn btn-ghost" href="#">
+          Read the setup guide
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+      </div>
+      <p class="fineprint">Free. Runs on your machine, with your own AI subscription or keys. The only network call it makes is checking GitHub for updates, and you can turn that off. If something breaks, <a href="#">file an issue on GitHub</a>. There is no tracking to tell us for you.</p>
+
+      <details class="hubprompt">
+        <summary>
+          <span class="hp-file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="15" height="15"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg>
+            attention-hub-setup.txt
+          </span>
+          <span class="hp-hint">Expand to read it, then copy. Same rule as the prompt above: you read what you paste.</span>
+        </summary>
+        <pre class="hp-body">[DRAFT COPY FOR THE MOCK. The real text is the hub's one-paste setup prompt,
+mirrored verbatim from the attention-hub repo, same sync discipline as prompt.txt.]
+
+Set up the Attention Hub on this machine, and a project memory first if I
+do not have one.
+
+1. MEMORY FIRST. If this machine has no memory network yet, run the
+   buildwithamemory setup (the method prompt) before anything else. If one
+   exists, leave it alone. Never overwrite what is already written.
+2. CLONE the hub: git clone https://github.com/adetwiler/attention-hub
+3. RUN its setup: follow SETUP.md. Ask me only the questions the config
+   cannot answer itself (which AI CLI I use, which repos my board watches).
+4. START it with the start script and open it in my browser.
+5. REPORT back: what you set up, where the database lives (it is mine),
+   and the one command I run next time.</pre>
+        <div class="hp-actions"><button class="achip go">Copy the whole prompt</button></div>
+      </details>
+    </div>
+
+    <div class="hubshot" aria-label="A small mock of the Attention Hub interface">
+      <div class="hub-top">
+        <span class="logo">ATTENTION HUB</span>
+        <span class="tab">TODAY</span>
+        <span>BOARD</span>
+        <span>SESSIONS</span>
+        <span>JOBS</span>
+        <span class="stat"><b>2 running</b> · 1 queued</span>
+      </div>
+      <div class="hub-body">
+        <div class="hub-card needs">
+          <span class="hd"><span class="dot"></span>Waiting for you · 2</span>
+          <div class="hub-item">
+            <span class="who">agent question · poetry-site · 4m ago</span>
+            <span class="ask">The empty state for saved drafts. Which copy?</span>
+            <span class="answer-chips">
+              <button class="achip go">"Nothing saved yet"</button>
+              <button class="achip go">"Your drafts live here"</button>
+              <button class="achip">Type an answer</button>
+            </span>
+          </div>
+          <div class="hub-item">
+            <span class="who">review ask · release notes · 1h ago</span>
+            <span class="ask">v1.1 notes are drafted and need a look.</span>
+            <span class="answer-chips"><button class="achip go">Open</button><button class="achip">Resolve</button></span>
+          </div>
+        </div>
+        <div class="hub-card">
+          <span class="hd">Jobs</span>
+          <span class="hub-job"><span class="st run"></span>self-build: add why-badges to the board<span class="sha">running</span></span>
+          <span class="hub-job"><span class="st done"></span>update applied: v1.1<span class="sha">a41b2e · undo</span></span>
+        </div>
+      </div>
+      <div class="hub-toast">
+        <span class="t-hd"><span class="dot"></span>Needs you</span>
+        <span>poetry-site asked a question. Answer it here without switching windows.</span>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ END NEW SECTION ============ -->
+
+<div class="dimlabel">existing pillars section, unchanged (condensed)</div>
+<section class="band dimmed" style="padding-top:40px; padding-bottom:40px;">
+  <div class="col">
+    <span class="eyebrow">The method behind it</span>
+    <h2 style="margin-top:14px;">Twelve pillars, plus more. Take the parts that fit.</h2>
+  </div>
+</section>
+
+<div class="dimlabel">existing anti-product section, unchanged (condensed). The hub keeps this promise: files and database stay on your machine.</div>
+<section class="band dimmed" style="padding-top:40px; padding-bottom:60px;">
+  <div class="col" style="text-align:center;">
+    <span class="eyebrow">The anti-product</span>
+    <h2 style="margin-top:14px;">No hosted memory. No lock-in. The files stay yours.</h2>
+  </div>
+</section>
+
+</body>
+</html>
