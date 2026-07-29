@@ -1107,3 +1107,73 @@ body {
   min-height: 380px;
   padding: 10px;
 }
+
+/* ------------------------------------------------------------------ tabs
+   YOUR tabs: the config-declared nav entries, and the folder tab's listing.
+   They sit visually AFTER the rooms and read as yours rather than as ours,
+   which is the whole point of the seam (docs/adr/0003-tab-seam-over-module-system-for-v1.md). */
+
+.nav .tabsep {
+  color: var(--hair);
+  font-size: 11px;
+}
+
+/* Yours, and lit the same way a room is when you are in it. */
+.nav .tab.mine {
+  color: var(--ink-faint);
+}
+
+/* The honest empty state, and a real link: it goes to the page that explains
+   how to fill it, because a tooltip is not reachable on a touch screen. */
+.nav .tab.add {
+  opacity: 0.55;
+  text-decoration: none;
+}
+
+.nav .tab.add:hover {
+  opacity: 1;
+}
+
+/* A config the hub could not read. Dim is not enough for that one. */
+.nav .tab.off.bad {
+  color: var(--st-need);
+  opacity: 0.9;
+}
+
+.tabup {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.tabdir {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tabrow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--hair);
+  font-size: 12px;
+}
+
+.tabrow:last-child {
+  border-bottom: none;
+}
+
+/* A folder reads as a folder before you click it. */
+.tabrow.isdir .link {
+  color: var(--ink);
+}
+
+.tabkind {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
