@@ -56,6 +56,16 @@ export const MIGRATIONS: readonly string[] = [
   CREATE INDEX idx_ledger_state ON action_ledger (state);
   CREATE INDEX idx_ledger_target ON action_ledger (target);
   CREATE INDEX idx_ledger_created ON action_ledger (created_at);`,
+
+  // 1: live state that is not registry. See src/lib/settings.ts for why this is
+  // one key-value table and not a column per feature. Quiet hours is its first
+  // tenant (quiet.manual, quiet.start, quiet.end) and it works with zero rows,
+  // so this migration adds a capability and changes no behaviour on its own.
+  `CREATE TABLE settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`,
 ];
 
 /** One row of PRAGMA foreign_key_check: a reference with no parent. */
