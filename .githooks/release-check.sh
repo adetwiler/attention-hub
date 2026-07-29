@@ -99,6 +99,39 @@ if command -v node >/dev/null 2>&1; then
   '; then :; else say_fail "hub.config.example.json failed its shape check"; fi
 fi
 
+# --- 5b. The terminal sidecar's port and its OFF switch ----------------------
+# The sidecar's port is written in three places for the same reason the hub's is
+# (a plain .mjs that runs before any TypeScript exists, plus the example config a
+# fresh install reads), so the same assertion applies: a drift here has the
+# sidecar listening on a port the app never points at, which presents as "the
+# terminal never connects" with no error anywhere.
+#
+# The second half is the one that matters more. terminal.enabled MUST ship false.
+# A stranger's first install cannot come with a browser shell already open, and
+# that is a permanent rule, not a default someone may tidy up later.
+if command -v node >/dev/null 2>&1; then
+  if node -e '
+    const fs = require("node:fs");
+    const raw = JSON.parse(fs.readFileSync("hub.config.example.json", "utf8"));
+    const terminal = raw.terminal;
+    if (typeof terminal !== "object" || terminal === null) { console.error("hub.config.example.json has no terminal section"); process.exit(1); }
+    if (terminal.enabled !== false) { console.error("hub.config.example.json must ship terminal.enabled = false: a first install never comes with a browser shell open"); process.exit(1); }
+    const port = terminal.port;
+    if (!Number.isInteger(port)) { console.error("hub.config.example.json terminal.port must be a whole number"); process.exit(1); }
+    const sources = { "pty/server.mjs": /DEFAULT_PORT\s*=\s*(\d+)/, "src/lib/config.ts": /TERMINAL_PORT_DEFAULT\s*=\s*(\d+)/ };
+    for (const [file, re] of Object.entries(sources)) {
+      const m = re.exec(fs.readFileSync(file, "utf8"));
+      if (m === null) { console.error("could not find the sidecar port constant in " + file); process.exit(1); }
+      if (Number(m[1]) !== port) { console.error(file + " sidecar port " + m[1] + " disagrees with hub.config.example.json terminal.port " + port); process.exit(1); }
+    }
+    // The permanent owner-only rule lives in the module manifest in code, so the
+    // gate reads it there rather than trusting a sentence in a doc.
+    const lib = fs.readFileSync("src/lib/terminal.ts", "utf8");
+    if (!/ownerOnly:\s*true/.test(lib)) { console.error("src/lib/terminal.ts: TERMINAL_MODULE.ownerOnly must stay true. It is a permanent rule, not a v1 limitation."); process.exit(1); }
+    if (!/enabledByDefault:\s*false/.test(lib)) { console.error("src/lib/terminal.ts: TERMINAL_MODULE.enabledByDefault must stay false."); process.exit(1); }
+  '; then :; else say_fail "the terminal module failed its port and default check"; fi
+fi
+
 # --- 6. Nothing spawns Next.js outside the one boot path ---------------------
 # scripts/next-run.mjs is where NEXT_TELEMETRY_DISABLED is set. A package.json
 # script that calls `next` directly bypasses it and phones Vercel on the exact
