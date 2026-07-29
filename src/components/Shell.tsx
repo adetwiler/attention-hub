@@ -6,6 +6,7 @@
 // JOBS, with the running and queued counts on the right. TODAY is the only room
 // built in this slice; the rest are marked as not built yet rather than linking
 // nowhere, because a dead link is a worse lie than an honest label.
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import type { LedgerSnapshot } from "@/lib/stream";
 import { useLedgerStream } from "./useLedgerStream";
@@ -13,6 +14,7 @@ import { useLedgerStream } from "./useLedgerStream";
 /** The rooms in the order the design puts them. `built` flips as slices land. */
 const ROOMS: readonly { id: string; label: string; href: string; built: boolean }[] = [
   { id: "today", label: "TODAY", href: "/", built: true },
+  { id: "wall", label: "WALL", href: "/wall", built: true },
   { id: "board", label: "BOARD", href: "/board", built: false },
   { id: "sessions", label: "SESSIONS", href: "/sessions", built: false },
   { id: "jobs", label: "JOBS", href: "/jobs", built: false },
@@ -28,6 +30,9 @@ interface ShellProps {
 export default function Shell({ hubName, version, initial, children }: ShellProps) {
   const snap = useLedgerStream(initial);
   const { running, queued } = snap.counts;
+  // Which tab is lit comes from the URL, not from a hardcoded room name: with
+  // more than one built room, a fixed answer marks the wrong tab.
+  const here = usePathname();
 
   return (
     <div className="app">
@@ -36,7 +41,7 @@ export default function Shell({ hubName, version, initial, children }: ShellProp
         <nav className="nav">
           {ROOMS.map((room) =>
             room.built ? (
-              <a key={room.id} className={room.id === "today" ? "tab on" : "tab"} href={room.href}>
+              <a key={room.id} className={room.href === here ? "tab on" : "tab"} href={room.href}>
                 {room.label}
               </a>
             ) : (
