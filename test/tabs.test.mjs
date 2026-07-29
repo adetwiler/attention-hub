@@ -246,6 +246,20 @@ describe("tabs", { skip }, () => {
     assert.match(view.problem, /outside/);
   });
 
+  test("a SIBLING folder whose name STARTS WITH the tab's name is still outside", () => {
+    // The classic containment bug: comparing with a bare string prefix lets
+    // /notes-private through for a tab rooted at /notes, because the first is
+    // literally prefixed by the second. Comparing against root + separator is
+    // what makes this pass, so it is worth pinning rather than assuming.
+    mkdirSync(path.join(dir, "notes"));
+    mkdirSync(path.join(dir, "notes-private"));
+    writeFileSync(path.join(dir, "notes-private", "secret.txt"), "not yours");
+    write({ tabs: [{ name: "Notes", dir: "notes" }] });
+    const view = room("notes", "../notes-private/secret.txt");
+    assert.equal(view.file, null);
+    assert.match(view.problem, /outside/);
+  });
+
   test("a SYMLINK out of the folder is refused, because the check is real", () => {
     mkdirSync(path.join(dir, "notes"));
     writeFileSync(path.join(dir, "secret.txt"), "not yours");
