@@ -20,8 +20,12 @@ const configMod = await loadTs("src/lib/config.ts");
 const skip = wallMod === null || configMod === null ? NO_TS : false;
 
 describe("wallView", { skip }, () => {
-  const { wallView } = wallMod ?? {};
+  const { wallViewWith } = wallMod ?? {};
   const { loadConfig, resetConfigCache } = configMod ?? {};
+
+  // wall.ts takes a config LOADER so it holds no runtime project-internal
+  // import and stays loadable here. See the note at the top of src/lib/wall.ts.
+  const buildWall = () => wallViewWith(loadConfig);
 
   const originalCwd = process.cwd();
   let dir;
@@ -47,7 +51,7 @@ describe("wallView", { skip }, () => {
 
   test("no profiles is an honest empty wall, not an error", () => {
     write({});
-    const view = wallView();
+    const view = buildWall();
     assert.equal(view.problem, null);
     assert.deepEqual(view.panes, []);
   });
@@ -59,7 +63,7 @@ describe("wallView", { skip }, () => {
         side: { configDir: realDir("side") },
       },
     });
-    const view = wallView();
+    const view = buildWall();
     assert.equal(view.problem, null);
     assert.deepEqual(
       view.panes.map((p) => [p.id, p.label, p.kind, p.problem]),
@@ -75,12 +79,12 @@ describe("wallView", { skip }, () => {
     const profiles = {};
     for (let i = 0; i < 8; i += 1) profiles[`p${i}`] = { configDir: realDir(`p${i}`) };
     write({ profiles });
-    assert.equal(wallView().panes.length, 8);
+    assert.equal(buildWall().panes.length, 8);
   });
 
   test("a configDir that does not exist is a problem on the pane, and the pane stays", () => {
     write({ profiles: { work: { configDir: "nope-not-here" } } });
-    const view = wallView();
+    const view = buildWall();
     assert.equal(view.panes.length, 1);
     const problem = view.panes[0].problem;
     assert.match(problem, /does not exist/);
@@ -90,19 +94,19 @@ describe("wallView", { skip }, () => {
   test("a configDir that is a file, not a folder, says which", () => {
     writeFileSync(path.join(dir, "afile"), "x");
     write({ profiles: { work: { configDir: "afile" } } });
-    assert.match(wallView().panes[0].problem, /is not a folder/);
+    assert.match(buildWall().panes[0].problem, /is not a folder/);
   });
 
   test("a profile with no configDir is fine: a pane need not be tied to an account", () => {
     write({ profiles: { notes: {} } });
-    const pane = wallView().panes[0];
+    const pane = buildWall().panes[0];
     assert.equal(pane.problem, null);
     assert.equal(pane.detail, null);
   });
 
   test("an unreadable config is a wall-level problem, never a thrown room", () => {
     writeFileSync(path.join(dir, "hub.config.json"), "{ not json");
-    const view = wallView();
+    const view = buildWall();
     assert.deepEqual(view.panes, []);
     assert.match(view.problem, /not valid JSON/);
   });
@@ -118,7 +122,7 @@ describe("wallView", { skip }, () => {
         ],
       },
     });
-    const view = wallView();
+    const view = buildWall();
     assert.deepEqual(
       view.panes.map((p) => [p.id, p.label, p.kind]),
       [
@@ -132,7 +136,7 @@ describe("wallView", { skip }, () => {
 
   test("wall.paneKind sets the kind derived panes get", () => {
     write({ profiles: { work: { configDir: realDir("work") } }, wall: { paneKind: "terminal" } });
-    assert.equal(wallView().panes[0].kind, "terminal");
+    assert.equal(buildWall().panes[0].kind, "terminal");
   });
 
   // The loader's vocabulary is "name the exact place in the file". Each message
@@ -144,7 +148,10 @@ describe("wallView", { skip }, () => {
     [{ wall: { paneKind: "hologram" } }, /one of: placeholder, terminal, browser at "wall\.paneKind"/],
     [{ wall: { panes: {} } }, /expected a list of panes at "wall\.panes"/],
     [{ wall: { panes: [{}] } }, /non-empty string at "wall\.panes\[0\]\.id"/],
-    [{ wall: { panes: [{ id: "a" }, { id: "a" }] } }, /id no other pane uses at "wall\.panes\[1\]\.id"/],
+    // The loader names the offending value, so the pattern has to allow it:
+    // "an id no other pane uses (have: a) at ...". Asserting the message
+    // without the parenthetical passed review by eye and failed on the machine.
+    [{ wall: { panes: [{ id: "a" }, { id: "a" }] } }, /id no other pane uses \(have: a\) at "wall\.panes\[1\]\.id"/],
     [{ wall: { panes: [{ id: "a", kind: "hologram" }] } }, /one of: placeholder/],
     [{ wall: { panes: [{ id: "a", profile: "ghost" }] } }, /configured profile \(have: none\) at "wall\.panes\[0\]\.profile"/],
   ];

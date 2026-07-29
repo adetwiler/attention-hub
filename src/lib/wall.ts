@@ -13,8 +13,14 @@
 //
 //   HONEST EMPTY. No profiles configured means no panes, and the room says so.
 //   There is no sample pane, ever.
+//   TESTABLE BY CONSTRUCTION. The import below is TYPE-ONLY on purpose, and the
+//   config arrives as an argument. Node's native type stripping erases a type
+//   import but does not resolve an extensionless RUNTIME one the way the bundler
+//   does, so a `loadConfig` import here would make this module impossible to
+//   load through test/_ts.mjs and would take the whole suite file down with it.
+//   test/README.md states the rule and src/lib/migrate.ts is the precedent.
 import { statSync } from "node:fs";
-import { loadConfig, type PaneKind } from "./config";
+import type { HubConfig, PaneKind } from "./config";
 
 /** One pane, as the grid and the content components see it. Plain data: it
  * crosses the server-to-client boundary as props. */
@@ -49,17 +55,8 @@ function dirProblem(where: string, dir: string): string | null {
   }
 }
 
-/** The panes to render, resolved from config. Never throws: a config the hub
- * cannot read is reported as a problem, because a room that 500s tells the user
- * nothing about what to change. */
-export function wallView(): WallView {
-  let config;
-  try {
-    config = loadConfig();
-  } catch (err) {
-    return { panes: [], problem: err instanceof Error ? err.message : String(err) };
-  }
-
+/** The panes to render, given a config that already parsed. Pure. */
+export function wallView(config: HubConfig): WallView {
   const { profiles, wall } = config;
   // Config order is on-screen order, both ways round: an explicit pane list is
   // taken as written, and the derived list follows the order of the profiles.
@@ -81,4 +78,20 @@ export function wallView(): WallView {
   });
 
   return { panes, problem: null };
+}
+
+/** The wall, built through a config LOADER passed in by the caller. Never
+ * throws: a config the hub cannot read is reported as a wall-level problem,
+ * because a room that 500s tells the user nothing about what to change.
+ *
+ * Taking the loader as an argument rather than importing it is what keeps this
+ * whole module loadable by the test suite (see the note at the top), and it is
+ * why the unreadable-config path stays covered instead of moving into a page
+ * component where no test can reach it. */
+export function wallViewWith(load: () => HubConfig): WallView {
+  try {
+    return wallView(load());
+  } catch (err) {
+    return { panes: [], problem: err instanceof Error ? err.message : String(err) };
+  }
 }

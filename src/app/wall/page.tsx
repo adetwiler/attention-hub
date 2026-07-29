@@ -8,12 +8,15 @@
 // hands plain data to the client grid. Nothing about what a pane HOLDS is
 // decided here: that is the content registry, src/components/paneContent.tsx.
 import Wall from "@/components/Wall";
-import { wallView } from "@/lib/wall";
+import { loadConfig } from "@/lib/config";
+import { wallViewWith } from "@/lib/wall";
 
 export const dynamic = "force-dynamic";
 
 export default function WallRoom() {
-  const view = wallView();
+  // The loader is passed IN rather than imported by wall.ts, so that module
+  // stays free of runtime project-internal imports and therefore stays testable.
+  const view = wallViewWith(loadConfig);
 
   return (
     <div className="wallroom">
