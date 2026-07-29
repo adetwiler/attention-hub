@@ -17,7 +17,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const ROOTS = ["src", "scripts"];
+// pty/ is in here because it is SHIPPED CODE, not a helper: the terminal
+// sidecar is the one part of the product that legitimately opens a socket, and
+// a directory outside the scan is exactly where a hardcoded path or port hides.
+// Its two default constants carry the reviewed-exception marker.
+const ROOTS = ["src", "scripts", "pty"];
 const EXTENSIONS = new Set([".ts", ".tsx", ".mjs", ".js", ".jsx", ".css"]);
 
 // A line carrying this marker is a deliberate, reviewed exception.

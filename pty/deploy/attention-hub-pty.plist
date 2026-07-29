@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd, macOS. The terminal sidecar has to come back after a reboot, or the
+  terminal panes are dead while the rest of the hub works, which reads as the
+  hub being broken rather than one service being down.
+
+  Install it (a USER agent, never a system daemon: this thing opens a shell as
+  you, and it must never run as root):
+
+    1. cp pty/deploy/attention-hub-pty.plist ~/Library/LaunchAgents/
+    2. edit the copy and replace both HUB_DIR placeholders with the full path to
+       your attention-hub folder, and NODE_BIN with the output of `which node`
+    3. launchctl load ~/Library/LaunchAgents/attention-hub-pty.plist
+
+  Check it: curl the health path the sidecar answers, or read the log below.
+  Stop it:  launchctl unload ~/Library/LaunchAgents/attention-hub-pty.plist
+
+  KeepAlive is on, and that is safe: the sidecar refuses to start at all when
+  terminal.enabled is not true in your config, so switching the module off means
+  launchd retries a process that exits immediately rather than serving a shell.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>attention-hub-pty</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>NODE_BIN</string>
+    <string>HUB_DIR/pty/server.mjs</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>HUB_DIR/pty</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>HUB_DIR/data/pty.log</string>
+  <key>StandardErrorPath</key>
+  <string>HUB_DIR/data/pty.log</string>
+</dict>
+</plist>
