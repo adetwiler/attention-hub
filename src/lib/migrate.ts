@@ -56,6 +56,33 @@ export const MIGRATIONS: readonly string[] = [
   CREATE INDEX idx_ledger_state ON action_ledger (state);
   CREATE INDEX idx_ledger_target ON action_ledger (target);
   CREATE INDEX idx_ledger_created ON action_ledger (created_at);`,
+
+  // The terminal module's grants: one row per permission to open a shell.
+  //
+  // It is a STATE table, not a second history. The history of who attached a
+  // terminal is action_ledger, and ledger_id points at that row. What lives here
+  // is the part a ledger row must never hold: an unredeemed authority, with a
+  // deadline. Rows are pruned; the ledger is forever.
+  //
+  // token_hash, not token: the database is then not itself a stack of working
+  // shell grants. redeemed_at is what makes a grant single use, and the UPDATE
+  // that sets it is the redemption, so two racing sidecars cannot both win.
+  `CREATE TABLE terminal_grants (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_hash  TEXT NOT NULL UNIQUE,
+    pane_id     TEXT NOT NULL,
+    session     TEXT NOT NULL,
+    cwd         TEXT NOT NULL,
+    shell       TEXT,
+    tmux        INTEGER NOT NULL DEFAULT 1 CHECK (tmux IN (0, 1)),
+    scrollback  INTEGER NOT NULL DEFAULT 0,
+    idle_minutes INTEGER NOT NULL DEFAULT 30,
+    ledger_id   INTEGER REFERENCES action_ledger (id),
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at  TEXT NOT NULL,
+    redeemed_at TEXT
+  );
+  CREATE INDEX idx_terminal_grants_expires ON terminal_grants (expires_at);`,
 ];
 
 /** One row of PRAGMA foreign_key_check: a reference with no parent. */
