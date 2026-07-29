@@ -34,7 +34,10 @@ export interface WebPaneProps {
   pane: string;
   /** Shown in the pane's own toolbar. Optional: the grid already renders a header. */
   label?: string;
-  /** Which browser profile to start on. Overrides the remembered one. */
+  /** Which browser profile to start on, the FIRST time. A choice made in the pane's own
+   * picker is remembered and wins over this, because a pane the user pointed somewhere must
+   * still be pointed there after a reload. An id with no matching profile falls back to the
+   * first configured one, so this can never produce a blank pane. */
   profile?: string;
   /** Where to open, first time. Falls back to the remembered address, then to the configured
    * home page. */
@@ -195,7 +198,10 @@ export default function WebPane({
         const data = (await res.json()) as State;
         if (!alive) return;
         setState(data);
-        const saved = wantProfile ?? recall(PROFILE_KEY(pane));
+        // The REMEMBERED choice first, then the prop. The other order made the wall override
+        // the picker on every reload, so a pane the user had pointed at another browser
+        // silently snapped back.
+        const saved = recall(PROFILE_KEY(pane)) ?? wantProfile ?? null;
         const first = data.profiles.find((p) => p.seeded) ?? data.profiles[0];
         setProfile(saved !== null && data.profiles.some((p) => p.id === saved) ? saved : (first?.id ?? ""));
         setDraft(initialUrl ?? recall(URL_KEY(pane)) ?? "");

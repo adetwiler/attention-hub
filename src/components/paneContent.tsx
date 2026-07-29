@@ -15,6 +15,7 @@ import type { ComponentType } from "react";
 import type { PaneKind } from "@/lib/config";
 import type { PaneSpec } from "@/lib/wall";
 import type { PaneView } from "./PaneGrid";
+import WebPane from "./WebPane";
 
 export interface PaneContentProps {
   pane: PaneSpec;
@@ -53,11 +54,22 @@ function NotBuiltPane({ pane }: PaneContentProps) {
   );
 }
 
+/** A real browser, mirrored into this pane. The adapter is the whole of the wiring: WebPane
+ * takes self-contained props so it also renders on its own route (/browser), which is where
+ * it gets exercised against a real browser, and so it cannot be coupled to the grid.
+ *
+ * The pane's id is the browser profile it opens by default, which is the convention the
+ * config's `browser.profiles` comment states: a browser profile id matches an account name.
+ * The pane's own picker overrides it, and a pane id with no matching browser profile falls
+ * back to the first configured one, so nothing here can produce a blank pane. */
+function BrowserPane({ pane, view }: PaneContentProps) {
+  return <WebPane pane={pane.id} profile={pane.id} solo={view.solo} />;
+}
+
 /** Every kind, mapped. Exhaustive by type. */
 export const PANE_CONTENT: Record<PaneKind, ComponentType<PaneContentProps>> = {
   placeholder: PlaceholderPane,
   // Owned by the terminal slice: a live pty attached to this profile's session.
   terminal: NotBuiltPane,
-  // Owned by the browser slice: a mirrored Chrome tab for this account.
-  browser: NotBuiltPane,
+  browser: BrowserPane,
 };
