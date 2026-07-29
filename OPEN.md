@@ -119,6 +119,35 @@ The consequence to know about: live pickup of a user's own modules and pages is
 a dev-mode property, so slice 7 has to either make module changes work in
 production or say plainly that they need a restart.
 
+**8. The browser pane needs YOU once, and it cannot be done without you (slice
+13).** Three things, all human by nature:
+
+- **Seed a real profile.** `node scripts/seed-browser-profile.mjs` reads your
+  actual browser's profile folder and REFUSES while that browser is open, so it
+  has never been run against real browser data here. The walk used an empty
+  scratch directory. Quit Chrome, run it, and check the pane can open the copy.
+- **Connect an AI browser session to it, once per profile.** The extension makes
+  you click Connect in the right browser on purpose, so nothing automated can do
+  it. Everything that story depends on (FOLLOW, the tab picker, parking a window
+  the moment it appears) is verified; the handshake is not.
+- **Decide whether Linux ships as tested or as untested.** The discovery paths and
+  the systemd unit are written from documented locations, never run. The adapter
+  convention in this repo is that something built to spec but never exercised is
+  marked `untested` and the UI says so. Nothing marks the browser pane that way on
+  Linux right now, and one honest sentence in the README would.
+
+**9. Two decisions in slice 13 are mine, and both are cheap to change now.**
+
+- **`browser.profiles` is a SECOND list next to the top-level `profiles`.** One is
+  accounts (a label and your AI tool's config directory), the other is browser data
+  directories (a port, a source folder, a seeded copy). They are separate because a
+  browser brings constraints an account does not have, and CONTEXT.md now says so.
+  The alternative was one list with a nested `browser` block, which reads tidier and
+  couples the browser pane to the account model. Say the word and it merges.
+- **The default search engine and home page are DuckDuckGo**, in config, with a
+  `{}` placeholder so any engine works. There is no vendor written into the code.
+  Pick a different default if you would rather.
+
 ## Owed by a later slice, recorded so it cannot be forgotten
 
 **The attention feed (#2) ports TVG HQ's 2026-07-29 honesty + read-in-place fixes,

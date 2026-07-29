@@ -78,6 +78,46 @@ vendor neutral: you name whatever tool you already use and pay for, in
 `adapters` in your config. An adapter shipped without being exercised against a
 real install is marked `untested`, and the UI says so rather than pretending.
 
+## The browser pane
+
+**Sidecar.** A small, separate, loopback-only process the hub talks to for
+something a Next route cannot do. Today there is one: the browser sidecar
+(`chrome/server.mjs`), which cannot be a route because a route handler cannot
+perform a WebSocket upgrade. A sidecar has its own `package.json` so its
+dependencies never reach the app bundle, and it always obeys the same three
+rules: loopback only, a single-use token minted by the hub, and NO KILL PATH.
+
+**Mirrored, not framed.** The browser pane shows a picture of a real browser tab
+and forwards your input to it. It is not an iframe and never can be: a site's
+`X-Frame-Options` header is the site's decision and no browser may override it,
+so a framed pane could show almost nothing. The word matters because "the web
+pane" sounds like an embed, and every property that makes this work (real logins,
+sites that refuse framing, an extension able to drive the page you are looking
+at) follows from it NOT being one.
+
+**Browser profile.** One browser data directory the pane can mirror, declared in
+`browser.profiles`. One profile is one signed-in identity, which is the whole
+reason there is more than one. It is NOT the same thing as a **profile** in the
+top-level `profiles` section: that is an account you work under, with your AI
+tool's config directory. A browser profile carries a browser's own constraints (a
+debugging port of its own, a singleton lock of its own, a one-time seeded copy),
+which is why it is a separate list. By convention the ids match.
+
+**Seeding.** The one-time copy of one of your real browser profiles into the
+hub's own data directory (`scripts/seed-browser-profile.mjs`). It exists because
+Chrome 136 stopped honouring `--remote-debugging-port` on the default data
+directory, so the hub can never drive the browser you have open. Seeding is part
+of the feature, not a rough edge, and an unseeded profile says so and names the
+command.
+
+**Parked.** Where the real browser window sits: off the side of the desktop, at
+full size, still compositing. Distinct from MINIMIZED, which is the trap:
+minimizing stops compositing and drops the mirror from about 92 fps to 0.3, which
+looks exactly like a broken socket. Nothing in the hub ever minimizes a window,
+and the pane's WINDOW button un-parks one so you can reach the browser's own UI
+(an extension popup, a download, a file picker), which a picture of page pixels
+can never carry.
+
 ## The mechanics
 
 **Snapshot.** The one object every live surface renders (`LedgerSnapshot`).
