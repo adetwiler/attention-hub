@@ -297,3 +297,269 @@ body {
 .foot-ver {
   margin-left: auto;
 }
+
+/* ---------------------------------------------------------------- wall
+
+   THE WALL: every configured pane on one screen. The shape comes from the
+   COUNT, never from a hardcoded four, so adding a profile to hub.config.json
+   is the whole job of adding a pane. See src/components/PaneGrid.tsx. */
+
+/* The wall is the one room that is not an 900px column of cards, so it opts out
+   of the shell's reading width rather than the shell knowing about it. */
+.room:has(.wallroom) {
+  max-width: none;
+  padding: clamp(14px, 2.5vw, 22px) clamp(10px, 2vw, 18px) 18px;
+}
+
+.wallroom {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.wall {
+  display: grid;
+  gap: 8px;
+}
+
+.wallbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.walltitle {
+  color: var(--ink-muted);
+}
+
+.wallgrow {
+  flex: 1 1 auto;
+}
+
+.wallkeys {
+  letter-spacing: 0.06em;
+  text-transform: none;
+  opacity: 0.75;
+}
+
+.fchips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fchip {
+  font: inherit;
+  color: var(--ink-faint);
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fchip:hover {
+  color: var(--ink);
+  border-color: var(--hair-strong);
+}
+
+.fchip.on {
+  color: var(--ink);
+  background: var(--panel-2);
+  border-color: var(--ember);
+}
+
+/* FOCUS MODE: the grid retemplates from how many panes are ON SCREEN, and pane
+   order never changes, so a focused pane is the same pane, bigger. One, two or
+   three sit on a single row (a focused pane should get the full height, which
+   is the entire point of focusing it); four and up flow into two columns. */
+.wallgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* A definite height, not flex: rows split it, panes clip, bodies scroll. */
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: calc(100vh - 250px);
+  min-height: 360px;
+}
+
+.wallgrid.n1 {
+  grid-template-columns: 1fr;
+}
+
+.wallgrid.n2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.wallgrid.n3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.wallpane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* A solo pane takes the ember edge, so it is obvious at a glance that the
+   others are HIDDEN rather than missing. */
+.wallpane.solo {
+  border-color: rgba(245, 169, 75, 0.35);
+}
+
+.wallhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 10px;
+  border-bottom: 1px solid var(--hair);
+  background: var(--panel-2);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.wallname {
+  color: var(--ink);
+}
+
+.wallbad {
+  color: var(--st-need);
+}
+
+.wallzoom {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.wallzoom:hover {
+  color: var(--ink);
+  border-color: var(--hair-strong);
+}
+
+.wallbody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+.wallbody .empty {
+  font-size: 12px;
+}
+
+.wallbody code {
+  color: var(--ink-muted);
+  background: var(--panel-2);
+  border: 1px solid var(--hair);
+  border-radius: 4px;
+  padding: 1px 5px;
+  overflow-wrap: anywhere;
+}
+
+.paneplaceholder {
+  display: grid;
+  gap: 8px;
+}
+
+.panebound {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* Fullscreen sheds the topbar, the nav and the footer, because the wall is the
+   whole point of the screen when it is on. Both selectors: the class tracks the
+   fullscreenchange event, and :fullscreen covers the browser's own exit paths. */
+.wall:fullscreen,
+.wall.isfull {
+  background: var(--bg);
+  height: 100vh;
+  padding: 8px;
+}
+
+.wall.isfull .wallgrid {
+  height: calc(100vh - 44px);
+}
+
+/* The dots are the phone pager's position, so they are hidden where the panes
+   are all on screen at once. */
+.walldots {
+  display: none;
+  gap: 7px;
+  justify-content: center;
+}
+
+.pdot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--hair-strong);
+  background: transparent;
+  cursor: pointer;
+}
+
+.pdot.on {
+  background: var(--ember);
+  border-color: var(--ember);
+}
+
+@media (max-width: 720px) {
+  /* Same panes, same focus state, one per screen with a swipe. Not a second
+     mobile layout: the grid becomes a scroll-snap pager. */
+  .wallgrid,
+  .wallgrid.n1,
+  .wallgrid.n2,
+  .wallgrid.n3 {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    height: calc(100dvh - 240px);
+    min-height: 320px;
+  }
+
+  .wallgrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .wallpane {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  /* The key legend is desktop truth: there is no keyboard on a phone. */
+  .wallkeys {
+    display: none;
+  }
+
+  .walldots {
+    display: flex;
+  }
+}
