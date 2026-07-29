@@ -96,6 +96,14 @@ Two settings worth knowing about up front:
 - **`adapters`** is where you name the AI command-line tool you already use. The
   hub is not tied to any one vendor. Until you fill it in, the surfaces that
   need an agent say so instead of pretending.
+- **`terminal`** is **off**, and it stays off until you read
+  [docs/terminal.md](docs/terminal.md). Switched on, it gives one pane a real
+  shell on this machine, in a directory you name, so a dev server or a git
+  command can run from the hub and keep running when you navigate away. It is
+  also the most powerful thing here: a shell can read your keys and push your
+  code, which is why it needs a second process, a deliberate step to enable, and
+  a network you trust. macOS and Linux, because it keeps sessions alive with
+  tmux.
 
 ## Teams
 
