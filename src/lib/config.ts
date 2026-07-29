@@ -38,6 +38,14 @@ const DATA_DIR_DEFAULT = "data";
 const USER_DIR_DEFAULT = "user";
 const UPDATE_REPO_DEFAULT = "adetwiler/attention-hub";
 const UPDATE_HOURS_DEFAULT = 24;
+/** What a wall pane holds when nothing says otherwise. See PANE_KINDS below. */
+const PANE_KIND_DEFAULT: PaneKind = "placeholder";
+
+/** A profile name and a pane id both become an id in a DOM attribute and a
+ * localStorage key, so they are slugs. The error message says so in plain words. */
+const SLUG = /^[a-z0-9][a-z0-9_-]*$/;
+const SLUG_EXPECTED =
+  "a lowercase name of letters, numbers, dashes or underscores, starting with a letter or number";
 
 // ---------------------------------------------------------------- types
 
@@ -86,6 +94,48 @@ export interface ModulesConfig {
   enabled: string[];
 }
 
+/** One account you work under. The key in `profiles` is its name, and the wall
+ * shows one pane per profile unless `wall.panes` says otherwise. */
+export interface Profile {
+  /** Shown on the pane and its chip. Falls back to the profile name. */
+  label: string;
+  /** Absolute. That account's config directory for your AI tool. null = this
+   * profile is not tied to one, which is fine: a pane may hold anything. */
+  configDir: string | null;
+}
+
+/** What a pane HOLDS. The grid never reads this: it owns the layout, the focus
+ * model and the pane frame, and one content component per kind fills the body.
+ *
+ * This union is the registry of kind NAMES, deliberately wider than what the
+ * current version can render, so that a config written for a later release
+ * still validates and the wall says honestly which pane is not built yet
+ * instead of refusing the whole file. `src/components/paneContent.tsx` maps
+ * every name here to a component, and the Record type makes a missing row a
+ * compile error. See docs/adr/0004-pane-content-contract.md. */
+export type PaneKind = "placeholder" | "terminal" | "browser";
+
+export const PANE_KINDS: readonly PaneKind[] = ["placeholder", "terminal", "browser"];
+
+/** One pane of the wall, as declared in config. */
+export interface WallPane {
+  /** Stable id. The focus selection and the DOM node are keyed on it. */
+  id: string;
+  kind: PaneKind;
+  /** Key into `profiles`, or null for a pane not tied to an account. */
+  profile: string | null;
+  /** An explicit override. null falls back to the profile label, then the id. */
+  label: string | null;
+}
+
+export interface WallConfig {
+  /** The declared panes. EMPTY is the normal case: the wall then shows one pane
+   * per configured profile, in config order, so four accounts give the 2x2. */
+  panes: WallPane[];
+  /** The kind a derived (profile) pane gets. */
+  paneKind: PaneKind;
+}
+
 export interface HubConfig {
   hub: HubIdentity;
   bind: BindConfig;
@@ -96,6 +146,9 @@ export interface HubConfig {
   update: UpdateConfig;
   adapters: AdaptersConfig;
   modules: ModulesConfig;
+  /** The accounts. Empty is honest: the wall says it has no panes configured. */
+  profiles: Record<string, Profile>;
+  wall: WallConfig;
 }
 
 // ---------------------------------------------------------------- helpers
@@ -255,6 +308,64 @@ function parseModules(root: Record<string, unknown>): ModulesConfig {
   return { enabled: stringList(raw, "enabled", "modules.enabled") };
 }
 
+function parseProfiles(root: Record<string, unknown>): Record<string, Profile> {
+  const raw = section(root, "profiles");
+  const profiles: Record<string, Profile> = {};
+  for (const key of Object.keys(raw)) {
+    if (isComment(key)) continue;
+    if (!SLUG.test(key)) throw configError(`profiles.${key}`, `${SLUG_EXPECTED} (the name becomes the pane's id)`);
+    const entry = asRecord(raw[key], `profiles.${key}`);
+    const dir = optString(entry, "configDir", `profiles.${key}.configDir`);
+    profiles[key] = {
+      label: str(entry, "label", `profiles.${key}.label`, key),
+      configDir: dir === null ? null : resolvePath(dir),
+    };
+  }
+  return profiles;
+}
+
+function parsePaneKind(value: unknown, where: string): PaneKind {
+  for (const kind of PANE_KINDS) {
+    if (value === kind) return kind;
+  }
+  throw configError(where, `one of: ${PANE_KINDS.join(", ")}`);
+}
+
+function parseWall(root: Record<string, unknown>, profiles: Record<string, Profile>): WallConfig {
+  const raw = section(root, "wall");
+  const kindRaw = raw["paneKind"];
+  const paneKind =
+    kindRaw === undefined || kindRaw === null ? PANE_KIND_DEFAULT : parsePaneKind(kindRaw, "wall.paneKind");
+
+  const listRaw = raw["panes"];
+  if (listRaw === undefined || listRaw === null) return { panes: [], paneKind };
+  if (!Array.isArray(listRaw)) throw configError("wall.panes", "a list of panes");
+
+  const seen = new Set<string>();
+  const known = Object.keys(profiles).join(", ") || "none";
+  const panes = listRaw.map((entryRaw, i): WallPane => {
+    const where = `wall.panes[${i}]`;
+    const entry = asRecord(entryRaw, where);
+    const id = optString(entry, "id", `${where}.id`);
+    if (id === null) throw configError(`${where}.id`, "a non-empty string");
+    if (!SLUG.test(id)) throw configError(`${where}.id`, SLUG_EXPECTED);
+    if (seen.has(id)) throw configError(`${where}.id`, `an id no other pane uses (have: ${id})`);
+    seen.add(id);
+    const profile = optString(entry, "profile", `${where}.profile`);
+    if (profile !== null && profiles[profile] === undefined) {
+      throw configError(`${where}.profile`, `the name of a configured profile (have: ${known})`);
+    }
+    const entryKind = entry["kind"];
+    return {
+      id,
+      profile,
+      kind: entryKind === undefined || entryKind === null ? paneKind : parsePaneKind(entryKind, `${where}.kind`),
+      label: optString(entry, "label", `${where}.label`),
+    };
+  });
+  return { panes, paneKind };
+}
+
 // ---------------------------------------------------------------- load
 
 let cached: HubConfig | null = null;
@@ -290,6 +401,7 @@ function readRoot(): Record<string, unknown> {
 export function loadConfig(): HubConfig {
   if (cached !== null) return cached;
   const root = readRoot();
+  const profiles = parseProfiles(root);
   cached = {
     hub: parseHub(root),
     bind: parseBind(root),
@@ -298,6 +410,10 @@ export function loadConfig(): HubConfig {
     update: parseUpdate(root),
     adapters: parseAdapters(root),
     modules: parseModules(root),
+    profiles,
+    // The wall validates pane.profile against the profiles above, so it is
+    // parsed last and takes them as an argument rather than re-reading the file.
+    wall: parseWall(root, profiles),
   };
   return cached;
 }
