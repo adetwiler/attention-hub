@@ -19,7 +19,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const ROOTS = ["src", "scripts", "chrome"];
+// chrome/ and pty/ are in here because they are SHIPPED CODE, not helpers: the
+// two sidecars are the parts of the product that legitimately open a socket, and
+// a directory outside the scan is exactly where a hardcoded path or port hides.
+// Their default port constants carry the reviewed-exception marker.
+const ROOTS = ["src", "scripts", "chrome", "pty"];
 const EXTENSIONS = new Set([".ts", ".tsx", ".mjs", ".js", ".jsx", ".css"]);
 
 // A line carrying this marker is a deliberate, reviewed exception.

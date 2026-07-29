@@ -15,6 +15,7 @@ import type { ComponentType } from "react";
 import type { PaneKind } from "@/lib/config";
 import type { PaneSpec } from "@/lib/wall";
 import type { PaneView } from "./PaneGrid";
+import TerminalPane from "./TerminalPane";
 import WebPane from "./WebPane";
 
 export interface PaneContentProps {
@@ -69,7 +70,9 @@ function BrowserPane({ pane, view }: PaneContentProps) {
 /** Every kind, mapped. Exhaustive by type. */
 export const PANE_CONTENT: Record<PaneKind, ComponentType<PaneContentProps>> = {
   placeholder: PlaceholderPane,
-  // Owned by the terminal slice: a live pty attached to this profile's session.
-  terminal: NotBuiltPane,
+  // A real shell on this machine, through the pty sidecar. Ships switched OFF
+  // (terminal.enabled) and the pane says so rather than showing a dead button.
+  // docs/terminal.md and docs/adr/0007-terminal-sidecar-and-its-trust-model.md.
+  terminal: TerminalPane,
   browser: BrowserPane,
 };

@@ -1,0 +1,36 @@
+# systemd, Linux. A USER unit, never a system one: the sidecar opens a shell as
+# you, and it must never run as root.
+#
+# Install it:
+#   1. mkdir -p ~/.config/systemd/user
+#   2. cp pty/deploy/attention-hub-pty.service ~/.config/systemd/user/
+#   3. edit the copy: replace HUB_DIR with the full path to your attention-hub
+#      folder (%h is your home directory, so %h/attention-hub works), and
+#      NODE_BIN with the output of `which node`
+#   4. systemctl --user daemon-reload
+#      systemctl --user enable --now attention-hub-pty
+#
+# Read the log:  journalctl --user -u attention-hub-pty -f
+# Stop it:       systemctl --user disable --now attention-hub-pty
+#
+# Survive logout (a headless box you reach over a private network):
+#   loginctl enable-linger $USER
+#
+# Restart=on-failure rather than always, because the sidecar EXITS on purpose
+# when terminal.enabled is not true in your config. Switching the module off
+# should stop the service, not start a retry loop.
+
+[Unit]
+Description=Attention Hub terminal sidecar (loopback pty over WebSocket)
+Documentation=file://HUB_DIR/docs/terminal.md
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=HUB_DIR/pty
+ExecStart=NODE_BIN HUB_DIR/pty/server.mjs
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

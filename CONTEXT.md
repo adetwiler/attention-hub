@@ -178,6 +178,35 @@ to say which. `LedgerSnapshot.degraded` carries the reason on the same wire as
 the data, so a hub that cannot open its own database renders a card explaining
 that rather than a convincing "nothing is happening".
 
+## The terminal
+
+**Sidecar.** A small process the hub runs beside itself because the framework
+cannot do the job in a route: today, exactly one, the pty sidecar (`pty/`). It
+speaks WebSocket on loopback, owns the shells, and has its own `package.json` so
+its native dependency never reaches the app bundle. A sidecar is not a service
+you sign into and not a daemon that outlives your machine: it is part of the hub
+that happens to need its own process, which is why it also needs its own service
+definition to come back after a reboot.
+
+**Grant.** One permission to open one shell: single use, valid for seconds,
+minted by the hub for a named pane, and spent by the sidecar. It exists because a
+port cannot be a permission. The browser is handed a token, the DATABASE holds
+only its hash, and the sidecar has to ask the hub what the token is worth, which
+is also how it learns which directory to open. So a grant is the thing that
+decides what a shell may be, and the client never chooses.
+
+**Session.** A `tmux` session named `<prefix>-<pane id>`, and the reason a shell
+outlives the tab it was opened from. Navigation, a sidecar restart, a hub update
+and a closed laptop all leave it running, and it is attachable from a real
+terminal, which is the whole of the no-lockout contract: the hub can never be the
+thing that traps a process, so it also never offers to kill one.
+
+**Attach.** Joining a session that is already there, as opposed to starting one.
+The distinction is load-bearing rather than pedantic: the client that CREATES a
+session sets its size, and every attach after that must refuse to change it, or
+a phone joining from the sofa collapses the desk layout. See
+[docs/terminal.md](docs/terminal.md).
+
 ## The promises
 
 **Local only.** The hub binds loopback and runs on your machine against your

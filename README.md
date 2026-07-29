@@ -161,7 +161,7 @@ never touch your settings, your database, or anything you built yourself.
 
 **Editing the config takes effect on the next restart.**
 
-Three settings worth knowing about up front:
+Four settings worth knowing about up front:
 
 - **`bind.host`** is `127.0.0.1`, meaning this machine only. To reach the hub
   from your phone or another computer, the right answer is a private network
@@ -172,6 +172,14 @@ Three settings worth knowing about up front:
   need an agent say so instead of pretending.
 - **`tabs`** is the one above: what you want in the nav. See
   [docs/tabs.md](docs/tabs.md).
+- **`terminal`** is **off**, and it stays off until you read
+  [docs/terminal.md](docs/terminal.md). Switched on, it gives one pane a real
+  shell on this machine, in a directory you name, so a dev server or a git
+  command can run from the hub and keep running when you navigate away. It is
+  also the most powerful thing here: a shell can read your keys and push your
+  code, which is why it needs a second process, a deliberate step to enable, and
+  a network you trust. macOS and Linux, because it keeps sessions alive with
+  tmux.
 
 ## Not built yet
 

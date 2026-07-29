@@ -49,9 +49,12 @@
 
   "wall": {
     "$comment": "THE WALL: every pane side by side, on one screen. The grid takes its shape from the COUNT, so adding a profile above is the whole job of adding a pane. Number keys 1 to 9 blow one pane up on its own, 0 brings them all back, F is fullscreen, and the layout you leave is the layout you come back to. You only need the keys below if you want something other than one pane per profile.",
-    "$paneKind": "What a profile's pane HOLDS. \"placeholder\" is the only kind this version can render: it shows the account the pane is bound to and says plainly that its content module is not installed. \"terminal\" and \"browser\" are accepted here so a config written for a later release still loads, and the wall names the pane that is waiting rather than refusing your whole file.",
+    "$paneKind": "What a profile's pane HOLDS. \"placeholder\" shows the account the pane is bound to and says plainly that its content module is not installed. \"terminal\" is a real shell on this machine and needs the terminal section below switched on (it is off by default, and the pane says so rather than showing a dead button). \"browser\" mirrors a real browser and needs the browser section below configured. A kind this version cannot draw still loads and names itself on the wall, rather than the hub refusing your whole file.",
     "paneKind": "placeholder",
-    "$panes": "OPTIONAL, and empty is the normal case. Leave it out and the wall is one pane per profile, in the order above. Write it when you want a different set: an ordered list of { \"id\", \"kind\", \"profile\", \"label\" }, where id is a slug unique in the list, profile names one of the profiles above (or is left out for a pane tied to no account), and label overrides the profile's.",
+    "$panes": "OPTIONAL, and empty is the normal case. Leave it out and the wall is one pane per profile, in the order above. Write it when you want a different set: an ordered list of { \"id\", \"kind\", \"profile\", \"label\", \"cwd\" }, where id is a slug unique in the list, profile names one of the profiles above (or is left out for a pane tied to no account), label overrides the profile's, and cwd is where a terminal pane opens (a folder that has to exist, or the pane says which key to fix).",
+    "$panesExample": [
+      { "id": "shell", "kind": "terminal", "label": "SHELL", "cwd": "~/your-project" }
+    ],
     "panes": []
   },
 
@@ -128,6 +131,27 @@
       { "id": "personal", "label": "PERSONAL", "browser": "chrome", "dir": "Profile 1", "port": 2891, "account": "" }
     ],
     "profiles": []
+  },
+
+  "terminal": {
+    "$comment": "THE TERMINAL MODULE, AND IT SHIPS SWITCHED OFF. A terminal pane is a real shell on this machine, running as you, reached from a browser tab. It can read your keys, your databases and anything else you can read, and it can push code. That is not a bug in it, it is what a shell is, which is why enabled is false until you decide otherwise and why nothing about it exists until you do: with this false, the sidecar process refuses to start and the hub refuses every request. Read docs/terminal.md before you turn it on. macOS and Linux only: the sidecar keeps sessions alive with tmux, and there is no Windows version of it.",
+    "$security": "Four doors, all on by default and none of them a setting: the sidecar listens on 127.0.0.1 and refuses any other peer, a connection needs a single-use short-lived grant that only the hub's own pages can mint, silence drops the socket, and every attach is recorded in the hub's ledger (that a terminal was attached, never what was typed). The one thing YOU have to get right: do not put the hub on the open internet. It has no login. With this module on, exposing it is handing out a shell.",
+    "enabled": false,
+    "$port": "The terminal sidecar's port on loopback. It always binds 127.0.0.1, and that is not configurable on purpose. It must not be the same as browser.sidecarPort above: they are two different processes and the second one to start would find the port taken.",
+    "port": 2888,
+    "$url": "Only for reaching the sidecar through your own proxy, from a phone on a private network for example. Empty means ws://127.0.0.1 on the port above, which is the normal case.",
+    "url": null,
+    "$tmux": "Keep sessions in tmux, so a dev server you start here survives leaving the page, restarting the sidecar, updating the hub and closing your laptop, and can always be picked up from a real terminal with `tmux attach -t hub-<pane>`. Turning this off gives you a plain shell that dies with the browser connection.",
+    "tmux": true,
+    "sessionPrefix": "hub",
+    "$cwd": "Where a terminal pane opens, unless the pane names its own cwd. Empty means your home directory.",
+    "cwd": null,
+    "$shell": "The shell to run. Empty means the one your system says you use.",
+    "shell": null,
+    "$scrollback": "Lines of history replayed when you attach, so coming back to a session is not a blank screen.",
+    "scrollback": 2000,
+    "$idleMinutes": "Minutes of nothing typed before the connection is dropped. The tmux session keeps running, so you lose nothing and there is no forgotten open shell in a tab.",
+    "idleMinutes": 30
   },
 
   "modules": {

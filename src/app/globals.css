@@ -491,6 +491,106 @@ body {
   color: var(--ink-faint);
 }
 
+/* ---------------------------------------------------------------- terminal pane */
+
+/* A shell wants the whole pane, and .wallbody is padded and scrollable for text
+   content. :has() rather than a class on .wallbody because PaneGrid owns the
+   frame and a content kind never reaches into it (ADR-0004). Two scrollbars, one
+   from the pane and one from xterm, is the failure this avoids. */
+.wallbody:has(> .termpane) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.termpane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.termbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--hair);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.termstate.on {
+  color: var(--st-done);
+}
+
+.termsession {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-muted);
+}
+
+.termgrow {
+  flex: 1;
+}
+
+.termbtn {
+  padding: 3px 9px;
+  border: 1px solid var(--hair-strong);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.termbtn:hover:not(:disabled) {
+  border-color: var(--ember);
+  color: var(--ember-hot);
+}
+
+.termbtn:disabled {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+.termnote {
+  margin: 0;
+  padding: 7px 10px;
+  font-size: 11px;
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--hair);
+}
+
+.termnote.bad {
+  color: var(--st-need);
+}
+
+.termpane .empty {
+  padding: 12px;
+  font-size: 12px;
+}
+
+.termhost {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 0 0 6px;
+}
+
+.termhost.hidden {
+  display: none;
+}
+
+/* xterm sizes itself from its container, so the container needs a real height
+   and the canvas needs to stop the pane from scrolling. */
+.termhost .xterm,
+.termhost .xterm-viewport,
+.termhost .xterm-screen {
+  height: 100% !important;
+}
+
 /* Fullscreen sheds the topbar, the nav and the footer, because the wall is the
    whole point of the screen when it is on. Both selectors: the class tracks the
    fullscreenchange event, and :fullscreen covers the browser's own exit paths. */

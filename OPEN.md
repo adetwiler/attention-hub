@@ -215,6 +215,43 @@ public-bound repo.
   `{}` placeholder so any engine works. There is no vendor written into the code.
   Pick a different default if you would rather.
 
+**13. THE SETUP PAGE (#8) HAS TO CARRY THE TERMINAL WARNING, LOUDLY, AND HERE IS
+EXACTLY WHAT IT SAYS.** The terminal module (#11) is in v1 and ships switched
+off. The mechanisms are all in place (loopback bind, same-origin single-use
+grant, idle timeout, a ledger row per attach, owner-only pinned in code and by
+the release check), and the one door no mechanism can hold is the user's own
+network. So #8 owns saying this, in its own section, not in a footnote:
+
+- **A terminal pane is a real shell on your machine**, running as you, reached
+  from a browser tab. It can read your keys and your databases and it can push
+  code. That is what a shell is.
+- **It is off until you turn it on**: `"terminal": { "enabled": true }` plus a
+  pane of kind `terminal`, plus running the sidecar (`cd pty && npm install &&
+  npm start`), plus a service file from `pty/deploy/` so it survives a reboot.
+- **Never put the hub on the open internet.** The hub has no login. With this
+  module on, exposing it is handing out a shell. Reach it from a phone through a
+  private network, never a port forward.
+- **macOS and Linux only**, because the sidecar is tmux-backed. Say it plainly;
+  do not imply Windows.
+- **Owner only, permanently.** When multi-person installs exist, no role but the
+  owner ever gets a pty. Not a v1 limitation.
+
+Wording that already exists and can be lifted: the `$comment` and `$security`
+keys on the `terminal` section of `hub.config.example.json`, and the Security
+section of [docs/terminal.md](docs/terminal.md).
+
+**14. `terminal.enabled` is the whole switch, and there is no UI for it.** Turning
+the module on means editing config and starting a second process, which is a
+deliberate speed bump on the product's most powerful surface. If you would rather
+it be a toggle on a settings screen, that is a decision to take with #8, and it
+should stay a two-step (config plus sidecar) rather than becoming one click.
+
+**15. A `terminal` pane needs no profile, so the wall's pane story is now two
+stories.** A profile pane is bound to an account directory; a terminal pane is
+bound to a working directory (`wall.panes[].cwd`). Both render in the same grid
+and the example config documents both. If that reads as two concepts where you
+wanted one, the cheap moment to say so is before #8 writes the setup copy.
+
 ## Owed by a later slice, recorded so it cannot be forgotten
 
 **DONE in slice 2: the three 2026-07-29 honesty + read-in-place fixes are ported.**
@@ -265,6 +302,23 @@ deliberately human (see item 11). The walk to do, once a profile is seeded: add
 YOUTUBE in the nav, and confirm the pane opens on that address rather than on the
 configured home page.
 
+**The Chrome walk for the terminal pane (#11) is owed to a human.** Everything
+below the browser was driven and measured for real
+([docs/verification/2026-07-29-slice-11-terminal.md](docs/verification/2026-07-29-slice-11-terminal.md)):
+26 checks including the loopback bind, the same-origin refusal, single-use
+grants, ledger rows, session survival across a detach and across killing the
+sidecar, the idle drop, and the size trap measured both ways. What no agent can
+do is connect the Chrome extension, so these are unseen: xterm rendering in a
+pane, the wall's number keys not stealing a keystroke from the shell, fullscreen
+and solo re-fitting the terminal, and a real phone attaching to a desk session.
+
+**Three branches appended `MIGRATIONS[1]` (#2 settings, #13 browser_tokens, #11
+terminal_grants).** Expected, and the resolution is in
+[docs/claude/parallel-agent-builds.md](docs/claude/parallel-agent-builds.md):
+merge order decides the index, the later ones get renumbered at the merge, and
+nothing breaks because no installed database has applied any of the three yet.
+Do it deliberately in one place, at the merge, not by having each branch guess.
+
 **A CI backstop (unassigned).** `--no-verify` bypasses the local hook, and the
 release check is manual. A GitHub Actions job running
 `bash .githooks/release-check.sh --generic-only` on push would make the generic
@@ -298,3 +352,28 @@ setup docs say "restart" in the meantime.
 - **No test framework?** Wrong call, reversed. `node:test` ships inside the
   Node 20 that the `engines` field already requires, so the regression net costs
   zero dependencies. `npm test`. See [test/README.md](test/README.md).
+
+**16. THE TWO SIDECARS BOTH WANTED PORT 2887, and the terminal moved to 2888 at
+the merge.** Slice 13's browser sidecar and slice 11's terminal sidecar were
+authored in parallel worktrees and both picked the port after the hub's own. Two
+processes cannot hold one port: whichever started second would have died with
+`EADDRINUSE`, which now says so in plain words instead of printing a stack trace.
+So `terminal.port` is `2888`, asserted against `src/lib/config.ts` and
+`pty/server.mjs` by the release check, and the config comment says the two must
+differ. This is the same class of collision as the `MIGRATIONS` index below, and
+worth remembering when a third sidecar appears: **a port is an identity, so assign
+it at dispatch rather than letting each slice guess.**
+
+**17. FIVE `hub-allow-network` MARKERS IN `chrome/server.mjs` WERE ONE LINE TOO
+HIGH, and this merge moved them.** The gate reads one line at a time (its own
+header says so), so a marker on the comment line ABOVE a `fetch(` protects
+nothing: it looks armed and is not. Those five lines passed their original commit
+only because `chrome/` was added to the gate's roots AFTER they were written, and
+gates scan staged additions, so nothing rescans an existing file. They would have
+blocked the next commit that touched them, with a confusing message, and the merge
+that widened the roots again is what surfaced it. Moved onto the code lines,
+reasons unchanged, nothing about the browser sidecar's behaviour touched. Worth
+knowing generally: **widening a gate's scope does not audit what is already in
+the tree**, and `bash .githooks/release-check.sh` does not catch this class either,
+because the whole-tree scan is content, not reach. A one-off `git grep` for
+markers on their own line is the only sweep that finds it.

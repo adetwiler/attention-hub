@@ -1,0 +1,19 @@
+{
+  "name": "attention-hub-pty",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Attention Hub terminal sidecar: a loopback WebSocket in front of a tmux-backed pty. Its own package on purpose, so a native module never reaches the app bundle. macOS and Linux only.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "postinstall": "node postinstall.mjs"
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0",
+    "ws": "^8.18.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

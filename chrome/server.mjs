@@ -192,8 +192,7 @@ const seeded = (id) => existsSync(path.join(dataDirFor(id), "Default"));
  * the same profile joins the browser that is already open instead of racing a new one. */
 async function browserAlive(id, timeoutMs = 1000) {
   try {
-    // hub-allow-network: loopback only, to this profile's own debugging port on this machine.
-    const res = await fetch(`http://127.0.0.1:${debugPort(id)}/json/version`, {
+    const res = await fetch(`http://127.0.0.1:${debugPort(id)}/json/version`, { // hub-allow-network: loopback only, to this profile's own debugging port on this machine.
       signal: AbortSignal.timeout(timeoutMs),
     });
     return res.ok;
@@ -427,8 +426,7 @@ async function pushTabs(id) {
 async function browserCdp(id) {
   const existing = browsers.get(id);
   if (existing !== undefined && existing.ws.readyState === WebSocket.OPEN) return existing;
-  // hub-allow-network: loopback only, the browser this hub launched on this machine.
-  const ver = await (await fetch(`http://127.0.0.1:${debugPort(id)}/json/version`)).json();
+  const ver = await (await fetch(`http://127.0.0.1:${debugPort(id)}/json/version`)).json(); // hub-allow-network: loopback only, the browser this hub launched on this machine.
   const cdp = new Cdp(ver.webSocketDebuggerUrl);
   await cdp.ready;
   cdp.on((msg) => {
@@ -457,8 +455,7 @@ const paneTargets = new Map(); // `${profile}:${pane}` -> targetId
 /** Connect to one specific tab. Split out from attachTab because switching the mirrored tab
  * mid-socket is an ordinary thing to do, not a reconnect. */
 async function connectTo(id, targetId) {
-  // hub-allow-network: loopback only, the debugging port of a browser on this machine.
-  const list = await (await fetch(`http://127.0.0.1:${debugPort(id)}/json/list`)).json();
+  const list = await (await fetch(`http://127.0.0.1:${debugPort(id)}/json/list`)).json(); // hub-allow-network: loopback only, the debugging port of a browser on this machine.
   const target = list.find((t) => t.id === targetId && t.type === "page");
   if (target === undefined) throw new Error("that tab is gone");
   const cdp = new Cdp(target.webSocketDebuggerUrl);
@@ -468,9 +465,8 @@ async function connectTo(id, targetId) {
 
 /** Open a new tab in a profile's browser and return its target. */
 async function newTab(id, url) {
-  // hub-allow-network: loopback only, the debugging port of a browser on this machine.
   const created = await (
-    await fetch(`http://127.0.0.1:${debugPort(id)}/json/new?${encodeURIComponent(url)}`, { method: "PUT" })
+    await fetch(`http://127.0.0.1:${debugPort(id)}/json/new?${encodeURIComponent(url)}`, { method: "PUT" }) // hub-allow-network: loopback only, the debugging port of a browser on this machine.
   ).json();
   return created;
 }
@@ -478,8 +474,7 @@ async function newTab(id, url) {
 async function attachTab(id, pane, url) {
   const key = `${id}:${pane}`;
   await browserCdp(id); // start parking and publishing before any tab exists
-  // hub-allow-network: loopback only, the debugging port of a browser on this machine.
-  const list = await (await fetch(`http://127.0.0.1:${debugPort(id)}/json/list`)).json();
+  const list = await (await fetch(`http://127.0.0.1:${debugPort(id)}/json/list`)).json(); // hub-allow-network: loopback only, the debugging port of a browser on this machine.
   const pages = list.filter((t) => t.type === "page");
 
   let target = null;

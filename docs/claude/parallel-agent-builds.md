@@ -77,6 +77,14 @@ merge order decides the index and the second one is simply renumbered. Nothing
 breaks because no database has applied either string yet. Do it at the merge, in
 one place, deliberately, and never by having each agent guess an index.
 
+**Renumbering DOES break a database that already applied the old order, and that
+was observed here rather than reasoned about.** At the slice-11 merge, a local dev
+database had applied `terminal_grants` as index 1 and sat at `user_version` 2. With
+the array renumbered, the runner tried index 2 and 3 and died with
+`SqliteError: table terminal_grants already exists`, surfacing as a 500 on the
+route that opens a shell. The fix for a dev database is to delete it. There is no
+fix for someone else's, which is the whole reason the rule below exists.
+
 **After v1.0.0 this becomes a real hazard**, because renumbering an applied
 migration makes an installed database silently disagree with the code, which is
 the exact failure `CLAUDE.md` forbids. From then on, parallel slices that need
