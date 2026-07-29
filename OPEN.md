@@ -82,10 +82,9 @@ passes a non-empty check while protecting nothing is worse than no gate. It
 looks armed. Confirm you are happy with a stranger meeting this on their first
 commit, or say the word and contributors get a marker-file exemption.
 
-**3. `marked` is installed and nothing uses it yet.** It is in the slice-1
-dependency list from the issue, but the first consumer is slice 7's markdown
-module. It sits in a repo that preaches a lean dependency list. Keep it (one
-fewer install step later) or drop it until slice 7 needs it? I kept it.
+**3. RESOLVED by slice 2: `marked` now has a real consumer.** It renders a
+markdown file an attention item links to, inside the hub, via
+`src/lib/markdown.ts`. Keeping it was the right call.
 
 **4. No icons, anywhere, on purpose.** The house rule is inline Lucide SVG and
 never emoji. The approved mock's hub screenshot uses coloured dots and no icons,
@@ -112,14 +111,92 @@ longer substitutes a default over a value you actually wrote, so it can no
 longer announce and bind a port you never asked for. Say the word if you want
 the full merge anyway.
 
-**7. Production is now the default run mode.** `./start.sh` builds once if
+**7. Production is now the default run mode, and as of 2026-07-29 `start` also
+REBUILDS when the source is newer than the build.** That second half was a
+release blocker found by the first run of the integrated hub: `start` checked
+only whether a build EXISTED, so with three slices merged and a 13-hour-old
+build, `/wall` and `/browser` both returned 404 on a tree that had just passed
+every gate. Since v1 updates are plain `git pull` and production is the default,
+the shipped update path was "pull a release, restart, get the old hub". Fixed in
+`scripts/serve.mjs`; a runtime `hub.config.json` change deliberately does NOT
+trigger a rebuild. Record:
+[docs/verification/2026-07-29-integrated-v1-smoke-and-stale-build.md](docs/verification/2026-07-29-integrated-v1-smoke-and-stale-build.md).
+The original note follows.
+
+**Production is the default run mode.** `./start.sh` builds once if
 needed and serves the built app; `./start.sh dev` is the contributor path. This
 is a user-facing change from the first draft, recorded as ADR-0002 decision 8.
 The consequence to know about: live pickup of a user's own modules and pages is
 a dev-mode property, so slice 7 has to either make module changes work in
 production or say plainly that they need a restart.
 
-**8. THE SETUP PAGE (#8) HAS TO CARRY THE TERMINAL WARNING, LOUDLY, AND HERE IS
+**8. The attention feed does not rotate, and slice 2 left it that way on
+purpose.** One line per item plus one per answer, so it grows slowly, and
+everything answered is history. The contract says so out loud
+([docs/attention-feed.md](docs/attention-feed.md)) with the honest advice to move
+old lines by hand. Worth revisiting only if a real install ever notices; a
+rotation scheme that splits the file is a new way for an answer to go missing.
+
+**9. The Chrome walk for slice 2 is OWED, and it needs you.** The release gate
+(the plan node, 2026-07-29) is a Claude-in-Chrome end-to-end walk, and the connect
+step is deliberately human: the extension needs you to pick the browser. The walk
+to do: file an item from a terminal, watch it toast live, answer it, confirm
+`hub get <id>` reads the answer back, then resolve a review ask and see the
+closing row appended. Everything except the in-browser half is verified by the
+suite and by hand (see the comment on issue #2).
+
+**10. RESOLVED, and it was never the product: the Turbopack NFT warning is an
+artifact of building inside a nested worktree.** `Encountered unexpected file in
+NFT list` appeared on the slice-2 branch and not on `main`, which looked like the
+slice had introduced it. It had not, and the first comparison was not apples to
+apples: the branch was built inside a worktree under `.claude/worktrees/` while
+`main` was built in the normal checkout.
+
+The measurement that settled it: the SAME slice-2 commit, checked out to a
+worktree at a non-nested path and built there, produces **zero** warnings. The
+warning names the worktree's own `next.config.ts`, which is the tell. Building
+under `.claude/` makes Turbopack's file tracing walk up into a directory that is
+inside the project it is tracing, so it reports that the whole project was traced
+unintentionally.
+
+Nothing to fix in `src/`, and the removed `turbopackIgnore` markers were correctly
+removed: they were never going to help. The lesson, which applies to every agent
+worktree, is in
+[docs/claude/parallel-agent-builds.md](docs/claude/parallel-agent-builds.md):
+**a build warning seen only in a nested worktree is suspect until reproduced from
+a normal checkout.** Compare like with like before recording a defect in a
+public-bound repo.
+
+**11. The browser pane needs YOU once, and it cannot be done without you (slice
+13).** Three things, all human by nature:
+
+- **Seed a real profile.** `node scripts/seed-browser-profile.mjs` reads your
+  actual browser's profile folder and REFUSES while that browser is open, so it
+  has never been run against real browser data here. The walk used an empty
+  scratch directory. Quit Chrome, run it, and check the pane can open the copy.
+- **Connect an AI browser session to it, once per profile.** The extension makes
+  you click Connect in the right browser on purpose, so nothing automated can do
+  it. Everything that story depends on (FOLLOW, the tab picker, parking a window
+  the moment it appears) is verified; the handshake is not.
+- **Decide whether Linux ships as tested or as untested.** The discovery paths and
+  the systemd unit are written from documented locations, never run. The adapter
+  convention in this repo is that something built to spec but never exercised is
+  marked `untested` and the UI says so. Nothing marks the browser pane that way on
+  Linux right now, and one honest sentence in the README would.
+
+**12. Two decisions in slice 13 are mine, and both are cheap to change now.**
+
+- **`browser.profiles` is a SECOND list next to the top-level `profiles`.** One is
+  accounts (a label and your AI tool's config directory), the other is browser data
+  directories (a port, a source folder, a seeded copy). They are separate because a
+  browser brings constraints an account does not have, and CONTEXT.md now says so.
+  The alternative was one list with a nested `browser` block, which reads tidier and
+  couples the browser pane to the account model. Say the word and it merges.
+- **The default search engine and home page are DuckDuckGo**, in config, with a
+  `{}` placeholder so any engine works. There is no vendor written into the code.
+  Pick a different default if you would rather.
+
+**13. THE SETUP PAGE (#8) HAS TO CARRY THE TERMINAL WARNING, LOUDLY, AND HERE IS
 EXACTLY WHAT IT SAYS.** The terminal module (#11) is in v1 and ships switched
 off. The mechanisms are all in place (loopback bind, same-origin single-use
 grant, idle timeout, a ledger row per attach, owner-only pinned in code and by
@@ -144,13 +221,13 @@ Wording that already exists and can be lifted: the `$comment` and `$security`
 keys on the `terminal` section of `hub.config.example.json`, and the Security
 section of [docs/terminal.md](docs/terminal.md).
 
-**9. `terminal.enabled` is the whole switch, and there is no UI for it.** Turning
+**14. `terminal.enabled` is the whole switch, and there is no UI for it.** Turning
 the module on means editing config and starting a second process, which is a
 deliberate speed bump on the product's most powerful surface. If you would rather
 it be a toggle on a settings screen, that is a decision to take with #8, and it
 should stay a two-step (config plus sidecar) rather than becoming one click.
 
-**10. A `terminal` pane needs no profile, so the wall's pane story is now two
+**15. A `terminal` pane needs no profile, so the wall's pane story is now two
 stories.** A profile pane is bound to an account directory; a terminal pane is
 bound to a working directory (`wall.panes[].cwd`). Both render in the same grid
 and the example config documents both. If that reads as two concepts where you
@@ -158,16 +235,14 @@ wanted one, the cheap moment to say so is before #8 writes the setup copy.
 
 ## Owed by a later slice, recorded so it cannot be forgotten
 
-**The attention feed (#2) ports TVG HQ's 2026-07-29 honesty + read-in-place fixes,
-not the surfaces as they were the day the port was scoped.** Upstream (the private
-hub, commit `cbf76fd`) after the owner hit both in use: (1) a third `agent-notice` kind in the
-needs-you model - a question row with no options and no "?" is a REPORT (night-runner
-REDs), labeled "reports"/REPORT, never "asks you", and it never takes over the wall;
-(2) `AttentionLink` - a non-http link on an attention item is a file path and opens
-IN the hub (the show/float mechanism) instead of a browser tab; (3) the float window
-renders `.md` as markdown (marked + the shared doc styles, frontmatter stripped),
-which is also the first real consumer for the installed `marked` (call #3 above).
-Port all three with the feed or the stranger inherits the complaint verbatim.
+**DONE in slice 2: the three 2026-07-29 honesty + read-in-place fixes are ported.**
+(1) `agent-notice` is in the CONTRACT, not just the display layer: a row with no
+options and no question mark is a REPORT, labelled REPORT, never "asks you", and a
+writer can declare it explicitly. (2) A non-http `link` is a file path and opens
+IN the hub. (3) The float window renders `.md` as markdown, frontmatter stripped,
+which is also `marked`'s first consumer. The one upstream behaviour NOT ported is
+"a notice never takes over the wall", because in this repo the toast stack is
+capped at three and dismissible and there is nothing for an item to take over.
 
 **The update check is not built (slice 6).** The config section, the README
 bullet and `CONTEXT.md` all say so in as many words. When the code lands, all
@@ -237,3 +312,28 @@ setup docs say "restart" in the meantime.
 - **No test framework?** Wrong call, reversed. `node:test` ships inside the
   Node 20 that the `engines` field already requires, so the regression net costs
   zero dependencies. `npm test`. See [test/README.md](test/README.md).
+
+**16. THE TWO SIDECARS BOTH WANTED PORT 2887, and the terminal moved to 2888 at
+the merge.** Slice 13's browser sidecar and slice 11's terminal sidecar were
+authored in parallel worktrees and both picked the port after the hub's own. Two
+processes cannot hold one port: whichever started second would have died with
+`EADDRINUSE`, which now says so in plain words instead of printing a stack trace.
+So `terminal.port` is `2888`, asserted against `src/lib/config.ts` and
+`pty/server.mjs` by the release check, and the config comment says the two must
+differ. This is the same class of collision as the `MIGRATIONS` index below, and
+worth remembering when a third sidecar appears: **a port is an identity, so assign
+it at dispatch rather than letting each slice guess.**
+
+**17. FIVE `hub-allow-network` MARKERS IN `chrome/server.mjs` WERE ONE LINE TOO
+HIGH, and this merge moved them.** The gate reads one line at a time (its own
+header says so), so a marker on the comment line ABOVE a `fetch(` protects
+nothing: it looks armed and is not. Those five lines passed their original commit
+only because `chrome/` was added to the gate's roots AFTER they were written, and
+gates scan staged additions, so nothing rescans an existing file. They would have
+blocked the next commit that touched them, with a confusing message, and the merge
+that widened the roots again is what surfaced it. Moved onto the code lines,
+reasons unchanged, nothing about the browser sidecar's behaviour touched. Worth
+knowing generally: **widening a gate's scope does not audit what is already in
+the tree**, and `bash .githooks/release-check.sh` does not catch this class either,
+because the whole-tree scan is content, not reach. A one-off `git grep` for
+markers on their own line is the only sweep that finds it.

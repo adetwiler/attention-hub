@@ -6,8 +6,9 @@
 #   (c) personal data:  no real home path and no email address, ANYWHERE, not
 #                       just under src/. Docs and READMEs are where a pasted
 #                       terminal path and a real address actually land.
-#   (d) no telemetry:   no outbound-network shape under src/, scripts/ or pty/.
-#   (e) config first:   no absolute path under src/, scripts/ or pty/.
+#   (d) no telemetry:   no outbound-network shape in shipped code (src, scripts,
+#                       and the two sidecars: chrome and pty).
+#   (e) config first:   no absolute path in shipped code, same roots as (d).
 #   (f) binaries:       staged binary blobs are scanned through their printable
 #                       strings, because grep -I cannot see inside them.
 #
@@ -43,21 +44,26 @@ git diff --cached --unified=0 --no-color -- . | awk '
   /^\+/      { print file ":" ln ": " substr($0,2); ln++ }
 ' > "$HUB_SCRATCH/added"
 
-# The shipped-code slice, for the gates that only apply to it. pty/ is in the
-# list because the terminal sidecar IS shipped code: it is the one place in this
-# product where opening a socket is legitimate, and a directory left outside the
-# scan is exactly where the next one would hide. Every line in there that really
-# does connect carries the hub-allow-network marker and a reason.
+# The shipped-code slice, for the gates that only apply to it.
+#
+# chrome/ AND pty/ ARE IN IT, and adding them was not optional. Those directories
+# are the two sidecars: they import node:http, they import ws, and they open
+# sockets, which is precisely the shape gate (d) exists to police. Leaving a
+# network-capable component outside the slice would have made the gate backing
+# this product's headline claim blind to the directories most able to break it.
+# Every line in there that really does connect carries an explicit
+# hub-allow-network reason, and all of them are loopback.
 LOCKFILES='^[^:]*(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.lock|poetry\.lock|uv\.lock):'
 
-hub_scan "$HUB_SCRATCH/added" -E '^(src|scripts|pty)/'
-printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/inroots"
-# A lockfile inside a shipped root (pty/package-lock.json) is machine generated,
-# and every dependency in it resolves from a registry URL. Those are not an
-# outbound-network shape anybody wrote, so the code slice is AUTHORED code only.
-# Without this the gate blocks its own npm install output, which is how a real
-# gate gets disabled by the people it protects.
-hub_scan "$HUB_SCRATCH/inroots" -vE "$LOCKFILES"
+hub_scan "$HUB_SCRATCH/added" -E '^(src|scripts|chrome|pty)/'
+printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/sliced"
+# Lockfiles are machine generated and every entry carries a registry URL. That is a
+# record of where a dependency CAME FROM, not a call this code makes, so they are out
+# of the network gate for the same reason they are out of the email gate below. A
+# sidecar has its own lockfile inside the slice (pty/package-lock.json), so without
+# this the gate blocks its own npm install output, which is how a real gate ends up
+# switched off by the people it protects.
+hub_scan "$HUB_SCRATCH/sliced" -vE "$LOCKFILES"
 printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/code"
 
 # Machine-generated lockfiles carry upstream package-author addresses. An npm
@@ -145,7 +151,7 @@ fi
 # names (fetch, axios, posthog), which meant curl through child_process, a
 # WebSocket, undici, node:net and an image beacon all committed clean. So the
 # rule is now: any non-loopback URL, any import of a network-capable module, and
-# any shell-out to curl or wget is blocked under the shipped-code roots. A new
+# any shell-out to curl or wget is blocked in the shipped-code roots. A new
 # exfiltration shape has to be explicitly excused rather than merely unlisted.
 #
 # Two markers, both on the same line as the code, because the gate reads one
@@ -170,7 +176,7 @@ shape_hits="$HUB_SCAN_OUT"
 printf '%s\n%s\n' "$url_hits" "$shape_hits" > "$HUB_SCRATCH/net"
 hub_scan "$HUB_SCRATCH/net" -vE 'hub-allow-network:|hub-no-request:'
 if [ -n "$HUB_SCAN_OUT" ]; then
-  report "staged change adds an outbound-network shape under src/, scripts/ or pty/:" "$HUB_SCAN_OUT" \
+  report "staged change adds an outbound-network shape in shipped code:" "$HUB_SCAN_OUT" \
     "This hub makes no network calls except the documented update check.
 If this line IS that check, mark it:        // hub-allow-network: <why>
 If it only mentions a URL and sends nothing: // hub-no-request: <why>"
@@ -183,7 +189,7 @@ fi
 ABSPATH='/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|[A-Za-z]:[\\/]+Users[\\/]+|/Volumes/'
 hub_scan "$HUB_SCRATCH/code" -E "$ABSPATH"
 if [ -n "$HUB_SCAN_OUT" ]; then
-  report "staged change adds an absolute path under src/, scripts/ or pty/:" "$HUB_SCAN_OUT" \
+  report "staged change adds an absolute path in shipped code:" "$HUB_SCAN_OUT" \
     "Read it from hub.config.json instead."
 fi
 

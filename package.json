@@ -4,11 +4,16 @@
   "private": true,
   "description": "A free, local-only command center for AI-assisted work. Your machine, your database, no telemetry.",
   "license": "MIT",
+  "bin": {
+    "hub": "scripts/hub.mjs"
+  },
   "scripts": {
     "dev": "node scripts/serve.mjs dev",
     "start": "node scripts/serve.mjs start",
     "build": "node scripts/build.mjs",
     "build:check": "node scripts/build.mjs --scratch",
+    "browser": "node chrome/server.mjs",
+    "browser:install": "npm install --prefix chrome",
     "typecheck": "tsc --noEmit",
     "check": "node scripts/check-paths.mjs",
     "test": "node --test",

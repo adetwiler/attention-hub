@@ -86,7 +86,7 @@ const hubRoot = path.dirname(here);
 // hub.config.example.json by .githooks/release-check.sh, which fails if the
 // three disagree. A drift here listens on a port the app does not point at,
 // which presents as "the terminal never connects" with no error anywhere.
-const DEFAULT_PORT = 2887; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and src/lib/config.ts by release-check.sh
+const DEFAULT_PORT = 2888; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and src/lib/config.ts by release-check.sh
 const DEFAULT_TMUX = true;
 const DEFAULT_PREFIX = "hub";
 const DEFAULT_SCROLLBACK = 2000;

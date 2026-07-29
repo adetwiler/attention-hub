@@ -22,6 +22,11 @@ user/
 # content scanner must never publish the list of things you are keeping out.
 .githooks/denylist.local
 
+# Agent worktrees. The tracked half of .claude/ is the skills that ship with the
+# hub; a worktree created under it is a whole second checkout, and `git add
+# .claude` in the main checkout would otherwise commit one.
+.claude/worktrees/
+
 # Environment
 .env
 .env.*

@@ -16,6 +16,35 @@ Attention items are NOT notifications. A notification tells you something
 happened. An attention item is a thing you can act on, and it stays until you
 act on it.
 
+**The feed.** The append-only JSONL file attention items live in, and the
+product's public integration surface: anything on the machine that can append a
+line can file an item and read the answer back. Its path comes from
+`attention.feed` in config and defaults inside `dataDir`. The full contract is
+[docs/attention-feed.md](docs/attention-feed.md); the reasoning is
+[ADR-0005](docs/adr/0005-attention-feed-append-only-jsonl.md).
+
+**Ask row / answer row.** The two shapes in the feed. An ask row opens an item;
+an answer row carries the same `id` and closes it. **Answers APPEND, and no row
+is ever rewritten**, which is what lets a writing session and the reading hub
+share the file with no lock. The first ask row for an id defines the item, and
+the first closing row is the answer of record.
+
+**Notice.** The third kind of item (`agent-notice`), and a distinction worth the
+word: a REPORT filed through the same channel, which wants triage rather than an
+answer. It is never labelled as asking you. A wall of rows claiming to ask you
+things that are not asking you is how a needs-you surface stops being believed.
+
+**Quiet hours.** One global flag (`manual` OR the schedule) that **suppresses
+surfaces and never data.** While it is on, nothing pops up, the queue fills
+normally, and when it lifts nothing back-fires: the morning list is simply the
+list. Live state, so it lives in the settings table and not in config. Default
+22:00 to 06:00 local, working with nothing configured.
+
+**Arrival.** An item that appeared since the last snapshot. "New" is decided in
+one place (`useArrivals`) with two halves: the FIRST snapshot is a baseline, never
+a storm, and an item is new exactly once. Opening the hub onto nine waiting items
+must not fire nine notifications.
+
 **The ledger.** The `action_ledger` table. The single, complete record of every
 mutation the hub has performed: who, what verb, against what target, with what
 result, producing which artifacts and which commits. Not a log. The jobs strip,
@@ -77,6 +106,46 @@ why the build has to be able to run without killing the instance serving you.
 vendor neutral: you name whatever tool you already use and pay for, in
 `adapters` in your config. An adapter shipped without being exercised against a
 real install is marked `untested`, and the UI says so rather than pretending.
+
+## The browser pane
+
+**Sidecar.** A small, separate, loopback-only process the hub talks to for
+something a Next route cannot do. Today there is one: the browser sidecar
+(`chrome/server.mjs`), which cannot be a route because a route handler cannot
+perform a WebSocket upgrade. A sidecar has its own `package.json` so its
+dependencies never reach the app bundle, and it always obeys the same three
+rules: loopback only, a single-use token minted by the hub, and NO KILL PATH.
+
+**Mirrored, not framed.** The browser pane shows a picture of a real browser tab
+and forwards your input to it. It is not an iframe and never can be: a site's
+`X-Frame-Options` header is the site's decision and no browser may override it,
+so a framed pane could show almost nothing. The word matters because "the web
+pane" sounds like an embed, and every property that makes this work (real logins,
+sites that refuse framing, an extension able to drive the page you are looking
+at) follows from it NOT being one.
+
+**Browser profile.** One browser data directory the pane can mirror, declared in
+`browser.profiles`. One profile is one signed-in identity, which is the whole
+reason there is more than one. It is NOT the same thing as a **profile** in the
+top-level `profiles` section: that is an account you work under, with your AI
+tool's config directory. A browser profile carries a browser's own constraints (a
+debugging port of its own, a singleton lock of its own, a one-time seeded copy),
+which is why it is a separate list. By convention the ids match.
+
+**Seeding.** The one-time copy of one of your real browser profiles into the
+hub's own data directory (`scripts/seed-browser-profile.mjs`). It exists because
+Chrome 136 stopped honouring `--remote-debugging-port` on the default data
+directory, so the hub can never drive the browser you have open. Seeding is part
+of the feature, not a rough edge, and an unseeded profile says so and names the
+command.
+
+**Parked.** Where the real browser window sits: off the side of the desktop, at
+full size, still compositing. Distinct from MINIMIZED, which is the trap:
+minimizing stops compositing and drops the mirror from about 92 fps to 0.3, which
+looks exactly like a broken socket. Nothing in the hub ever minimizes a window,
+and the pane's WINDOW button un-parks one so you can reach the browser's own UI
+(an extension popup, a download, a file picker), which a picture of page pixels
+can never carry.
 
 ## The mechanics
 

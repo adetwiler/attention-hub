@@ -9,6 +9,7 @@
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import type { LedgerSnapshot } from "@/lib/stream";
+import AttentionToasts from "./AttentionToasts";
 import { useLedgerStream } from "./useLedgerStream";
 
 /** The rooms in the order the design puts them. `built` flips as slices land. */
@@ -57,6 +58,12 @@ export default function Shell({ hubName, version, initial, children }: ShellProp
           {queued} queued
         </span>
       </header>
+
+      {/* Mounted HERE, once, so it is on every room. The point of the feed is
+          that you find out while you are looking at something else, which cannot
+          be true of a component that only exists on TODAY. It renders nothing at
+          all until something arrives. */}
+      <AttentionToasts initial={initial} />
 
       <main className="room">{children}</main>
 

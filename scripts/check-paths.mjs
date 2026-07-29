@@ -5,7 +5,9 @@
 // pre-commit hook, and .githooks/release-check.sh. (Unit tests live in test/
 // and run on node:test, which ships with Node and costs no dependency.)
 //
-// It scans src/ and scripts/ for:
+// It scans src/, scripts/ and chrome/ (the browser sidecar, which is shipped
+// code that launches a browser and therefore has every reason to be tempted by
+// a hardcoded path) for:
 //   1. absolute home paths on any of the three platforms,
 //   2. absolute volume roots,
 //   3. port numbers written into code instead of read from hub.config.json.
@@ -17,11 +19,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-// pty/ is in here because it is SHIPPED CODE, not a helper: the terminal
-// sidecar is the one part of the product that legitimately opens a socket, and
+// chrome/ and pty/ are in here because they are SHIPPED CODE, not helpers: the
+// two sidecars are the parts of the product that legitimately open a socket, and
 // a directory outside the scan is exactly where a hardcoded path or port hides.
-// Its two default constants carry the reviewed-exception marker.
-const ROOTS = ["src", "scripts", "pty"];
+// Their default port constants carry the reviewed-exception marker.
+const ROOTS = ["src", "scripts", "chrome", "pty"];
 const EXTENSIONS = new Set([".ts", ".tsx", ".mjs", ".js", ".jsx", ".css"]);
 
 // A line carrying this marker is a deliberate, reviewed exception.

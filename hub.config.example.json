@@ -28,6 +28,11 @@
     "checkEveryHours": 24
   },
 
+  "attention": {
+    "$comment": "The attention feed: the append-only file any AI session, script or cron job on this machine writes to when it needs YOU. The hub reads it and shows you what is waiting. Leave feed out and it lives inside your dataDir, which is the right answer for almost everyone. Point it somewhere else only if several tools already agree on a file. The full contract, so anything can write to it, is docs/attention-feed.md. Quiet hours are NOT here: they are live state you change from the page, so they live in the database, and they suppress only the pop-up notifications, never the list itself.",
+    "feed": null
+  },
+
   "adapters": {
     "$comment": "Your AI command-line tools. The hub is not tied to any one vendor: name whatever you already use and already pay for. Left empty, the surfaces that need an agent say so honestly instead of pretending.",
     "default": null,
@@ -44,7 +49,7 @@
 
   "wall": {
     "$comment": "THE WALL: every pane side by side, on one screen. The grid takes its shape from the COUNT, so adding a profile above is the whole job of adding a pane. Number keys 1 to 9 blow one pane up on its own, 0 brings them all back, F is fullscreen, and the layout you leave is the layout you come back to. You only need the keys below if you want something other than one pane per profile.",
-    "$paneKind": "What a profile's pane HOLDS. \"placeholder\" shows the account the pane is bound to and says plainly that its content module is not installed. \"terminal\" is a real shell on this machine and needs the terminal section below switched on (it is off by default, and the pane says so rather than showing a dead button). \"browser\" is accepted here so a config written for a later release still loads, and the wall names the pane that is waiting rather than refusing your whole file.",
+    "$paneKind": "What a profile's pane HOLDS. \"placeholder\" shows the account the pane is bound to and says plainly that its content module is not installed. \"terminal\" is a real shell on this machine and needs the terminal section below switched on (it is off by default, and the pane says so rather than showing a dead button). \"browser\" mirrors a real browser and needs the browser section below configured. A kind this version cannot draw still loads and names itself on the wall, rather than the hub refusing your whole file.",
     "paneKind": "placeholder",
     "$panes": "OPTIONAL, and empty is the normal case. Leave it out and the wall is one pane per profile, in the order above. Write it when you want a different set: an ordered list of { \"id\", \"kind\", \"profile\", \"label\", \"cwd\" }, where id is a slug unique in the list, profile names one of the profiles above (or is left out for a pane tied to no account), label overrides the profile's, and cwd is where a terminal pane opens (a folder that has to exist, or the pane says which key to fix).",
     "$panesExample": [
@@ -53,12 +58,79 @@
     "panes": []
   },
 
+  "browser": {
+    "$comment": "THE BROWSER PANE: a real browser, mirrored into a pane and driven from it. It is NOT an iframe, and an iframe could never have worked: X-Frame-Options and frame-ancestors are the SITE's headers, and no browser is permitted to override them, so a framed pane could show almost nothing (measured 2026-07-29: of Google, DuckDuckGo, Brave, Startpage, Ecosia, Mojeek and Bing, only Bing could be framed at all). A screencast frames nothing, so the whole class of failure disappears and sites see an ordinary browser, because it is one. It runs on macOS and Linux; on Windows the pane says so rather than hanging. Nothing here records what you browse.",
+    "$constraint": "THE ONE CONSTRAINT WORTH KNOWING BEFORE YOU CONFIGURE ANYTHING: since Chrome 136, --remote-debugging-port is IGNORED when the data directory is the default one (developer.chrome.com/blog/remote-debugging-port). It is deliberate hardening, because remote debugging can read cookies and passwords. So the hub can NEVER drive the browser you have open, and no setting here changes that. It drives its own copy, which you make once per profile with: node scripts/seed-browser-profile.mjs",
+
+    "$sidecarPort": "The loopback port the browser sidecar listens on. The sidecar is a separate process (chrome/server.mjs) because a Next route cannot upgrade a WebSocket. It binds 127.0.0.1 only and that is not configurable. Start it with: npm run browser",
+    "sidecarPort": 2887,
+
+    "$userDataDir": "Where the hub keeps ITS OWN browser data directories, one per profile below. Never your real one, per the constraint above. Deleting a directory under here loses that copy's logins and nothing else; re-seed to make it again.",
+    "userDataDir": "~/.attention-hub/browser-data",
+
+    "$browsers": "The browsers the hub can drive, keyed by the name a profile's \"browser\" field uses. Chrome and Chromium are the same engine, so one mechanism covers both, and adding a browser is a row here rather than a code change. Leave this section out entirely and the built-in list below is used, which already covers a normal Chrome or Chromium install on macOS and Linux. \"bin\" is a list of candidate paths, first one that exists wins. \"names\" are command names looked for on PATH afterwards, which is what covers an install in a place nobody wrote down. Paths come first on purpose: a process started by launchd or systemd gets a minimal PATH, so resolving by name alone reports \"not installed\" on a machine that is running it. \"seedFrom\" is where that browser keeps YOUR real profiles, per platform, and it is read only by the seed script.",
+    "browsers": {
+      "chrome": {
+        "bin": [
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+          "/opt/google/chrome/chrome",
+          "/usr/bin/google-chrome",
+          "/usr/bin/google-chrome-stable"
+        ],
+        "names": ["google-chrome", "google-chrome-stable"],
+        "seedFrom": {
+          "darwin": "~/Library/Application Support/Google/Chrome",
+          "linux": "~/.config/google-chrome"
+        }
+      },
+      "chromium": {
+        "bin": [
+          "/Applications/Chromium.app/Contents/MacOS/Chromium",
+          "/usr/bin/chromium",
+          "/usr/bin/chromium-browser",
+          "/snap/bin/chromium"
+        ],
+        "names": ["chromium", "chromium-browser"],
+        "seedFrom": {
+          "darwin": "~/Library/Application Support/Chromium",
+          "linux": "~/.config/chromium"
+        }
+      }
+    },
+
+    "$windowPosition": "Where the real browser window is PARKED, off the side of your desktop. Two things were measured here and both matter. First, a parked window with the hub's anti-throttle flags streams at 92.7 fps, on screen at 92.3, and headless at 92.6, so a parked headful window costs nothing and keeps a window you can pull forward, which you need for anything that is the browser's own UI (an extension popup, a download, a file picker). Second, MINIMIZING IS NOT PARKING: a minimized window stops compositing and the mirror drops to 0.3 fps, so nothing here ever minimizes. macOS clamps a far-negative position to roughly -1400, leaving a sliver at the screen edge, and that sliver is the honest cost of a browser you can raise.",
+    "windowPosition": [-3200, 0],
+
+    "$windowSize": "The real window's size, which is also the page layout the pane starts with. The pane re-sizes the page to its own shape as soon as it connects, so this only decides the first frame.",
+    "windowSize": [1440, 900],
+
+    "$quality": "JPEG quality of the mirrored frames, 1 to 100. Lower is a smaller stream and a softer picture. 60 is legible for text at pane size.",
+    "quality": 60,
+
+    "$idleMs": "A pane socket that goes silent this long is dropped. The BROWSER is untouched: it keeps running with all its tabs, and the pane reopens on it. Nothing in the hub can ever quit a browser or close a tab.",
+    "idleMs": 1800000,
+
+    "$homeUrl": "Where a pane goes when you have not said. Yours to change: the hub has no opinion, and unlike the iframe version it is not limited to the one search engine that permits framing.",
+    "homeUrl": "https://duckduckgo.com",
+
+    "$searchUrl": "Where a typed PHRASE goes, as opposed to something that looks like an address. {} is replaced with what you typed, url-encoded. Which search engine you use is yours, so it is config rather than a vendor written into the code.",
+    "searchUrl": "https://duckduckgo.com/?q={}",
+
+    "$profiles": "The browsers the pane can mirror, in the order the picker shows them. EMPTY is honest: the pane says no browser profile is configured rather than inventing one. This is NOT the same list as the top-level \"profiles\" above. That one is the accounts you work under; this one is browser data directories, because a browser brings its own constraints (its own debugging port, its own singleton lock, a one-time seeded copy). By convention an id here matches an account name above, so a pane reads as that account's browser. ONE DATA DIRECTORY PER PROFILE, never one holding several: a browser takes a singleton lock per data directory, so several profiles in one would collapse into a single browser, and the protocol reports no profile on a target, so nothing could tell which window belonged to which login. Per row: \"id\" is a slug and becomes this profile's directory name under userDataDir; \"label\" is what the picker shows; \"browser\" names an entry of \"browsers\" above and defaults to chrome; \"dir\" is the folder to copy FROM inside your real browser (\"Default\", \"Profile 1\", \"Profile 2\"), read only by the seed script; \"port\" is this profile's debugging port and must be unique. WRITE THE PORT DOWN, never derive it from position: when a list like this was reordered upstream, every profile silently repointed and a row labelled one account attached to another account's browser and showed its tabs. A port is an identity. \"account\" is display only, so the pane can say which login this is.",
+    "$profilesExample": [
+      { "id": "work", "label": "WORK", "browser": "chrome", "dir": "Default", "port": 2890, "account": "you@example.com" },
+      { "id": "personal", "label": "PERSONAL", "browser": "chrome", "dir": "Profile 1", "port": 2891, "account": "" }
+    ],
+    "profiles": []
+  },
+
   "terminal": {
     "$comment": "THE TERMINAL MODULE, AND IT SHIPS SWITCHED OFF. A terminal pane is a real shell on this machine, running as you, reached from a browser tab. It can read your keys, your databases and anything else you can read, and it can push code. That is not a bug in it, it is what a shell is, which is why enabled is false until you decide otherwise and why nothing about it exists until you do: with this false, the sidecar process refuses to start and the hub refuses every request. Read docs/terminal.md before you turn it on. macOS and Linux only: the sidecar keeps sessions alive with tmux, and there is no Windows version of it.",
     "$security": "Four doors, all on by default and none of them a setting: the sidecar listens on 127.0.0.1 and refuses any other peer, a connection needs a single-use short-lived grant that only the hub's own pages can mint, silence drops the socket, and every attach is recorded in the hub's ledger (that a terminal was attached, never what was typed). The one thing YOU have to get right: do not put the hub on the open internet. It has no login. With this module on, exposing it is handing out a shell.",
     "enabled": false,
-    "$port": "The sidecar's port on loopback. It always binds 127.0.0.1, and that is not configurable on purpose.",
-    "port": 2887,
+    "$port": "The terminal sidecar's port on loopback. It always binds 127.0.0.1, and that is not configurable on purpose. It must not be the same as browser.sidecarPort above: they are two different processes and the second one to start would find the port taken.",
+    "port": 2888,
     "$url": "Only for reaching the sidecar through your own proxy, from a phone on a private network for example. Empty means ws://127.0.0.1 on the port above, which is the normal case.",
     "url": null,
     "$tmux": "Keep sessions in tmux, so a dev server you start here survives leaving the page, restarting the sidecar, updating the hub and closing your laptop, and can always be picked up from a real terminal with `tmux attach -t hub-<pane>`. Turning this off gives you a plain shell that dies with the browser connection.",

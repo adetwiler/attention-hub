@@ -57,7 +57,47 @@ export const MIGRATIONS: readonly string[] = [
   CREATE INDEX idx_ledger_target ON action_ledger (target);
   CREATE INDEX idx_ledger_created ON action_ledger (created_at);`,
 
-  // The terminal module's grants: one row per permission to open a shell.
+  // 1: live state that is not registry. See src/lib/settings.ts for why this is
+  // one key-value table and not a column per feature. Quiet hours is its first
+  // tenant (quiet.manual, quiet.start, quiet.end) and it works with zero rows,
+  // so this migration adds a capability and changes no behaviour on its own.
+  `CREATE TABLE settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`,
+
+  // 2: THE BROWSER PANE's handshake. The hub mints a single-use, short-lived row
+  // here and the sidecar (chrome/server.mjs) burns it on connect, so one
+  // database is the single source of truth for what was granted and restarting
+  // either side cannot desynchronise them.
+  //
+  // THE GRANT LIVES IN THE ROW, NEVER IN THE URL. `profile` says which browser
+  // the socket may drive, so a token that leaks out of a URL bar or a log
+  // cannot be re-pointed at a different signed-in profile.
+  //
+  // Deliberately absent: any record of what was BROWSED. The ledger records
+  // that a pane was opened on a profile and nothing else. A history table here
+  // would be a tracking log of the user's own machine, which is the one thing
+  // this product promises never to keep.
+  //
+  // This was authored as index 1 in a parallel worktree, at the same time as the
+  // settings table above was authored as index 1 in another. The index IS the
+  // version, so the second to merge gets renumbered, and that is only safe
+  // because nothing has shipped. See docs/claude/parallel-agent-builds.md.
+  `CREATE TABLE browser_tokens (
+    token      TEXT PRIMARY KEY,
+    profile    TEXT NOT NULL,
+    pane       TEXT NOT NULL DEFAULT '',
+    url        TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  );`,
+
+  // 3: THE TERMINAL MODULE's grants: one row per permission to open a shell.
+  // Authored as index 1 in a third parallel worktree, and renumbered here at the
+  // merge for the reason written above: the index is the version, merge order
+  // decides it, and nothing has shipped.
   //
   // It is a STATE table, not a second history. The history of who attached a
   // terminal is action_ledger, and ledger_id points at that row. What lives here

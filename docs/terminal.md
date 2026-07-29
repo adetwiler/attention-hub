@@ -192,6 +192,6 @@ and no attaching from a real terminal. Install tmux.
 
 ## Related
 
-- [docs/adr/0005-terminal-sidecar-and-its-trust-model.md](adr/0005-terminal-sidecar-and-its-trust-model.md), why it is shaped this way.
+- [docs/adr/0007-terminal-sidecar-and-its-trust-model.md](adr/0007-terminal-sidecar-and-its-trust-model.md), why it is shaped this way.
 - [docs/adr/0004-pane-content-contract.md](adr/0004-pane-content-contract.md), how a pane kind plugs into the wall.
 - [docs/verification/2026-07-29-slice-11-terminal.md](verification/2026-07-29-slice-11-terminal.md), what was actually measured, and what was not.

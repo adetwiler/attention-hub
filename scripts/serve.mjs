@@ -33,7 +33,7 @@
 // rather than importing the TypeScript loader. It validates the keys IT uses;
 // everything else is the loader's business, and a bad value there surfaces as
 // the config-problem card on a hub you can actually reach.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { appRoot, runNext } from "./next-run.mjs";
 
@@ -116,15 +116,73 @@ if (mode === "dev") {
   console.log("[hub] Development mode: slower, and it watches your files. Plain ./start.sh runs production.");
 }
 
-// Production needs something built. Building on demand keeps the documented
-// path one command, and it is the only place a first run pauses.
-if (mode === "start" && !existsSync(path.join(appRoot, ".next", "BUILD_ID"))) {
-  console.log("[hub] No production build yet, building it once (this takes a minute)...");
-  const built = await runNext(["build"]);
-  if (built !== 0) {
-    console.error("[hub] The build failed, so there is nothing to serve.");
-    console.error("[hub] Fix the error above, or run ./start.sh dev while you work.");
-    process.exit(built);
+/** The newest mtime under a path, or 0 if it is not there. Depth-limited only
+ * by the tree itself, and it never follows into `node_modules` or `.next`. */
+function newestMtime(target) {
+  let newest = 0;
+  const walk = (p) => {
+    let st;
+    try {
+      st = statSync(p);
+    } catch {
+      return;
+    }
+    if (st.isDirectory()) {
+      const base = path.basename(p);
+      if (base === "node_modules" || base === ".next" || base === ".git") return;
+      let entries;
+      try {
+        entries = readdirSync(p);
+      } catch {
+        return;
+      }
+      for (const entry of entries) walk(path.join(p, entry));
+      return;
+    }
+    if (st.mtimeMs > newest) newest = st.mtimeMs;
+  };
+  walk(target);
+  return newest;
+}
+
+// Production needs something built, and it needs the build to match the SOURCE.
+// Building on demand keeps the documented path one command, and it is the only
+// place a run pauses.
+//
+// WHY THE STALENESS CHECK IS NOT OPTIONAL. v1 updates are plain `git pull`, and
+// production is the default run mode. Checking only whether a build EXISTS meant
+// a user could pull a release, restart, and be served the OLD app forever, with
+// every new room returning 404 while the docs said it was there. That happened
+// here during the v1 build: three merged slices, a 13-hour-old build, and
+// `/wall` and `/browser` both 404 on a tree that had just passed every gate.
+// A stale build is BROKEN, not empty, so it says so and fixes itself.
+if (mode === "start") {
+  const buildId = path.join(appRoot, ".next", "BUILD_ID");
+  const builtAt = existsSync(buildId) ? statSync(buildId).mtimeMs : 0;
+  // Everything that changes what a build produces. Runtime config is absent on
+  // purpose: hub.config.json is read at request time, so editing it must NOT
+  // trigger a rebuild.
+  const sourceAt = Math.max(
+    newestMtime(path.join(appRoot, "src")),
+    newestMtime(path.join(appRoot, "package.json")),
+    newestMtime(path.join(appRoot, "next.config.ts")),
+    newestMtime(path.join(appRoot, "tsconfig.json")),
+  );
+
+  if (builtAt === 0) {
+    console.log("[hub] No production build yet, building it once (this takes a minute)...");
+  } else if (sourceAt > builtAt) {
+    console.log("[hub] The code is newer than the last build, so this one is stale.");
+    console.log("[hub] Rebuilding before serving, or you would get the old hub back.");
+  }
+
+  if (builtAt === 0 || sourceAt > builtAt) {
+    const built = await runNext(["build"]);
+    if (built !== 0) {
+      console.error("[hub] The build failed, so there is nothing to serve.");
+      console.error("[hub] Fix the error above, or run ./start.sh dev while you work.");
+      process.exit(built);
+    }
   }
 }
 

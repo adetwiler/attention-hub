@@ -1,4 +1,4 @@
-# ADR-0005: The terminal is a loopback sidecar, tmux-backed, off by default and owner-only forever
+# ADR-0007: The terminal is a loopback sidecar, tmux-backed, off by default and owner-only forever
 
 - **Status:** accepted
 - **Date:** 2026-07-29

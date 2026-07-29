@@ -663,3 +663,547 @@ body {
     display: flex;
   }
 }
+
+/* ---------------------------------------------------------------- attention
+
+   The feed's own chrome: the answer controls, the toast stack, and the float
+   window a linked file opens in. Same tokens as everything else, and colour
+   still means STATE and nothing else: --st-need marks the one kind of item that
+   is blocking something. */
+
+.card .hd .hd-btn {
+  font: inherit;
+  color: var(--ink-faint);
+  background: none;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  padding: 1px 9px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.card .hd .hd-btn:hover {
+  color: var(--ink);
+  border-color: var(--hair-strong);
+}
+
+.item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  border: 1px solid var(--hair-strong);
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex: none;
+}
+
+.tag.need {
+  color: var(--st-need);
+  border-color: var(--st-need);
+}
+
+.item-file {
+  font-size: 11.5px;
+}
+
+/* ---------------------------------------------------------------- answering */
+
+.answer {
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.answer-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.answer-hint {
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.answer-err {
+  margin: 0;
+  color: var(--st-need);
+  font-size: 11.5px;
+}
+
+.answer-input {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--hair-strong);
+  border-radius: 5px;
+  padding: 5px 8px;
+  flex: 1 1 14ch;
+  min-width: 0;
+}
+
+.answer-input.time {
+  flex: 0 0 7ch;
+  text-align: center;
+}
+
+.answer-input:focus-visible,
+.btn:focus-visible,
+.chip:focus-visible,
+.hd-btn:focus-visible {
+  outline: 1px solid var(--ember);
+  outline-offset: 1px;
+}
+
+.btn,
+.chip {
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  background: var(--panel-2);
+  border: 1px solid var(--hair-strong);
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  flex: none;
+}
+
+.btn:hover:not(:disabled),
+.chip:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ember);
+}
+
+.btn:disabled,
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn.go {
+  color: var(--bg);
+  background: var(--ember);
+  border-color: var(--ember);
+  font-weight: 600;
+}
+
+.btn.go:hover:not(:disabled) {
+  background: var(--ember-hot);
+  border-color: var(--ember-hot);
+  color: var(--bg);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--hair);
+  padding-top: 10px;
+}
+
+.link {
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  word-break: break-all;
+  text-decoration: underline;
+  text-decoration-color: var(--hair-strong);
+}
+
+/* A file link is a BUTTON, because it opens inside the hub rather than
+   navigating. It is styled as a link because that is what it behaves like. */
+.link.file {
+  font: inherit;
+  font-size: 11.5px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.link:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ember);
+}
+
+/* ---------------------------------------------------------------- toasts
+
+   Fixed, bottom right, above everything including the wall's fullscreen pane.
+   Capped at three by the component, so this never needs its own scroll. */
+
+.toasts {
+  position: fixed;
+  right: clamp(10px, 3vw, 24px);
+  bottom: clamp(10px, 3vw, 24px);
+  z-index: 60;
+  width: min(420px, calc(100vw - 20px));
+  display: grid;
+  gap: 8px;
+}
+
+.toast {
+  background: var(--panel-2);
+  border: 1px solid var(--hair-strong);
+  border-left: 2px solid var(--st-need);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 6px;
+}
+
+.toast.quiet-note {
+  border-left-color: var(--hair-strong);
+}
+
+.toast-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toast-head .btn {
+  margin-left: auto;
+}
+
+.toast .ask {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------- float
+
+   A file an item points at, opened over the page. Above the toasts (70 over
+   60): a document you asked to read should not be covered by an interruption. */
+
+.float-back {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(10, 7, 4, 0.72);
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 4vw, 40px);
+}
+
+.float {
+  background: var(--panel);
+  border: 1px solid var(--hair-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  width: min(820px, 100%);
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.float-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--hair);
+  background: var(--panel-2);
+}
+
+.float-name {
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.float-head .btn {
+  margin-left: auto;
+}
+
+.doc,
+.doc-raw {
+  overflow: auto;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.doc-raw {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.doc h1,
+.doc h2,
+.doc h3 {
+  font-family: var(--serif);
+  font-weight: 500;
+  line-height: 1.25;
+  margin: 1.2em 0 0.4em;
+}
+
+.doc h1 {
+  font-size: 1.5rem;
+  margin-top: 0;
+}
+
+.doc h2 {
+  font-size: 1.2rem;
+}
+
+.doc h3 {
+  font-size: 1.05rem;
+}
+
+.doc p,
+.doc ul,
+.doc ol,
+.doc blockquote {
+  margin: 0 0 0.9em;
+}
+
+.doc a {
+  color: var(--ember);
+}
+
+.doc code {
+  background: var(--panel-2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.92em;
+}
+
+.doc pre {
+  background: var(--panel-2);
+  border: 1px solid var(--hair);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow: auto;
+}
+
+.doc pre code {
+  background: none;
+  padding: 0;
+}
+
+.doc blockquote {
+  border-left: 2px solid var(--hair-strong);
+  padding-left: 12px;
+  color: var(--ink-muted);
+}
+
+.doc table {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.doc th,
+.doc td {
+  border: 1px solid var(--hair);
+  padding: 5px 8px;
+  text-align: left;
+}
+
+.doc hr {
+  border: 0;
+  border-top: 1px solid var(--hair);
+/* ---------------------------------------------------------------- browser pane
+
+   A pane holding a REAL browser, mirrored in as JPEG frames. The picture is a
+   canvas sized to whatever the far end sent and fitted here by CSS, so resizing
+   the pane is smooth and never re-encodes anything.
+
+   The stage is deliberately dark and empty: a letterboxed page should read as a
+   window with edges, not as a broken image. */
+
+.webpane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  min-height: 0;
+}
+
+.webbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: none;
+}
+
+.weblabel {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.webchip,
+.webopen {
+  font: inherit;
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border: 1px solid var(--hair-strong);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.webchip:hover:not(:disabled),
+.webopen:hover {
+  color: var(--ink);
+  border-color: var(--ember);
+}
+
+.webchip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* FOLLOW being on is state, so it takes the state colour. */
+.webchip.on {
+  color: var(--bg);
+  background: var(--ember);
+  border-color: var(--ember);
+}
+
+.webopen {
+  font-size: 12px;
+  padding: 6px 14px;
+  color: var(--ink);
+}
+
+.weburl {
+  flex: 1 1 140px;
+  min-width: 100px;
+  font: inherit;
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--hair-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.weburl:focus {
+  outline: none;
+  border-color: var(--ember);
+}
+
+.webselect {
+  font: inherit;
+  font-size: 10.5px;
+  max-width: 130px;
+  padding: 2px 4px;
+  border: 1px solid var(--hair-strong);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--ink-muted);
+}
+
+.webstage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #070504;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  overflow: hidden;
+  /* contentEditable is what makes this receive real text input events. Its own
+     caret and any typed characters must never be drawn over the picture. */
+  caret-color: transparent;
+}
+
+.webstage:focus {
+  outline: 1px solid var(--hair-strong);
+  outline-offset: -1px;
+}
+
+.webcanvas {
+  max-width: 100%;
+  max-height: 100%;
+  /* The picture is a mirror, so a pointer over it should read as a pointer over
+     a page, and dragging it must not start a browser image drag. */
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.webover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  gap: 10px;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: 16px;
+  background: rgba(7, 5, 4, 0.92);
+}
+
+.webover .empty {
+  max-width: 46ch;
+  font-size: 12px;
+}
+
+.webcode {
+  display: block;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--hair);
+  border-radius: 5px;
+  background: var(--panel-2);
+  color: var(--ember-hot);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.webfoot {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: none;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  min-width: 0;
+}
+
+.webwarn {
+  color: var(--st-run);
+}
+
+/* The address of the tab, truncated: it is context, never the point. */
+.webhere {
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 50%;
+}
+
+/* The standalone browser room: the mirror wants height, and a card that grows
+   with its content would give it none. */
+.webroom {
+  height: calc(100vh - 260px);
+  min-height: 380px;
+  padding: 10px;
+}

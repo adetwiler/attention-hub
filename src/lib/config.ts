@@ -36,6 +36,12 @@ const BIND_HOST_DEFAULT = "127.0.0.1";
 const BIND_PORT_DEFAULT = 2886; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and scripts/serve.mjs by release-check.sh
 const DATA_DIR_DEFAULT = "data";
 const USER_DIR_DEFAULT = "user";
+/** The attention feed's file name inside dataDir when the config does not name
+ * a path. Duplicated, deliberately and once, in scripts/hub.mjs: the CLI runs
+ * before any TypeScript exists, exactly as the boot script does. The two are
+ * held together by test/hub-cli.test.mjs, which asserts they resolve the same
+ * absolute path rather than trusting that they will. */
+const ATTENTION_FEED_DEFAULT = "attention.jsonl";
 const UPDATE_REPO_DEFAULT = "adetwiler/attention-hub";
 const UPDATE_HOURS_DEFAULT = 24;
 /** What a wall pane holds when nothing says otherwise. See PANE_KINDS below. */
@@ -46,7 +52,7 @@ const PANE_KIND_DEFAULT: PaneKind = "placeholder";
 const TERMINAL_ENABLED_DEFAULT = false;
 /** The pty sidecar's loopback port. Written in three places (here, the sidecar,
  * and the example config) and asserted equal by .githooks/release-check.sh. */
-const TERMINAL_PORT_DEFAULT = 2887; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and pty/server.mjs by release-check.sh
+const TERMINAL_PORT_DEFAULT = 2888; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and pty/server.mjs by release-check.sh
 const TERMINAL_TMUX_DEFAULT = true;
 const TERMINAL_PREFIX_DEFAULT = "hub";
 const TERMINAL_SCROLLBACK_DEFAULT = 2000;
@@ -57,6 +63,36 @@ const TERMINAL_IDLE_MINUTES_DEFAULT = 30;
 const SLUG = /^[a-z0-9][a-z0-9_-]*$/;
 const SLUG_EXPECTED =
   "a lowercase name of letters, numbers, dashes or underscores, starting with a letter or number";
+
+/** The browser sidecar's loopback port. Three copies of this number exist on
+ * purpose (here, chrome/server.mjs, and hub.config.example.json) because the
+ * sidecar boots without the TypeScript loader; release-check.sh fails if they
+ * disagree, for the same reason it guards the hub's own port. */
+const BROWSER_PORT_DEFAULT = 2887; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and chrome/server.mjs by release-check.sh
+const BROWSER_DATA_DIR_DEFAULT = "~/.attention-hub/browser-data";
+const BROWSER_HOME_URL_DEFAULT = "https://duckduckgo.com"; // hub-no-request: a default the USER's browser may visit. Nothing in the hub requests it.
+const BROWSER_SEARCH_URL_DEFAULT = "https://duckduckgo.com/?q={}"; // hub-no-request: a default the USER's browser may visit. Nothing in the hub requests it.
+const BROWSER_QUALITY_DEFAULT = 60;
+const BROWSER_IDLE_MS_DEFAULT = 30 * 60 * 1000;
+/** Far enough off any real desktop that the window is out of sight. macOS
+ * clamps it (see docs/browser-pane.md); Linux honours it. */
+const BROWSER_WINDOW_POSITION_DEFAULT: [number, number] = [-3200, 0];
+const BROWSER_WINDOW_SIZE_DEFAULT: [number, number] = [1440, 900];
+
+// THERE IS NO CODE DEFAULT FOR `browser.browsers`, AND THAT IS DELIBERATE.
+//
+// The install paths for Chrome and Chromium live in exactly ONE place,
+// hub.config.example.json, which is the file whose whole job is documenting
+// defaults and which this loader already falls back to. A code constant here
+// would be a second copy, and the sidecar (chrome/server.mjs) boots without
+// TypeScript so it could never read it, which means it would be a THIRD copy.
+//
+// This was a real bug for about an hour: the loader defaulted the list from
+// code, the sidecar defaulted it to {}, and the two then disagreed about
+// whether a browser was installed. A split verdict between the app and the
+// process it depends on is exactly the failure scripts/serve.mjs has a long
+// comment about. Absent means absent, in both readers, and the pane says which
+// key to fill in.
 
 // ---------------------------------------------------------------- types
 
@@ -100,9 +136,80 @@ export interface AdaptersConfig {
   agents: Record<string, AgentAdapter>;
 }
 
+export interface AttentionConfig {
+  /** Absolute. The append-only JSONL any process on this machine writes to when
+   * it needs the human. Defaults to attention.jsonl inside dataDir. The
+   * contract is docs/attention-feed.md. */
+  feed: string;
+}
+
 export interface ModulesConfig {
   /** Module ids switched on. Empty means the core defaults. */
   enabled: string[];
+}
+
+/** One Chromium browser the hub can drive, resolved for the platform it is
+ * running on. Chrome and Chromium are the same engine, so one mechanism covers
+ * both, and a `browsers` entry is a config row rather than a code change. */
+export interface BrowserBinary {
+  /** Absolute candidate paths, first one that exists wins. */
+  bin: string[];
+  /** Command names to look for on PATH when no candidate path exists. */
+  names: string[];
+  /** Where that browser keeps YOUR real profiles on THIS platform, the source
+   * for the one-time seed copy. Empty means the platform is not covered. */
+  seedFrom: string;
+}
+
+/** One browser profile the pane can mirror: its own data directory, its own
+ * browser process, its own debugging port. One profile is one signed-in
+ * identity, which is the whole reason there is more than one. */
+export interface BrowserProfile {
+  /** Stable slug. It is also this profile's directory name under userDataDir. */
+  id: string;
+  label: string;
+  /** Which entry of `browsers` this profile runs in. */
+  browser: string;
+  /** This profile's debugging port. EXPLICIT and permanent, never derived from
+   * position in the list: see docs/browser-pane.md for the reorder that made
+   * a derived port present as the wrong browser's tabs under the right label. */
+  port: number;
+  /** The folder to copy FROM in your real browser ("Default", "Profile 1").
+   * Read by the seed script, never by the app. */
+  dir: string;
+  /** Display only, so the pane can say which login this is. Blank is fine. */
+  account: string;
+}
+
+export interface BrowserConfig {
+  /** The browser sidecar's loopback port. chrome/server.mjs reads the same key. */
+  sidecarPort: number;
+  /** Absolute. The parent of the hub's per-profile browser data directories.
+   * NEVER your real one: Chrome 136+ refuses to be debugged on its default
+   * data directory, so the hub drives its own copy. */
+  userDataDir: string;
+  browsers: Record<string, BrowserBinary>;
+  /** Where the real browser window is parked, off the desktop. */
+  windowPosition: [number, number];
+  windowSize: [number, number];
+  /** JPEG quality of the mirrored frames, 1 to 100. */
+  quality: number;
+  /** A silent socket is dropped after this. The browser keeps running. */
+  idleMs: number;
+  homeUrl: string;
+  /** Where a typed phrase goes when it is not a URL. `{}` is the phrase,
+   * url-encoded. Config, not code: which search engine you use is yours. */
+  searchUrl: string;
+  /** Empty is the honest default: the pane says no profile is set up yet.
+   *
+   * NOT the same list as the top-level `profiles` below. That one is the
+   * ACCOUNTS you work under (a label and your AI tool's config directory); this
+   * one is the BROWSER DATA DIRECTORIES the pane can mirror. They are separate
+   * because a browser profile carries a browser's own constraints (its own
+   * debugging port, its own singleton lock, a one-time seeded copy), and by
+   * convention an id here matches an account name so a pane reads as "that
+   * account's browser". */
+  profiles: BrowserProfile[];
 }
 
 /** One account you work under. The key in `profiles` is its name, and the wall
@@ -191,7 +298,9 @@ export interface HubConfig {
   userDir: string;
   update: UpdateConfig;
   adapters: AdaptersConfig;
+  attention: AttentionConfig;
   modules: ModulesConfig;
+  browser: BrowserConfig;
   /** The accounts. Empty is honest: the wall says it has no panes configured. */
   profiles: Record<string, Profile>;
   wall: WallConfig;
@@ -350,9 +459,153 @@ function parseAdapters(root: Record<string, unknown>): AdaptersConfig {
   return { default: fallback, agents };
 }
 
+/** The feed path. Defaults INSIDE dataDir, which is already gitignored and
+ * already the folder an update never touches, so the integration surface a
+ * stranger writes against is safe by construction rather than by instruction. */
+function parseAttention(root: Record<string, unknown>, dataDir: string): AttentionConfig {
+  const raw = section(root, "attention");
+  const feed = optString(raw, "feed", "attention.feed");
+  return {
+    feed: feed === null ? path.join(dataDir, ATTENTION_FEED_DEFAULT) : resolvePath(feed),
+  };
+}
+
 function parseModules(root: Record<string, unknown>): ModulesConfig {
   const raw = section(root, "modules");
   return { enabled: stringList(raw, "enabled", "modules.enabled") };
+}
+
+/** A pair of numbers, or the documented default. A half-written pair is a
+ * mistake worth naming rather than silently half-honouring. */
+function numberPair(
+  raw: Record<string, unknown>,
+  key: string,
+  where: string,
+  fallback: [number, number],
+): [number, number] {
+  const value = raw[key];
+  if (value === undefined || value === null) return fallback;
+  if (!Array.isArray(value) || value.length !== 2) {
+    throw configError(where, "a list of exactly two numbers");
+  }
+  const [a, b] = value;
+  if (typeof a !== "number" || typeof b !== "number") {
+    throw configError(where, "a list of exactly two numbers");
+  }
+  return [a, b];
+}
+
+/** `seedFrom` is written per platform, because a browser keeps its profiles in
+ * a different place on macOS than on Linux and a single string would be wrong
+ * on one of them. An unlisted platform yields "", which the seed script reports
+ * as "not covered here" rather than guessing. */
+function platformSeed(raw: unknown, where: string): string {
+  if (raw === undefined || raw === null) return "";
+  // A plain string is accepted for the person who only has one machine.
+  if (typeof raw === "string") return expandPath(raw);
+  const byPlatform = asRecord(raw, where);
+  const here = byPlatform[process.platform];
+  if (here === undefined || here === null) return "";
+  if (typeof here !== "string" || here.trim() === "") {
+    throw configError(`${where}.${process.platform}`, "a non-empty string");
+  }
+  return expandPath(here);
+}
+
+function parseBrowserBinary(raw: unknown, key: string): BrowserBinary {
+  const where = `browser.browsers.${key}`;
+  const entry = asRecord(raw, where);
+  return {
+    bin: stringList(entry, "bin", `${where}.bin`),
+    names: stringList(entry, "names", `${where}.names`),
+    seedFrom: platformSeed(entry["seedFrom"], `${where}.seedFrom`),
+  };
+}
+
+function parseBrowserProfile(raw: unknown, index: number, ids: Set<string>, ports: Set<number>): BrowserProfile {
+  const where = `browser.profiles[${index}]`;
+  const entry = asRecord(raw, where);
+
+  const id = optString(entry, "id", `${where}.id`);
+  // The id BECOMES A DIRECTORY NAME under userDataDir and travels on the wire,
+  // so it is held to the same slug rule as a pane id rather than merely checked
+  // for separators.
+  if (id === null || !SLUG.test(id)) {
+    throw configError(`${where}.id`, `${SLUG_EXPECTED} (the id becomes this profile's data directory name)`);
+  }
+  // A DUPLICATE ID IS A CONFIG ERROR, not a last-one-wins shrug: the id keys
+  // this profile's data directory, so two rows sharing one would quietly point
+  // two profiles at a single browser.
+  if (ids.has(id)) throw configError(`${where}.id`, `an id not already used ("${id}" appears twice)`);
+  ids.add(id);
+
+  const label = optString(entry, "label", `${where}.label`);
+  if (label === null) throw configError(`${where}.label`, "a non-empty string");
+
+  // The source directory is a SINGLE folder name inside your real browser. A
+  // separator or a traversal would send the seed script copying from outside it.
+  const dir = optString(entry, "dir", `${where}.dir`);
+  if (dir === null || dir.includes("/") || dir.includes("\\") || dir === "." || dir === "..") {
+    throw configError(`${where}.dir`, "a plain folder name like \"Default\" or \"Profile 1\"");
+  }
+
+  const port = entry["port"];
+  if (typeof port !== "number" || !Number.isInteger(port) || port < 1024 || port > 65535) {
+    throw configError(`${where}.port`, "a whole number between 1024 and 65535");
+  }
+  // A SHARED PORT IS TWO PROFILES POINTING AT ONE BROWSER, and it presents as
+  // the wrong profile's tabs under the right label, which reads as a rendering
+  // bug rather than a config one.
+  if (ports.has(port)) throw configError(`${where}.port`, `a port not already used (${port} appears twice)`);
+  ports.add(port);
+
+  return {
+    id,
+    label,
+    browser: str(entry, "browser", `${where}.browser`, "chrome"),
+    port,
+    dir,
+    account: optString(entry, "account", `${where}.account`) ?? "",
+  };
+}
+
+function parseBrowser(root: Record<string, unknown>): BrowserConfig {
+  const raw = section(root, "browser");
+
+  const browsersRaw = raw["browsers"];
+  const browsers: Record<string, BrowserBinary> = {};
+  if (browsersRaw !== undefined && browsersRaw !== null) {
+    for (const [key, value] of Object.entries(asRecord(browsersRaw, "browser.browsers"))) {
+      if (isComment(key)) continue;
+      browsers[key] = parseBrowserBinary(value, key);
+    }
+  }
+
+  const quality = int(raw, "quality", "browser.quality", BROWSER_QUALITY_DEFAULT);
+  if (quality < 1 || quality > 100) throw configError("browser.quality", "a number between 1 and 100");
+
+  const port = int(raw, "sidecarPort", "browser.sidecarPort", BROWSER_PORT_DEFAULT);
+  if (port < 1 || port > 65535) throw configError("browser.sidecarPort", "a number between 1 and 65535");
+
+  const profilesRaw = raw["profiles"];
+  if (profilesRaw !== undefined && profilesRaw !== null && !Array.isArray(profilesRaw)) {
+    throw configError("browser.profiles", "a list of profiles");
+  }
+  const ids = new Set<string>();
+  const ports = new Set<number>();
+
+  return {
+    sidecarPort: port,
+    userDataDir: resolvePath(str(raw, "userDataDir", "browser.userDataDir", BROWSER_DATA_DIR_DEFAULT)),
+    browsers,
+    windowPosition: numberPair(raw, "windowPosition", "browser.windowPosition", BROWSER_WINDOW_POSITION_DEFAULT),
+    windowSize: numberPair(raw, "windowSize", "browser.windowSize", BROWSER_WINDOW_SIZE_DEFAULT),
+    quality,
+    idleMs: int(raw, "idleMs", "browser.idleMs", BROWSER_IDLE_MS_DEFAULT),
+    homeUrl: str(raw, "homeUrl", "browser.homeUrl", BROWSER_HOME_URL_DEFAULT),
+    searchUrl: str(raw, "searchUrl", "browser.searchUrl", BROWSER_SEARCH_URL_DEFAULT),
+    profiles: (Array.isArray(profilesRaw) ? profilesRaw : []).map((p, i) => parseBrowserProfile(p, i, ids, ports)),
+  };
 }
 
 function parseProfiles(root: Record<string, unknown>): Record<string, Profile> {
@@ -483,15 +736,18 @@ function readRoot(): Record<string, unknown> {
 export function loadConfig(): HubConfig {
   if (cached !== null) return cached;
   const root = readRoot();
+  const dataDir = resolvePath(str(root, "dataDir", "dataDir", DATA_DIR_DEFAULT));
   const profiles = parseProfiles(root);
   cached = {
     hub: parseHub(root),
     bind: parseBind(root),
-    dataDir: resolvePath(str(root, "dataDir", "dataDir", DATA_DIR_DEFAULT)),
+    dataDir,
     userDir: resolvePath(str(root, "userDir", "userDir", USER_DIR_DEFAULT)),
     update: parseUpdate(root),
     adapters: parseAdapters(root),
+    attention: parseAttention(root, dataDir),
     modules: parseModules(root),
+    browser: parseBrowser(root),
     profiles,
     // The wall validates pane.profile against the profiles above, so it is
     // parsed last and takes them as an argument rather than re-reading the file.
