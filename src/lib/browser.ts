@@ -99,6 +99,10 @@ export interface BrowserState {
   unsupportedWhy: string;
   /** At least one configured browser is installed. False = the pane says so. */
   browserInstalled: boolean;
+  /** Any browser is DECLARED in config at all. False and browserInstalled false are two
+   * different problems with two different fixes, so they are two different fields: nothing
+   * to look for, versus looked and did not find it. */
+  browsersDeclared: boolean;
   sidecarPort: number;
   homeUrl: string;
   searchUrl: string;
@@ -136,6 +140,7 @@ export function browserState(): BrowserState {
       ? ""
       : `The browser pane runs on macOS and Linux. This machine is ${process.platform}, so there is nothing to mirror here yet.`,
     browserInstalled: anyBrowserInstalled(),
+    browsersDeclared: Object.keys(browser.browsers).length > 0,
     sidecarPort: browser.sidecarPort,
     homeUrl: browser.homeUrl,
     searchUrl: browser.searchUrl,

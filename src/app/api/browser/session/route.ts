@@ -33,12 +33,22 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!state.supported) {
     return NextResponse.json({ ok: false, message: state.unsupportedWhy }, { status: 501 });
   }
+  if (!state.browsersDeclared) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "No browsers are declared under \"browser.browsers\" in hub.config.json, so the hub has nothing to look for. Copy that block from hub.config.example.json, then restart the hub.",
+      },
+      { status: 503 },
+    );
+  }
   if (!state.browserInstalled) {
     return NextResponse.json(
       {
         ok: false,
         message:
-          "No Chrome or Chromium was found on this machine, so there is no browser to mirror. Install one, or add its path under \"browser.browsers\" in hub.config.json.",
+          "No Chrome or Chromium was found at any path or command name under \"browser.browsers\" in hub.config.json. Install one, or add the path it is actually at.",
       },
       { status: 503 },
     );

@@ -68,6 +68,7 @@ interface State {
   supported: boolean;
   unsupportedWhy: string;
   browserInstalled: boolean;
+  browsersDeclared: boolean;
   sidecarPort: number;
   homeUrl: string;
   searchUrl: string;
@@ -663,10 +664,17 @@ export default function WebPane({
               <span className="dim">opening {current?.label ?? profile}...</span>
             ) : state !== null && !state.supported ? (
               <p className="empty">{state.unsupportedWhy}</p>
+            ) : state !== null && !state.browsersDeclared ? (
+              <p className="empty">
+                No browsers are declared under <code>browser.browsers</code> in hub.config.json, so the
+                hub has nothing to look for. Copy that block from hub.config.example.json, then restart
+                the hub.
+              </p>
             ) : state !== null && !state.browserInstalled ? (
               <p className="empty">
-                No Chrome or Chromium was found on this machine, so there is no browser to mirror. Install
-                one, or add its path under <code>browser.browsers</code> in hub.config.json.
+                No Chrome or Chromium was found at any path or command name under{" "}
+                <code>browser.browsers</code> in hub.config.json. Install one, or add the path it is
+                actually at.
               </p>
             ) : state !== null && state.profiles.length === 0 ? (
               <p className="empty">

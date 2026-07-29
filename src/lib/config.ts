@@ -62,40 +62,20 @@ const BROWSER_IDLE_MS_DEFAULT = 30 * 60 * 1000;
 const BROWSER_WINDOW_POSITION_DEFAULT: [number, number] = [-3200, 0];
 const BROWSER_WINDOW_SIZE_DEFAULT: [number, number] = [1440, 900];
 
-/** Where a Chromium browser is found, and where its real profiles live, per
- * platform. This is the whole of the hub's browser discovery: paths first
- * (a service manager gives a process a minimal PATH, so resolving by name alone
- * reports "not installed" on a machine that is running it), then names on PATH
- * so an install in an unusual place still works. */
-const BROWSER_BINARIES_DEFAULT: Record<string, RawBrowserBinary> = {
-  chrome: {
-    bin: [
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      "/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
-      "/opt/google/chrome/chrome",
-      "/usr/bin/google-chrome",
-      "/usr/bin/google-chrome-stable",
-    ],
-    names: ["google-chrome", "google-chrome-stable"],
-    seedFrom: {
-      darwin: "~/Library/Application Support/Google/Chrome",
-      linux: "~/.config/google-chrome",
-    },
-  },
-  chromium: {
-    bin: [
-      "/Applications/Chromium.app/Contents/MacOS/Chromium",
-      "/usr/bin/chromium",
-      "/usr/bin/chromium-browser",
-      "/snap/bin/chromium",
-    ],
-    names: ["chromium", "chromium-browser"],
-    seedFrom: {
-      darwin: "~/Library/Application Support/Chromium",
-      linux: "~/.config/chromium",
-    },
-  },
-};
+// THERE IS NO CODE DEFAULT FOR `browser.browsers`, AND THAT IS DELIBERATE.
+//
+// The install paths for Chrome and Chromium live in exactly ONE place,
+// hub.config.example.json, which is the file whose whole job is documenting
+// defaults and which this loader already falls back to. A code constant here
+// would be a second copy, and the sidecar (chrome/server.mjs) boots without
+// TypeScript so it could never read it, which means it would be a THIRD copy.
+//
+// This was a real bug for about an hour: the loader defaulted the list from
+// code, the sidecar defaulted it to {}, and the two then disagreed about
+// whether a browser was installed. A split verdict between the app and the
+// process it depends on is exactly the failure scripts/serve.mjs has a long
+// comment about. Absent means absent, in both readers, and the pane says which
+// key to fill in.
 
 // ---------------------------------------------------------------- types
 
@@ -142,14 +122,6 @@ export interface AdaptersConfig {
 export interface ModulesConfig {
   /** Module ids switched on. Empty means the core defaults. */
   enabled: string[];
-}
-
-/** A browser entry as it is written in the config, before this platform is
- * picked out of `seedFrom`. Only this file ever sees this shape. */
-interface RawBrowserBinary {
-  bin: string[];
-  names: string[];
-  seedFrom: Record<string, string>;
 }
 
 /** One Chromium browser the hub can drive, resolved for the platform it is
@@ -530,11 +502,7 @@ function parseBrowser(root: Record<string, unknown>): BrowserConfig {
 
   const browsersRaw = raw["browsers"];
   const browsers: Record<string, BrowserBinary> = {};
-  if (browsersRaw === undefined || browsersRaw === null) {
-    for (const [key, value] of Object.entries(BROWSER_BINARIES_DEFAULT)) {
-      browsers[key] = { bin: value.bin, names: value.names, seedFrom: platformSeed(value.seedFrom, key) };
-    }
-  } else {
+  if (browsersRaw !== undefined && browsersRaw !== null) {
     for (const [key, value] of Object.entries(asRecord(browsersRaw, "browser.browsers"))) {
       if (isComment(key)) continue;
       browsers[key] = parseBrowserBinary(value, key);
