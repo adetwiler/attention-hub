@@ -43,8 +43,21 @@ git diff --cached --unified=0 --no-color -- . | awk '
   /^\+/      { print file ":" ln ": " substr($0,2); ln++ }
 ' > "$HUB_SCRATCH/added"
 
-# The src/ and scripts/ slice, for the gates that only apply to shipped code.
-hub_scan "$HUB_SCRATCH/added" -E '^(src|scripts)/'
+# The shipped-code slice, for the gates that only apply to it.
+#
+# chrome/ IS IN IT, and adding it was not optional. That directory is the browser
+# sidecar: it imports node:http, it imports ws, and it opens sockets, which is
+# precisely the shape gate (d) exists to police. Leaving a whole network-capable
+# component outside the slice would have made the gate backing this product's
+# headline claim blind to the one directory most able to break it. Every line in
+# there that really does connect now carries an explicit hub-allow-network reason,
+# and all of them are loopback.
+hub_scan "$HUB_SCRATCH/added" -E '^(src|scripts|chrome)/'
+printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/sliced"
+# Lockfiles are machine generated and every entry carries a registry URL. That is a
+# record of where a dependency CAME FROM, not a call this code makes, so they are out
+# of the network gate for the same reason they are out of the email gate below.
+hub_scan "$HUB_SCRATCH/sliced" -vE '^[^:]*(package-lock\.json|yarn\.lock|pnpm-lock\.yaml):'
 printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/code"
 
 # Machine-generated lockfiles carry upstream package-author addresses. An npm
@@ -157,7 +170,7 @@ shape_hits="$HUB_SCAN_OUT"
 printf '%s\n%s\n' "$url_hits" "$shape_hits" > "$HUB_SCRATCH/net"
 hub_scan "$HUB_SCRATCH/net" -vE 'hub-allow-network:|hub-no-request:'
 if [ -n "$HUB_SCAN_OUT" ]; then
-  report "staged change adds an outbound-network shape under src/ or scripts/:" "$HUB_SCAN_OUT" \
+  report "staged change adds an outbound-network shape under src/, scripts/ or chrome/:" "$HUB_SCAN_OUT" \
     "This hub makes no network calls except the documented update check.
 If this line IS that check, mark it:        // hub-allow-network: <why>
 If it only mentions a URL and sends nothing: // hub-no-request: <why>"
@@ -170,7 +183,7 @@ fi
 ABSPATH='/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|[A-Za-z]:[\\/]+Users[\\/]+|/Volumes/'
 hub_scan "$HUB_SCRATCH/code" -E "$ABSPATH"
 if [ -n "$HUB_SCAN_OUT" ]; then
-  report "staged change adds an absolute path under src/ or scripts/:" "$HUB_SCAN_OUT" \
+  report "staged change adds an absolute path under src/, scripts/ or chrome/:" "$HUB_SCAN_OUT" \
     "Read it from hub.config.json instead."
 fi
 
