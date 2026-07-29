@@ -1022,6 +1022,8 @@ body {
 .doc hr {
   border: 0;
   border-top: 1px solid var(--hair);
+}
+
 /* ---------------------------------------------------------------- browser pane
 
    A pane holding a REAL browser, mirrored in as JPEG frames. The picture is a
