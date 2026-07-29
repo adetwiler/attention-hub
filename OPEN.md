@@ -78,6 +78,17 @@ production or say plainly that they need a restart.
 
 ## Owed by a later slice, recorded so it cannot be forgotten
 
+**The attention feed (#2) ports TVG HQ's 2026-07-29 honesty + read-in-place fixes,
+not the surfaces as they were the day the port was scoped.** Upstream (the private
+hub, commit `cbf76fd`) after the owner hit both in use: (1) a third `agent-notice` kind in the
+needs-you model - a question row with no options and no "?" is a REPORT (night-runner
+REDs), labeled "reports"/REPORT, never "asks you", and it never takes over the wall;
+(2) `AttentionLink` - a non-http link on an attention item is a file path and opens
+IN the hub (the show/float mechanism) instead of a browser tab; (3) the float window
+renders `.md` as markdown (marked + the shared doc styles, frontmatter stripped),
+which is also the first real consumer for the installed `marked` (call #3 above).
+Port all three with the feed or the stranger inherits the complaint verbatim.
+
 **The update check is not built (slice 6).** The config section, the README
 bullet and `CONTEXT.md` all say so in as many words. When the code lands, all
 three change in the SAME pass, and the transport-level clause (GitHub sees an IP
