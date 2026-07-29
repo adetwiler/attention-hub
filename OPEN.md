@@ -24,6 +24,18 @@ unaffected; what waits is Andrew becoming the first template install.
 
 Full record + the reasoning: `~/.claude/memory/project_attention_hub_giveaway.md`.
 
+**0a-i. README DRIFT, caught by the same rule that created it (2026-07-29).** The
+README's opening paragraph says *"when you want the hub itself to do something new,
+your own AI builds it."* That is self-build (#5), which is `post-v1` and blocked. It
+is stated in the present tense on the first screen a stranger reads, which is exactly
+the failure ADR-0003 exists to prevent: never market a capability that has not
+shipped. The "Early" callout below it lists what is missing but does not retract this
+sentence, and a reader who hits the gap trusts the privacy claims less too.
+
+**Fix it when the tab seam lands (#14), in the same pass**, so the opening describes
+what beat 2 actually ships: adding a tab in config, no code. Self-build moves to the
+"not built, tell us if you want it" list with the board, teams and the module system.
+
 **0a. v1 GAINED A SIXTH PIECE OF WORK on 2026-07-29: the tab seam.** Grilled and
 accepted as [ADR-0003](docs/adr/0003-tab-seam-over-module-system-for-v1.md). The
 marketing leads with a concrete hero and makes "then make it yours" the second
