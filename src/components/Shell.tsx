@@ -30,7 +30,11 @@ const ROOMS: readonly { id: string; label: string; href: string; built: boolean 
 /** What the nav says when you have no tabs: the truth, and where to write one.
  * Never a sample tab. A nav row that looks configured and is not is the exact
  * lie the honest-empty rule exists to forbid. */
-const NO_TABS = 'No tabs of yours yet. Add one to "tabs" in hub.config.json: a name, plus a url or a dir. See docs/tabs.md.';
+const NO_TABS = 'No tabs of yours yet. Add one to "tabs" in hub.config.json: a name, plus a url or a dir. The setup page walks you through it.';
+
+/** Where the empty state and the SETUP entry both go. The tab seam is one step
+ * of setup, so there is one page explaining it and not two. */
+const SETUP_HREF = "/setup";
 
 interface ShellProps {
   hubName: string;
@@ -85,10 +89,26 @@ export default function Shell({ hubName, version, initial, tabs, tabsProblem, ch
           ) : tabs.length === 0 ? (
             // Clickable, not a tooltip on a dead label: the empty state is also
             // the door to the page that explains how to fill it.
-            <a className={here === "/tab" ? "tab add on" : "tab add"} href="/tab" title={NO_TABS}>
+            <a
+              className={here === SETUP_HREF ? "tab add on" : "tab add"}
+              href={`${SETUP_HREF}#tabs`}
+              title={NO_TABS}
+            >
               + TAB
             </a>
           ) : null}
+          {/* SETUP is last, after your own tabs, because it is the page you
+              need twice and then rarely: once on your first day, and again the
+              day you switch something on. It is not one of the ROOMS above
+              because those are the approved design's five and this is not a
+              room you work in. */}
+          <a
+            className={here === SETUP_HREF ? "tab setup on" : "tab setup"}
+            href={SETUP_HREF}
+            title="Everything you can switch on, and the prompts that do it for you."
+          >
+            SETUP
+          </a>
         </nav>
         <span className="stat">
           <b>{running} running</b>

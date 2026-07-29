@@ -54,6 +54,13 @@ const TERMINAL_ENABLED_DEFAULT = false;
  * and the example config) and asserted equal by .githooks/release-check.sh. */
 const TERMINAL_PORT_DEFAULT = 2888; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and pty/server.mjs by release-check.sh
 const TERMINAL_TMUX_DEFAULT = true;
+
+/** OFF. The email digest is the one outbound path in the product and it exists
+ * only because a user configured it with their own key (ADR-0008). */
+const EMAIL_ENABLED_DEFAULT = false;
+/** The only provider built. One HTTPS request, so no mail library ships here. */
+const EMAIL_PROVIDER_DEFAULT = "resend";
+const EMAIL_SUBJECT_DEFAULT = "Attention Hub";
 const TERMINAL_PREFIX_DEFAULT = "hub";
 const TERMINAL_SCROLLBACK_DEFAULT = 2000;
 const TERMINAL_IDLE_MINUTES_DEFAULT = 30;
@@ -317,6 +324,31 @@ export interface TerminalConfig {
   idleMinutes: number;
 }
 
+/** THE EMAIL DIGEST, AND IT SHIPS OFF. It is the one user-configured outbound
+ * path in the product (ADR-0008): a command YOU schedule reads your feed and
+ * posts one message to a provider YOU chose, with YOUR key. The hub itself still
+ * initiates nothing, and nothing in `src/` sends anything: the sending lives in
+ * `scripts/hub.mjs digest`, run by your own cron or launchd.
+ *
+ * THE KEY IS NEVER IN THIS FILE. `apiKeyFile` is a PATH, because a config is a
+ * file people paste into bug reports, and a secret that can be pasted eventually
+ * is. The loader refuses an inline key by name so the mistake is loud. */
+export interface EmailConfig {
+  /** OFF by default. Nothing about email exists until you set this true. */
+  enabled: boolean;
+  /** The provider. Only "resend" is built: it is one HTTPS request and therefore
+   * no dependency. SMTP would mean a mail library inside the shipped tree. */
+  provider: "resend";
+  /** Where the digest goes. Yours. */
+  to: string | null;
+  /** The from address, which your provider has to have verified for you. */
+  from: string | null;
+  /** Absolute path to a file holding ONLY the API key. Never the key itself. */
+  apiKeyFile: string | null;
+  /** Subject line. The digest appends the count, so this is the stable half. */
+  subject: string;
+}
+
 export interface HubConfig {
   hub: HubIdentity;
   bind: BindConfig;
@@ -336,6 +368,8 @@ export interface HubConfig {
    * rather than showing a sample one. */
   tabs: HubTab[];
   terminal: TerminalConfig;
+  /** Off by default. The one outbound path, and only if you set it up. */
+  email: EmailConfig;
 }
 
 // ---------------------------------------------------------------- helpers
@@ -806,6 +840,41 @@ function parseTerminal(root: Record<string, unknown>): TerminalConfig {
   };
 }
 
+function parseEmail(root: Record<string, unknown>): EmailConfig {
+  const raw = section(root, "email");
+
+  // A KEY IN THE CONFIG IS REFUSED BY NAME. This is the only place in the loader
+  // that rejects a key for existing rather than for being the wrong type, and it
+  // earns that: hub.config.json is the file a stranger pastes into an issue when
+  // something breaks, and a secret in it leaves by the door marked "help me".
+  // Saying "use apiKeyFile" is the whole fix, so the message says it.
+  for (const forbidden of ["apiKey", "key", "token", "password", "secret"]) {
+    if (raw[forbidden] !== undefined) {
+      throw configError(
+        `email.${forbidden}`,
+        'nothing. A secret never goes in this file. Put the key in its own file and name it with "email.apiKeyFile"',
+      );
+    }
+  }
+
+  const provider = str(raw, "provider", "email.provider", EMAIL_PROVIDER_DEFAULT);
+  if (provider !== EMAIL_PROVIDER_DEFAULT) {
+    // Named rather than ignored: silently emailing through something other than
+    // what the user wrote would be the worst possible reading of this key.
+    throw configError("email.provider", `"${EMAIL_PROVIDER_DEFAULT}", the only provider built`);
+  }
+
+  const apiKeyFile = optString(raw, "apiKeyFile", "email.apiKeyFile");
+  return {
+    enabled: bool(raw, "enabled", "email.enabled", EMAIL_ENABLED_DEFAULT),
+    provider,
+    to: optString(raw, "to", "email.to"),
+    from: optString(raw, "from", "email.from"),
+    apiKeyFile: apiKeyFile === null ? null : resolvePath(apiKeyFile),
+    subject: str(raw, "subject", "email.subject", EMAIL_SUBJECT_DEFAULT),
+  };
+}
+
 // ---------------------------------------------------------------- load
 
 let cached: HubConfig | null = null;
@@ -859,6 +928,7 @@ export function loadConfig(): HubConfig {
     wall: parseWall(root, profiles),
     tabs: parseTabs(root),
     terminal: parseTerminal(root),
+    email: parseEmail(root),
   };
   return cached;
 }
