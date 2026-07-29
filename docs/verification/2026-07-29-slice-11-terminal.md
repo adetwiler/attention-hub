@@ -5,6 +5,9 @@
 - **Platform:** macOS 26.5.2 arm64, Node 24.16.0, Next 16.2.12, tmux 3.5a, node-pty 1.1.0, dev mode
 - **Instrument:** a throwaway WebSocket harness (the `ws` client already in
   `pty/node_modules`), NOT a browser. See "What could NOT be walked".
+- **Run twice:** once on the slice branch, and again after merging `main` (slices
+  2 and 13), because that merge moved the sidecar's port and renumbered its
+  migration. 26 of 26 both times.
 
 The point of this walk was to find out whether the ported design actually works
 on a machine rather than whether it reads well. It found **two real bugs and one
@@ -120,6 +123,14 @@ another copy is probably already running.
 
 Two smaller things the run tidied: the idle message said "1 minutes", and the
 pane could stack a second xterm inside the same host element on REATTACH.
+
+**4. The post-merge run caught the MIGRATIONS renumbering hazard happening for
+real.** A local dev database had applied `terminal_grants` as index 1; after the
+merge renumbered it to 3, boot died with `SqliteError: table terminal_grants
+already exists` and the mint route returned a 500. Not a product defect (nothing
+has shipped, and deleting a dev database is the fix), but it is the concrete proof
+behind the warning in `docs/claude/parallel-agent-builds.md`, which now says so
+instead of only predicting it.
 
 ## What could NOT be walked
 
