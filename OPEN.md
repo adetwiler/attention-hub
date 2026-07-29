@@ -8,6 +8,22 @@ Last swept: 2026-07-28 (after the slice-1 review pass).
 
 ## Needs a call from Andrew
 
+**0. v1 WAS RE-CUT QUAD-FIRST on 2026-07-29, and this doc has not caught up.** Owner
+approved: v1 is now exactly FIVE items - #2 attention feed, #11 terminal room port (the
+live wall), #9 re-scoped to config-driven account panes + focus, #13 the browser pane, #8
+release. Everything else (#3 board, #4 bench/jobs, #5 self-build, #6 machine + the update
+channel, #7 module system, #10 tmux-native control) is labelled `post-v1`. Two decisions
+ride with it: **platforms are macOS + Linux, stated plainly** (the terminal sidecar is
+tmux-based, Chrome discovery is POSIX-shaped), and **updates are `git pull` in v1** - #6's
+Releases check is post-v1, so keep the README's honest NOT-BUILT-YET wording and add the
+plain pull instruction rather than dropping the section.
+
+Consequence worth holding: #7 being post-v1 means EPIC C (TVG HQ rebuilding on this
+template with its game rooms as user modules) is a v1.1 story. A stranger's v1 is
+unaffected; what waits is Andrew becoming the first template install.
+
+Full record + the reasoning: `~/.claude/memory/project_attention_hub_giveaway.md`.
+
 **1. The default port is 2886, picked by me.** It is ATTN on a phone keypad and
 it is in the IANA unassigned range. If you would rather it be something else,
 now is the cheap moment: it is in `hub.config.example.json`, `src/lib/config.ts`
