@@ -27,8 +27,6 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [docs/browser-pane.md](browser-pane.md) | You are touching `chrome/`, `src/lib/browser.ts`, the browser routes or `WebPane`. Every measured trap, and each one cost real time. Read it before changing any of them. | internal |
 | [docs/adr/0007-terminal-sidecar-and-its-trust-model.md](adr/0007-terminal-sidecar-and-its-trust-model.md) | Before changing anything about the terminal: why it is a separate process, why tmux, why the grant, and the two rules about it that are permanent. | internal |
 | [docs/terminal.md](terminal.md) | You are switching the terminal on, running the sidecar, or about to touch it. Setup, the security model, and four traps that all fail silently. | public |
-| [docs/adr/0008-email-digest-is-the-users-own-outbound-call.md](adr/0008-email-digest-is-the-users-own-outbound-call.md) | You are touching anything that sends, or wondering how an email feature squares with a product that makes no network calls. Amends ADR-0002 decision 2. | internal |
-| [docs/email-digest.md](email-digest.md) | You are switching the digest on, or about to tell a user what it does. How to configure it, what the provider can see, and how to turn it off. | public |
 | [docs/claude/architecture.md](claude/architecture.md) | You are writing code in `src/`. How the files fit, where your slice plugs in, and the traps already paid for. | internal |
 | [docs/claude/parallel-agent-builds.md](claude/parallel-agent-builds.md) | You are about to start a slice while someone else is mid-slice, or you are dispatching more than one agent at this repo. The claim label, worktrees, gate install, and who owns the shell files. | internal |
 | [test/README.md](../test/README.md) | You are adding a test, or wondering why there is no test framework dependency. | internal |
@@ -55,7 +53,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | `src/lib/quiet.ts` | Quiet hours, pure. The midnight wrap lives here. |
 | `src/lib/settings.ts` | The settings table: live state that is not registry. |
 | `src/lib/markdown.ts` | Markdown to HTML for documents shown in place. Read its header before touching it. |
-| `scripts/hub.mjs` | The `hub` CLI. Dependency free, no TypeScript, works with the hub closed. Also holds `hub digest`, the email module, which is the ONE place in this repo that sends anything (ADR-0008). |
+| `scripts/hub.mjs` | The `hub` CLI. Dependency free, no TypeScript, works with the hub closed. |
 | `src/lib/sse.ts` | The stream route helper and the `?once=1` contract. |
 | `src/components/useEventStream.ts` | One EventSource per page, with the poll fallback. |
 | `src/lib/terminal.ts` | The terminal module's rules and its manifest. No I/O, so every refusal is tested. |

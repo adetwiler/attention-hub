@@ -41,7 +41,6 @@ function fakeConfig(over = {}) {
     browser: { profiles: [] },
     terminal: { enabled: false },
     bind: { allowedDevOrigins: [] },
-    email: { enabled: false, to: null, from: null, apiKeyFile: null },
     ...over,
   };
 }
@@ -93,13 +92,6 @@ describe("setup steps", { skip }, () => {
     assert.match(terminal.prompt, /macOS and Linux only/i);
   });
 
-  test("the email prompt puts the key in a file and never in the config", () => {
-    const email = SETUP_STEPS.find((step) => step.id === "email");
-    assert.match(email.prompt, /never into hub\.config\.json/i);
-    assert.match(email.prompt, /apiKeyFile/);
-    assert.match(email.prompt, /dry-run/);
-  });
-
   test("the reach prompt bans the two things that would open the hub up", () => {
     const reach = SETUP_STEPS.find((step) => step.id === "reach");
     assert.match(reach.prompt, /0\.0\.0\.0/);
@@ -114,7 +106,7 @@ describe("setup states", { skip }, () => {
     const states = setupStates(fakeConfig());
     assert.deepEqual(
       states.map((s) => s.state),
-      ["off", "off", "off", "off", "off", "off"],
+      ["off", "off", "off", "off", "off"],
     );
     for (const state of states) assert.ok(state.note.length > 0);
   });
@@ -135,23 +127,15 @@ describe("setup states", { skip }, () => {
         browser: { profiles: [{ id: "work" }] },
         terminal: { enabled: true },
         bind: { allowedDevOrigins: ["hub.example"] },
-        email: { enabled: true, to: "you@example.com", from: "hub@example.com", apiKeyFile: "/tmp/k" },
       }),
     );
     assert.deepEqual(
       on.map((s) => s.state),
-      ["on", "on", "on", "on", "on", "on"],
+      ["on", "on", "on", "on", "on"],
     );
     assert.match(on.find((s) => s.id === "config").note, /your-tool/);
-    assert.match(on.find((s) => s.id === "email").note, /you@example\.com/);
   });
 
-  test("an enabled email digest with nothing to send to says INCOMPLETE", () => {
-    const states = setupStates(fakeConfig({ email: { enabled: true, to: null, from: null, apiKeyFile: null } }));
-    const email = states.find((s) => s.id === "email");
-    assert.equal(email.state, "on");
-    assert.match(email.note, /incomplete/i);
-  });
 });
 
 describe("the hero prompt has exactly one copy", { skip }, () => {

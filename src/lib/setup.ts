@@ -51,7 +51,7 @@ export interface SetupStep {
   manual: string[];
 }
 
-export type StepId = "config" | "tabs" | "browser" | "terminal" | "reach" | "email";
+export type StepId = "config" | "tabs" | "browser" | "terminal" | "reach";
 
 /** What your config says about one step right now. Never a guess: an unreadable
  * config produces `unknown`, which the page renders as a problem rather than as
@@ -176,35 +176,6 @@ TWO RULES YOU MAY NOT BREAK, whatever I ask for:
 Never edit hub.config.example.json and never edit anything under src/ or
 scripts/.`;
 
-const EMAIL_PROMPT = `Set up the Attention Hub's email digest, which is off by default.
-
-You are standing in my Attention Hub clone. Read docs/email-digest.md and the
-"email" section of hub.config.example.json first. They are the specification.
-
-Understand what you are switching on before you explain it to me: the hub itself
-still calls nothing. A command I schedule (hub digest) reads my attention feed
-and posts one message to the email provider I chose, with my own key. It is the
-only outbound call in this product, it only happens because I set it up, and the
-provider can see who I email and what the digest says.
-
-1. Ask me whether I want it at all. If I say no, stop here and change nothing.
-2. Ask for the address to send TO, and for a Resend API key. WRITE THE KEY TO ITS
-   OWN FILE, never into hub.config.json: the config is a file I might paste into
-   a bug report one day. Put it somewhere private, for example
-   ~/.attention-hub/resend.key, and chmod 600 it.
-3. Fill in the "email" section of hub.config.json: enabled, to, from, and
-   apiKeyFile pointing at that file. The "from" address has to be one my provider
-   has verified for me.
-4. Test it without sending anything: node scripts/hub.mjs digest --dry-run
-   Show me what it printed.
-5. Send one for real when I say so: node scripts/hub.mjs digest
-6. Schedule it with MY scheduler, not with the hub: a cron line or a launchd
-   agent that runs "hub digest" as often as I want it. Show me the line before
-   you install it. Quiet hours do not apply, because the schedule is mine.
-
-Never put the key in hub.config.json, never commit it anywhere, and never send
-the digest anywhere except the address I gave you.`;
-
 export const SETUP_STEPS: readonly SetupStep[] = [
   {
     id: "config",
@@ -247,7 +218,7 @@ export const SETUP_STEPS: readonly SetupStep[] = [
   {
     id: "terminal",
     title: "The terminal",
-    lede: "A real shell on this machine, in a folder you name, reached from a browser tab. It is the most powerful thing here and the most dangerous, it ships switched off, and the section below is what to read before you switch it on. macOS and Linux only.",
+    lede: "A real shell on this machine, in a folder you name, reached from a browser tab. It is the most powerful thing here and the most dangerous, it ships switched off, and the warning above it is what to read before you switch it on. macOS and Linux only.",
     required: false,
     prompt: TERMINAL_PROMPT,
     manual: [
@@ -270,20 +241,6 @@ export const SETUP_STEPS: readonly SetupStep[] = [
       "If you bind an address instead, bind this machine's Tailscale IP (the 100.x one). Never 0.0.0.0.",
       'Add the hostname you type into "bind.allowedDevOrigins", or the page will load with every click dead.',
       "Never use tailscale funnel. That is the feature that puts a machine on the public internet, which is the one thing this hub must not be.",
-    ],
-  },
-  {
-    id: "email",
-    title: "The email digest",
-    lede: "Off, until you turn it on. A command you schedule yourself emails you what is waiting, through an email provider you choose, with your own key. It is the only outbound call in the product and it exists because a hub that only talks to you on the machine you left cannot tell you anything while you are out.",
-    required: false,
-    prompt: EMAIL_PROMPT,
-    manual: [
-      "Put your provider API key in its own file, not in hub.config.json. The config is a file people paste into bug reports.",
-      'Fill in "email" in hub.config.json: enabled, to, from, and apiKeyFile.',
-      "Check it without sending: node scripts/hub.mjs digest --dry-run",
-      "Schedule it with your own cron or launchd. The hub has no scheduler and deliberately does not grow one for this.",
-      "The whole contract, including what the provider can see, is in docs/email-digest.md.",
     ],
   },
 ];
@@ -361,18 +318,6 @@ export function setupStates(config: HubConfig | null): StepState[] {
         config.bind.allowedDevOrigins.length === 0
           ? "this machine only, which is the default"
           : `${config.bind.allowedDevOrigins.length} other ${config.bind.allowedDevOrigins.length === 1 ? "origin" : "origins"} allowed`,
-    },
-    email: {
-      id: "email",
-      state: config.email.enabled ? "on" : "off",
-      // An enabled digest with nothing to send to is a mistake worth naming
-      // here, because the alternative is finding out the first time you are
-      // away from the machine and no email arrives.
-      note: !config.email.enabled
-        ? "off, which is the default"
-        : config.email.to === null || config.email.from === null || config.email.apiKeyFile === null
-          ? "ON, but incomplete: it needs to, from and apiKeyFile"
-          : `on, to ${config.email.to}`,
     },
   };
   return SETUP_STEPS.map((step) => states[step.id]);

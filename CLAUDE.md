@@ -17,18 +17,15 @@ is the update channel, the memory network, the modules, and the author.
 ## The rules that are not negotiable
 
 **NO TELEMETRY, EVER.** The hub holds none of the user's data, and **this release
-makes ZERO outbound calls of its own**: the GitHub Releases check is post-v1, so
-the honest claim is stronger than "one call". Two things are true beside it, and
-neither weakens it:
+makes ZERO outbound calls. Full stop, no exception.** The GitHub Releases check
+is post-v1, so the honest v1 claim is stronger than "one call", and it is the
+product's single strongest asset: an opt-in email digest was built in slice 8 and
+CUT for exactly that reason (owner, 2026-07-29). Every marked network line in the
+tree is loopback. **If you are about to add the first non-loopback one, that is a
+decision for the owner and an ADR, not a commit.**
 
-- The **email digest** (ADR-0008) is a second outbound path, and it lives in
-  `scripts/hub.mjs`, off by default, run by the USER's own scheduler, with the
-  USER's key. Nothing under `src/` sends anything, and nothing in the hub decides
-  to. Keep it that way: a timer in the web process would break the claim.
-- The Releases check, when it lands (slice 6), sends nothing about the user.
-
-Two mechanisms hold all of this, and both exist because a promise in a README is
-worth nothing:
+Two mechanisms hold this, and both exist because a promise in a README is worth
+nothing:
 
 - `scripts/next-run.mjs` is the ONE place Next.js is launched from, because that
   is where `NEXT_TELEMETRY_DISABLED` is set. Never spawn `next` anywhere else.

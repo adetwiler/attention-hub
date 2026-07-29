@@ -57,6 +57,11 @@ const WISHES: readonly Wish[] = [
     title: "more than one person",
     what: "The hub is single user today. Multi-user is on the roadmap and nothing about it is built.",
   },
+  {
+    id: "email-digest",
+    title: "an email digest",
+    what: "Being emailed what is waiting while you are away from the machine. It was built and then cut before release: this hub makes zero outbound calls, and that promise is worth more without a footnote than the feature was worth with one.",
+  },
 ];
 
 /** The list, on TODAY, under everything that is actually running. */

@@ -222,6 +222,29 @@ export default function SetupRoom() {
         </p>
       </Step>
 
+      {/* THE WALL HAS TWO KINDS OF PANE, AND THEY ARE NAMED SEPARATELY ON
+          PURPOSE (OPEN 15, settled by the owner 2026-07-29). Folding them into
+          one "a pane points at a place" sentence reads tidier and hides the
+          thing the next section exists to make you notice: one of the two kinds
+          is a real shell. Tidier prose that buries the dangerous surface is a bad
+          trade on the page whose job is to stop someone exposing a root shell. */}
+      <section className="card">
+        <span className="hd">Two kinds of pane, and the difference matters</span>
+        <p className="empty">
+          <b>A pane can watch an account.</b> It is bound to one of your{" "}
+          <code>profiles</code>, meaning that account&apos;s config directory, and it shows you what
+          that account is doing. Four accounts give you the four-up wall. Nothing about it can run a
+          command.
+        </p>
+        <p className="empty">
+          <b>Or a pane can be a shell in a folder.</b> It is bound to a directory (
+          <code>wall.panes[].cwd</code>) and to no account at all, and it is a real terminal on this
+          machine. That is a different kind of thing living in the same grid, which is why the
+          config lists them separately and why this page does too. It is off by default, and the
+          next section is the one to read before you turn it on.
+        </p>
+      </section>
+
       {/* THE TERMINAL WARNING. Its own section, above the step, in the loudest
           words the page has. Everything in it is a mechanism except the last
           bullet, and the last bullet is the one no mechanism can hold. */}
@@ -237,7 +260,9 @@ export default function SetupRoom() {
           <code>&quot;terminal&quot;: {"{"} &quot;enabled&quot;: true {"}"}</code> in your config,
           add a pane of kind <code>terminal</code>, install and run the sidecar (
           <code>cd pty &amp;&amp; npm install &amp;&amp; npm start</code>), and install a service
-          file from <code>pty/deploy/</code> so it survives a reboot.
+          file from <code>pty/deploy/</code> so it survives a reboot. <b>There is no switch on a
+          settings screen</b>, and there is not going to be one: editing config and starting a
+          second process is a deliberate speed bump on the most powerful surface in the product.
         </p>
         <p className="empty">
           <b>Never put the hub on the open internet.</b> The hub has no login. With this module on,
@@ -298,16 +323,6 @@ export default function SetupRoom() {
         <p className="empty">
           <b>Never use <code>tailscale funnel</code>.</b> Serve is your tailnet. Funnel is the public
           internet, and this hub has no login.
-        </p>
-      </Step>
-
-      <Step step={stepById("email")} state={stateById("email")} prompt={stepById("email").prompt}>
-        <p className="empty">
-          <b>The hub still calls nothing on its own.</b> This is a command you schedule yourself,
-          with your own scheduler, that reads your feed and sends one message through a provider you
-          chose, with a key that is yours. Off until you set it up, and the only exception to the
-          promise on the front page. What the provider can see is written down rather than skipped
-          over, in <code>docs/email-digest.md</code>.
         </p>
       </Step>
 

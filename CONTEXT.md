@@ -99,6 +99,18 @@ is one cell of the wall. A **tab** is config. A **module** is code that owns a
 surface. Anything described as a widget is one of those three, and saying which
 is the point.
 
+**Account pane.** A pane bound to one of your `profiles`, meaning that account's
+config directory. It watches an account and can run nothing. Four accounts give
+you the four-up wall, which is where the product's hero picture comes from.
+
+**Shell pane.** A pane bound to a DIRECTORY (`wall.panes[].cwd`) and to no
+account at all: a real terminal on this machine, off by default, needing
+`terminal.enabled` plus a second process before it exists. The two words stay
+separate deliberately (OPEN 15, settled 2026-07-29): "a pane points at a place"
+reads tidier and hides that one of the two kinds can read your keys and push your
+code, which is the exact thing the setup page's warning needs a reader to notice.
+Tidier prose that buries the dangerous surface is a bad trade.
+
 **User space.** Everything of yours that the hub must never overwrite:
 `hub.config.json`, `userDir`, and `dataDir`. All three are gitignored, which is
 why a plain `git pull` is a safe way to take an update.
@@ -226,19 +238,11 @@ Linux** in v1, and Windows is not supported, which is a claim about the release
 and not a licence to write POSIX-only code (see CLAUDE.md).
 
 **No telemetry.** We hold none of your data. **This release makes zero outbound
-calls of its own**: the release check is not built, so the claim is stronger than
-"one call", not weaker. When that check lands it will tell GitHub nothing about
-you beyond the fact that a request happened, which is your IP address and a user
-agent, the same as any browser. Feedback happens through GitHub issues, which is
-the only channel.
-
-**The digest.** The one outbound path in the product, and it is the user's, not
-ours: `hub digest` reads the feed and emails what is waiting, through a provider
-they chose, with their key, on a schedule they wrote. Off by default, and it
-lives in the CLI rather than in `src/` precisely so that "the hub itself
-initiates nothing" stays literally true (ADR-0008). The word matters because
-"the hub emails you" would describe a different product: nothing in the hub
-decides to send anything.
+calls**, with no exception: the release check is not built, so the claim is
+stronger than "one call", not weaker. When that check lands it will tell GitHub
+nothing about you beyond the fact that a request happened, which is your IP
+address and a user agent, the same as any browser. Feedback happens through
+GitHub issues, which is the only channel.
 
 **Untested.** Built to spec, never exercised, and saying so. The convention
 started with adapters (`untested: true` on the row, and the UI says it) and now

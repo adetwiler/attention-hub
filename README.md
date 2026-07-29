@@ -12,9 +12,9 @@ Free and open source, by Andrew Detwiler / [buildwithamemory.com](https://buildw
 
 > **Early.** This is not the finished product. What works: TODAY, the attention
 > feed described below, the live stream, the wall, the terminal, the browser pane,
-> tabs, the setup page, the opt-in email digest, and the database under it all.
-> What does not exist yet: the rooms behind BOARD, SESSIONS and JOBS, the module
-> system, the hub building itself, more than one person, and the update check
+> tabs, the setup page, and the database under it all. What does not exist yet:
+> the rooms behind BOARD, SESSIONS and JOBS, the module system, the hub building
+> itself, more than one person, an email digest, and the update check
 > described further down (the setting is there, the code that would use it is
 > not). [Not built yet](#not-built-yet) lists those and how to ask for one. What
 > is here is honest about what is not.
@@ -51,11 +51,6 @@ The hub does not have to be running when something files a question. One filed a
 lines of Python is a perfectly good client. The `hub` command is a convenience
 over the same file, not a privileged one. There is an
 [AI-session skill](.claude/skills/README.md) that ships with the hub too.
-
-**When you are away from the machine**, the hub can email you what is still
-waiting. That is the one thing in here that leaves your machine, it is off, and
-you set it up with your own key and your own scheduler:
-[docs/email-digest.md](docs/email-digest.md).
 
 **Quiet hours** suppress the pop-ups and nothing else. The list is never filtered,
 nothing is delayed, and when quiet lifts nothing arrives in a pile: whatever came
@@ -101,17 +96,11 @@ answer is not "have your AI edit the source": updates here are a plain
 
 ## Your data is yours
 
-- **This release makes ZERO outbound calls of its own.** Not one. The hub sends
-  nothing about you anywhere, and we hold none of your data, because there is
-  nowhere for it to go: the database lives in a folder on your machine and it
-  belongs to you. There is no server on our side, and there never has been.
-- **There is exactly one exception, it is off, and it is yours.** If YOU set up
-  the [email digest](docs/email-digest.md), a command YOU schedule emails YOU
-  what is waiting, through an email provider YOU chose, with YOUR key. The hub
-  still initiates nothing: nothing inside it makes that call, no timer runs, and
-  with nothing scheduled it never fires. Your provider sees the text of your open
-  items, so that page says so in those words rather than skipping it. Off until
-  you turn it on, and deleting the section turns it back off.
+- **This release makes ZERO outbound calls.** Not one, and there is no
+  exception. The hub sends nothing about you anywhere, and we hold none of your
+  data, because there is nowhere for it to go: the database lives in a folder on
+  your machine and it belongs to you. There is no server on our side, and there
+  never has been.
 - **Local only.** It listens on `127.0.0.1`, which means this machine and
   nothing else, until you decide otherwise. There is no login, which is safe
   exactly while that stays true, so reaching it from another device means a
@@ -123,8 +112,9 @@ answer is not "have your AI edit the source": updates here are a plain
 - **The promise is enforced mechanically, because a promise in a README is worth
   nothing.** A pre-commit gate blocks any non-loopback address, any
   network-capable import and any shell-out to curl or wget in the shipped code,
-  unless the line carries an explicit marker and a written reason. There is
-  currently one such marker in the whole tree, and it is the email digest.
+  unless the line carries an explicit marker and a written reason. Every marked
+  line in this repo today is loopback: the hub talking to its own two sidecars on
+  this machine.
 - **The update check is NOT BUILT YET.** The `update` setting exists and the code
   that would use it does not. When it lands, once a day it will ask GitHub
   whether a newer release exists, send no identifiers and nothing about your
@@ -245,10 +235,6 @@ Five settings worth knowing about up front:
   code, which is why it needs a second process, a deliberate step to enable, and
   a network you trust. macOS and Linux, because it keeps sessions alive with
   tmux.
-- **`email`** is **off**. Switched on, a command you schedule yourself emails you
-  what is waiting, through a provider you choose, with your own key. It is the
-  only outbound path in the product and the key never goes in this file. See
-  [docs/email-digest.md](docs/email-digest.md).
 
 ## Not built yet
 
@@ -263,7 +249,7 @@ a date.
 | [More than one person](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20more%20than%20one%20person&body=I%20want%20this.) | The hub is single user today, and that is stated up front rather than implied away. |
 | [The update check](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20the%20update%20check&body=I%20want%20this.) | The one network call described above. The setting exists; the code that would use it does not. Updating today is `git pull`. |
 | [Windows](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20Windows&body=I%20want%20this.) | This release is macOS and Linux. The terminal needs a non-tmux path and browser discovery needs Windows locations. See [Platforms](#platforms). |
-| [SMTP for the email digest](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20SMTP%20for%20the%20email%20digest&body=I%20want%20this.) | The digest speaks to one provider over one HTTPS request, which is why it costs no dependency. SMTP would need a mail library in the tree. |
+| [An email digest](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20an%20email%20digest&body=I%20want%20this.) | Being emailed what is waiting while you are away from the machine. It was built and then cut from this release, because zero outbound calls is a stronger promise than one with a footnote, and nobody had asked for it yet. |
 
 Each link opens a prefilled issue. What gets asked for gets built, and reactions
 on those issues are the only vote count there is. The same list is in the hub, at
@@ -273,15 +259,11 @@ the bottom of TODAY.
 
 [Open an issue.](https://github.com/adetwiler/attention-hub/issues/new) Say what
 you did, what happened, and what you expected. The exact words a surface put on
-your screen are worth more than a description of them, and a
-`hub digest --dry-run` or a config with the paths in it is worth more again.
+your screen are worth more than a description of them.
 
 That link is in the hub too, at the bottom of the SETUP page. It is the only
 feedback channel there is: nothing in this product reports anything to anyone, so
 if you do not say it, nobody knows it.
-
-**Do not paste your API key.** Nothing here asks for one, and the digest's dry
-run is written to print everything except the key for exactly this moment.
 
 ## For contributors
 
