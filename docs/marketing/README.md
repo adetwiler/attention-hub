@@ -2,33 +2,35 @@
 
 What the hub shows a stranger, and the rules for producing it.
 
-**No raw screenshots live in this repo.** The gates here read text. They cannot read a PNG,
-which makes a screenshot the one asset type that walks past every leak check you built. So
-source frames stay in a private repo and only redacted, purpose-built shots land in
-`shots/`.
+## The rule, and the failure mode on both sides of it
 
-## The rule
+A shot is eligible when it contains nothing that genuinely should not be public: real
+credentials, someone else's data, work under NDA. That is a short list, and a screenshot of
+your own machine doing your own published work is almost never on it.
 
-A shot is eligible when all three are true:
+**The gates here read text and cannot read a PNG**, so an image is the one asset type that no
+automated check inspects. That is a real structural fact and it means a human has to open the
+image and read it.
 
-1. **Nothing personal in frame.** No home paths, no real account names, no private repo or
-   project names, no client work. Same list as the CLAUDE.md public-repo rule, applied to
-   pixels.
-2. **It was produced from the manifest**, not cropped by hand from whatever was on screen.
-   `screenshots.manifest.json` is the recipe: presets, targets, and the redaction list. A UI
-   change means re-running it, not re-hunting the old framing.
-3. **The redaction was asserted, not eyeballed.** Re-scan after masking and confirm zero
-   pattern matches remain. A shot with one surviving match is not delivered.
+**It also means the judgement can fail in the expensive direction.** The first pass of this
+doc treated a maintainer's own name, home path, public project names and published creative
+work as leaks, and declared a ready set of screenshots unshippable. Every one of those was
+wrong, and the cost was real: work blocked, and the owner made to justify his own public
+material twice. **Over-classifying is a failure, not a safe default.** Open the image, read
+what is actually in it, and name only what would genuinely harm someone.
 
-## Produce them against the demo profile, not a real one
+Where a screenshot does carry something that must not ship, replace the content and re-shoot
+rather than blurring it. A blurred rectangle sits exactly where the interesting content was.
 
-The hub is local and config-driven, so the honest way to get marketing shots is a seeded demo
-config: generic profiles, believable queued items including one real question, and a project
-name that belongs to nobody. That beats blurring a live wall, where the blur lands exactly on
-the content that was supposed to prove work is happening.
+## The manifest is for repeatability, not secrecy
+
+`screenshots.manifest.json` records presets, targets and framing so that when the UI moves,
+one recipe re-cuts the whole set at identical sizes instead of somebody re-hunting the old
+composition by eye. Its redaction block is a backstop for the demo-profile path, not a
+prerequisite for shipping a shot.
 
 The `marketing-screenshots` standard covers the capture loop itself (drive the running app,
-frame the element, redact, assert, save at the preset size).
+frame the element, save at the preset size).
 
 ## The asset set
 
@@ -46,16 +48,15 @@ A5 doubles as the GitHub social preview, which crops to 2:1. Compose so the need
 survives losing the top and bottom thirds; the current framing puts it in a corner a 2:1 crop
 can clip.
 
-## Reference frames
+## Source frames
 
-Three quad-wall captures from 2026-07-29 proved the framing works and are the composition
-reference for the set above. They are unredacted, so they live in a private repo along with
-the full plan, the derived crops at size, the placement table and the redaction map. The
-maintainer's own notes hold the path; it is deliberately not written here, for the same
-reason the leak gate keeps its denylist out of the tree.
+Three quad-wall captures from 2026-07-29 are the source for the set above and are cleared for
+use as-is. They live with the derived crops, the placement table and the full plan in the
+maintainer's private working repo, which is where the originals are backed up; the path is in
+his own notes rather than here.
 
 ## Open
 
-Owner call pending: re-shoot against a seeded demo profile (recommended, and it can ride along
-with the Claude-in-Chrome release walk that is already required) or blur the reference frames
-and ship sooner. Tracked in [OPEN.md](../../OPEN.md).
+One item, and it is a preference rather than a risk: the source frames show four account tags,
+and the maintainer's own note says hold that detail until he has used the hub longer. Tracked
+in [OPEN.md](../../OPEN.md).
