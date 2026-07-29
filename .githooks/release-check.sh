@@ -96,6 +96,34 @@ if command -v node >/dev/null 2>&1; then
       if (m === null) { console.error("could not find the default port constant in " + file); process.exit(1); }
       if (Number(m[1]) !== port) { console.error(file + " default port " + m[1] + " disagrees with hub.config.example.json bind.port " + port); process.exit(1); }
     }
+
+    // THE BROWSER SIDECAR PORT IS THE SAME PROBLEM AGAIN. It is written in three
+    // places for the same reason: the sidecar (chrome/server.mjs) boots without the
+    // TypeScript loader, so it cannot import the constant, and the example config
+    // has to show the value. A drift here means the hub probes one port while the
+    // sidecar listens on another, and the symptom is a pane that says the sidecar is
+    // not running while it is running perfectly.
+    const browserPort = raw.browser === undefined ? undefined : raw.browser.sidecarPort;
+    if (browserPort !== undefined) {
+      if (!Number.isInteger(browserPort)) { console.error("hub.config.example.json browser.sidecarPort must be a whole number"); process.exit(1); }
+      if (browserPort === port) { console.error("hub.config.example.json browser.sidecarPort must differ from bind.port, or the two servers fight over one port"); process.exit(1); }
+      const browserSources = { "src/lib/config.ts": /BROWSER_PORT_DEFAULT\s*=\s*(\d+)/, "chrome/server.mjs": /sidecarPort\s*\?\?\s*(\d+)/ };
+      for (const [file, re] of Object.entries(browserSources)) {
+        const m = re.exec(fs.readFileSync(file, "utf8"));
+        if (m === null) { console.error("could not find the sidecar port default in " + file); process.exit(1); }
+        if (Number(m[1]) !== browserPort) { console.error(file + " sidecar port " + m[1] + " disagrees with hub.config.example.json browser.sidecarPort " + browserPort); process.exit(1); }
+      }
+    }
+
+    // THE BROWSER PROFILE LIST MUST SHIP EMPTY. It names data directories and
+    // debugging ports on a machine we know nothing about, and a shipped row would be
+    // invented data in the file a fresh clone actually reads: the pane would offer a
+    // profile that does not exist. The worked example lives beside it under a $ key,
+    // which the loader ignores.
+    if (raw.browser !== undefined && Array.isArray(raw.browser.profiles) && raw.browser.profiles.length > 0) {
+      console.error("hub.config.example.json browser.profiles must ship EMPTY (use $profilesExample for the worked example)");
+      process.exit(1);
+    }
   '; then :; else say_fail "hub.config.example.json failed its shape check"; fi
 fi
 

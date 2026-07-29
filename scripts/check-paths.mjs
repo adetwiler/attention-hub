@@ -5,7 +5,9 @@
 // pre-commit hook, and .githooks/release-check.sh. (Unit tests live in test/
 // and run on node:test, which ships with Node and costs no dependency.)
 //
-// It scans src/ and scripts/ for:
+// It scans src/, scripts/ and chrome/ (the browser sidecar, which is shipped
+// code that launches a browser and therefore has every reason to be tempted by
+// a hardcoded path) for:
 //   1. absolute home paths on any of the three platforms,
 //   2. absolute volume roots,
 //   3. port numbers written into code instead of read from hub.config.json.
@@ -17,7 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const ROOTS = ["src", "scripts"];
+const ROOTS = ["src", "scripts", "chrome"];
 const EXTENSIONS = new Set([".ts", ".tsx", ".mjs", ".js", ".jsx", ".css"]);
 
 // A line carrying this marker is a deliberate, reviewed exception.

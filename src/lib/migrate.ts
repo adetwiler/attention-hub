@@ -66,6 +66,33 @@ export const MIGRATIONS: readonly string[] = [
     value      TEXT NOT NULL,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );`,
+
+  // 2: THE BROWSER PANE's handshake. The hub mints a single-use, short-lived row
+  // here and the sidecar (chrome/server.mjs) burns it on connect, so one
+  // database is the single source of truth for what was granted and restarting
+  // either side cannot desynchronise them.
+  //
+  // THE GRANT LIVES IN THE ROW, NEVER IN THE URL. `profile` says which browser
+  // the socket may drive, so a token that leaks out of a URL bar or a log
+  // cannot be re-pointed at a different signed-in profile.
+  //
+  // Deliberately absent: any record of what was BROWSED. The ledger records
+  // that a pane was opened on a profile and nothing else. A history table here
+  // would be a tracking log of the user's own machine, which is the one thing
+  // this product promises never to keep.
+  //
+  // This was authored as index 1 in a parallel worktree, at the same time as the
+  // settings table above was authored as index 1 in another. The index IS the
+  // version, so the second to merge gets renumbered, and that is only safe
+  // because nothing has shipped. See docs/claude/parallel-agent-builds.md.
+  `CREATE TABLE browser_tokens (
+    token      TEXT PRIMARY KEY,
+    profile    TEXT NOT NULL,
+    pane       TEXT NOT NULL DEFAULT '',
+    url        TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  );`,
 ];
 
 /** One row of PRAGMA foreign_key_check: a reference with no parent. */
