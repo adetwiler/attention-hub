@@ -506,12 +506,13 @@ setInterval(() => {
   for (const live of sessions) {
     const minutes = live.pty === null ? 1 : Number.isInteger(live.idleMinutes) ? live.idleMinutes : idleMinutes;
     if (now - live.lastActive < minutes * 60 * 1000) continue;
+    const spell = `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
     send(live.ws, {
       type: "status",
       state: "idle",
       message: live.tmux
-        ? `dropped after ${minutes} minutes with nothing typed. The session is still running, so attaching again picks it up exactly where it was.`
-        : `dropped after ${minutes} minutes with nothing typed.`,
+        ? `dropped after ${spell} with nothing typed. The session is still running, so attaching again picks it up exactly where it was.`
+        : `dropped after ${spell} with nothing typed.`,
     });
     live.ws.close(1000, "idle");
   }

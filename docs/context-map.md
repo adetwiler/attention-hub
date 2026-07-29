@@ -17,6 +17,9 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [docs/adr/0001-mit-license-cc0-setup-prompt.md](adr/0001-mit-license-cc0-setup-prompt.md) | Why MIT, why CC0 on the setup prompt, why attribution is a product feature and not a licence term. | internal |
 | [docs/adr/0002-hub-architecture.md](adr/0002-hub-architecture.md) | Before changing the spine, or when a decision looks arbitrary: local-only, no telemetry, config-first, ledger-as-history, user-space separation, multi-adapter. | internal |
 | [docs/adr/0003-tab-seam-over-module-system-for-v1.md](adr/0003-tab-seam-over-module-system-for-v1.md) | You are about to build the extension story, or wondering why a `tabs` array exists next to a planned module system. The three marketing beats, the seam v1 ships, and why the setup wizard is a prompt. | internal |
+| [docs/adr/0004-pane-content-contract.md](adr/0004-pane-content-contract.md) | You are adding a kind of pane to the wall, or wondering why the content registry is a `Record` over a union. | internal |
+| [docs/adr/0005-terminal-sidecar-and-its-trust-model.md](adr/0005-terminal-sidecar-and-its-trust-model.md) | Before changing anything about the terminal: why it is a separate process, why tmux, why the grant, and the two rules about it that are permanent. | internal |
+| [docs/terminal.md](terminal.md) | You are switching the terminal on, running the sidecar, or about to touch it. Setup, the security model, and four traps that all fail silently. | public |
 | [docs/claude/architecture.md](claude/architecture.md) | You are writing code in `src/`. How the files fit, where your slice plugs in, and the traps already paid for. | internal |
 | [docs/claude/parallel-agent-builds.md](claude/parallel-agent-builds.md) | You are about to start a slice while someone else is mid-slice, or you are dispatching more than one agent at this repo. The claim label, worktrees, gate install, and who owns the shell files. | internal |
 | [test/README.md](../test/README.md) | You are adding a test, or wondering why there is no test framework dependency. | internal |
@@ -37,6 +40,10 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | `src/lib/stream.ts` | The one snapshot every live surface renders. |
 | `src/lib/sse.ts` | The stream route helper and the `?once=1` contract. |
 | `src/components/useEventStream.ts` | One EventSource per page, with the poll fallback. |
+| `src/lib/terminal.ts` | The terminal module's rules and its manifest. No I/O, so every refusal is tested. |
+| `src/lib/terminalGrants.ts` | The grant store: mint, single-use redeem, prune. |
+| `src/components/paneContent.tsx` | The pane content registry. One row per kind, exhaustive by type. |
+| `pty/` | The terminal sidecar. Its OWN package, so a native module never reaches the app bundle. |
 | `src/app/` | Rooms and API routes. |
 | `scripts/next-run.mjs` | The ONE place Next.js is launched. Where the telemetry switch lives. |
 | `scripts/` | Start, build, and the config-first check. Dependency free. |
