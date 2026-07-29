@@ -24,18 +24,6 @@ unaffected; what waits is Andrew becoming the first template install.
 
 Full record + the reasoning: `~/.claude/memory/project_attention_hub_giveaway.md`.
 
-**0a-i. README DRIFT, caught by the same rule that created it (2026-07-29).** The
-README's opening paragraph says *"when you want the hub itself to do something new,
-your own AI builds it."* That is self-build (#5), which is `post-v1` and blocked. It
-is stated in the present tense on the first screen a stranger reads, which is exactly
-the failure ADR-0003 exists to prevent: never market a capability that has not
-shipped. The "Early" callout below it lists what is missing but does not retract this
-sentence, and a reader who hits the gap trusts the privacy claims less too.
-
-**Fix it when the tab seam lands (#14), in the same pass**, so the opening describes
-what beat 2 actually ships: adding a tab in config, no code. Self-build moves to the
-"not built, tell us if you want it" list with the board, teams and the module system.
-
 **0a. v1 GAINED A SIXTH PIECE OF WORK on 2026-07-29: the tab seam.** Grilled and
 accepted as [ADR-0003](docs/adr/0003-tab-seam-over-module-system-for-v1.md). The
 marketing leads with a concrete hero and makes "then make it yours" the second
@@ -53,6 +41,37 @@ the night fleet's milestone count moved 5 to 6 to match. Two things ride with it
 built screen, and the docs stop at the config seam and say plainly why, since
 `user/` does not ship until #7 and `git pull` updates would collide with source
 edits.
+
+**BUILT on branch `slice-14-tab-seam` (2026-07-29), not merged.** The `tabs` array,
+the nav entries, `/tab/<slug>`, the not-built list, `prompt.txt`, and
+[docs/tabs.md](docs/tabs.md). The three calls it left are 0a-ii, immediately below.
+
+**0a-ii. THE TAB SEAM LANDED (slice 14, 2026-07-29), and three calls in it are
+mine.** All three are cheap to change now and none of them blocks anything.
+
+- **The setup prompt lives at `prompt.txt`, as ONE copy, and nothing embeds it.**
+  It is the whole-config prompt (it interviews you about the hub name, dataDir,
+  port, adapters, profiles, tabs and the browser pane, then writes
+  `hub.config.json` and refuses to touch source), because that is what the setup
+  page needs and #8 owns that page. The filename is what the reference gate kit
+  expects. **The prompt-sync gate is still owed by #8** and now has a real file to
+  compare the embedded copy against: port it in the SAME commit that embeds it,
+  per the row further down. Nothing in the app duplicates the prompt text: the
+  `/tab` page names the file instead, so there is one copy and nothing to sync
+  yet.
+- **The "not built" rows link to PREFILLED NEW ISSUES, not to the existing slice
+  issues.** That is literally what #14 asked for, and a new issue is a stranger
+  saying "I want this" in their own words. The cost: reactions scatter across
+  duplicates instead of gathering on one canonical row. If you would rather each
+  row pointed at its tracking issue (#3 board, #5 self-build, #7 modules) so the
+  reaction count is in one place, it is a one-line change per row, in
+  `src/components/NotBuilt.tsx` and the README table. Your call, and it turns on
+  whether you want strangers reading internal slice text.
+- **`/tab` exists as a small page of its own.** The honest empty state needed
+  somewhere to go: a dim "+ TAB" in the nav with only a tooltip is a dead end on a
+  touch screen. It explains the seam, lists your tabs, and points at `prompt.txt`
+  and `docs/tabs.md`. **It is not the setup page**, and it does not try to be one.
+  If #8's setup page absorbs it, delete it and point the nav there instead.
 
 **0b. Marketing shots are CLEARED, with one preference left.** Three quad-wall captures
 (2026-07-29) are the source set and need no redaction: the maintainer's name and home path
@@ -218,12 +237,33 @@ released line is "Attention Hub, free and open source, by Andrew Detwiler /
 buildwithamemory.com" with the link. It is deliberately not written yet because
 slice 8 owns the release copy.
 
-**The prompt-sync gate (slice 8).** The reference gate kit compares the README's
-embedded prompt against `prompt.txt` on every commit that touches either. This
-repo's setup prompt does not exist until slice 8, and its sync point is the
-collapsed prompt card in the buildwithamemory mock. When that file lands, port
-the gate in the SAME commit. Two drifting copies of the hero prompt is the most
-embarrassing inaccuracy this repo could ship.
+**The prompt-sync gate (slice 8), and `prompt.txt` now EXISTS.** The reference
+gate kit compares the README's embedded prompt against `prompt.txt` on every
+commit that touches either. Slice 14 wrote `prompt.txt` (the tab seam needs the
+prompt, because the seam is config and the prompt is how a non-developer writes
+config), and deliberately embedded it NOWHERE: the README and the `/tab` page name
+the file rather than quoting it, so today there is exactly one copy and nothing
+can drift. **The moment slice 8 embeds it** in the setup page, the site copy, or
+the collapsed prompt card in the buildwithamemory mock, port the gate in the SAME
+commit. Two drifting copies of the hero prompt is the most embarrassing inaccuracy
+this repo could ship.
+
+**The module system (#7) MUST NOT ORPHAN TABS.** Recorded in four places on
+purpose, because it is an obligation and not an intention: the `HubTab` type in
+`src/lib/config.ts`, the head of `src/lib/tabs.ts`, the slice-7 row in
+[docs/claude/architecture.md](docs/claude/architecture.md), and the closing
+section of [docs/tabs.md](docs/tabs.md). A tab is a supported surface from day
+one, so a release that hands someone modules and quietly stops reading their
+`tabs` breaks the config they wrote on their first day, on the update that was
+meant to give them more. Grow the shape, never replace it.
+
+**The tab seam's Chrome walk is OWED, and it needs you (slice 14).** Everything a
+folder tab does is covered by `test/tabs.test.mjs` and was exercised by hand, but a
+`url` tab renders through the browser pane, and the pane's connect step is
+deliberately human (see item 11). The walk to do, once a profile is seeded: add
+`{ "name": "YouTube", "url": "https://youtube.com" }` to `tabs`, restart, click
+YOUTUBE in the nav, and confirm the pane opens on that address rather than on the
+configured home page.
 
 **A CI backstop (unassigned).** `--no-verify` bypasses the local hook, and the
 release check is manual. A GitHub Actions job running

@@ -5,16 +5,18 @@ A free command center for AI-assisted work that runs on your own machine.
 It watches the work you and your agents have in flight, and tells you when
 something actually needs you. Honestly, you can do all of this from a terminal.
 The hub is for the moments between sessions: an agent hits a question and you
-answer it in one click, your work in one place, and when you want the hub itself
-to do something new, your own AI builds it.
+answer it in one click, your work in one place, and the things you keep glancing
+at sitting in the nav next to it, because you added them to a config file.
 
 Free and open source, by Andrew Detwiler / [buildwithamemory.com](https://buildwithamemory.com).
 
 > **Early.** This is not the finished product. What works: TODAY, the attention
-> feed described below, the live stream, and the database under it. What does not
-> exist yet: the rooms behind BOARD, SESSIONS and JOBS, and the update check
+> feed described below, the live stream, the wall, the browser pane, tabs, and the
+> database under it all. What does not exist yet: the rooms behind BOARD, SESSIONS
+> and JOBS, the module system, the hub building itself, and the update check
 > described further down (the setting is there, the code that would use it is
-> not). What is here is honest about what is not.
+> not). [Not built yet](#not-built-yet) lists those and how to ask for one. What
+> is here is honest about what is not.
 
 ## When something needs you
 
@@ -50,6 +52,43 @@ over the same file, not a privileged one. There is an
 nothing is delayed, and when quiet lifts nothing arrives in a pile: whatever came
 in is simply on the list, oldest first. Default 22:00 to 06:00, and there is a
 switch on the card.
+
+## Make it yours
+
+Add a **tab** and it is in the nav, next to the hub's own rooms. A tab is a name
+plus what it points at: a web page, or a folder on this machine.
+
+```jsonc
+"tabs": [
+  { "name": "YouTube", "url": "https://youtube.com" },
+  { "name": "Notes",   "dir": "~/notes" }
+]
+```
+
+That is the whole job. You write no code, you clone no template, and you edit
+none of the hub's own files. Restart the hub and the tab is there. With no tabs
+configured the nav says so, and never shows you a sample one.
+
+A `url` tab opens a **real browser** on this machine and mirrors it into the page,
+so real logins work and so do sites that refuse to be framed. It needs the
+browser pane set up once. A `dir` tab lists the folder and opens what is in it
+right there, markdown rendered as markdown, and it can only ever show you what
+you pointed it at.
+
+Recipes, the exact rules, and the limits: [docs/tabs.md](docs/tabs.md).
+
+**If you would rather not edit JSON**, hand [`prompt.txt`](prompt.txt) to the AI
+command-line tool you already use. It reads `hub.config.example.json`, asks you
+what you want, and writes your config. It works with any tool, because what it
+follows is the comments in that file rather than anything about one vendor. That
+prompt is public domain (CC0), per
+[ADR-0001](docs/adr/0001-mit-license-cc0-setup-prompt.md).
+
+Tabs are the only way this version lets you add a surface. Something with **code
+of its own** is a module, it is not built yet, and
+[docs/tabs.md](docs/tabs.md#where-these-docs-stop-and-why) says plainly why the
+answer is not "have your AI edit the source": updates here are a plain
+`git pull`, so a source edit is a merge conflict waiting for you.
 
 ## Your data is yours
 
@@ -122,7 +161,7 @@ never touch your settings, your database, or anything you built yourself.
 
 **Editing the config takes effect on the next restart.**
 
-Two settings worth knowing about up front:
+Three settings worth knowing about up front:
 
 - **`bind.host`** is `127.0.0.1`, meaning this machine only. To reach the hub
   from your phone or another computer, the right answer is a private network
@@ -131,12 +170,25 @@ Two settings worth knowing about up front:
 - **`adapters`** is where you name the AI command-line tool you already use. The
   hub is not tied to any one vendor. Until you fill it in, the surfaces that
   need an agent say so instead of pretending.
+- **`tabs`** is the one above: what you want in the nav. See
+  [docs/tabs.md](docs/tabs.md).
 
-## Teams
+## Not built yet
 
-Not yet. The hub is single user today, and that is stated up front rather than
-implied away. Multi-user is being built and it is on the public roadmap. If you
-want it, say so in an issue: that is how it gets prioritised.
+Named, because they are missing. None of these exists today, and nothing below is
+a date.
+
+| Not built | What it would be |
+|---|---|
+| [The module system](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20the%20module%20system&body=I%20want%20this.) | Surfaces with code of their own, in a folder an update never touches. Tabs are the config-only version of this, and they are what ships today. |
+| [The hub building itself](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20the%20hub%20building%20itself&body=I%20want%20this.) | Describing a surface you want and having your own AI tool build it into the hub, as an action you can inspect and undo. |
+| [The board](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20the%20board&body=I%20want%20this.) | The room behind BOARD: work in flight as cards you move. |
+| [More than one person](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20more%20than%20one%20person&body=I%20want%20this.) | The hub is single user today, and that is stated up front rather than implied away. |
+| [The update check](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20the%20update%20check&body=I%20want%20this.) | The one network call described above. The setting exists; the code that would use it does not. Updating today is `git pull`. |
+
+Each link opens a prefilled issue. What gets asked for gets built, and reactions
+on those issues are the only vote count there is. The same list is in the hub, at
+the bottom of TODAY.
 
 ## For contributors
 

@@ -201,6 +201,34 @@ export interface BrowserConfig {
   profiles: BrowserProfile[];
 }
 
+/** One TAB: the v1 extension seam, and the whole of "make it yours" in this
+ * release. A name, plus what it points at. Nothing else.
+ *
+ * A tab owns no data and has no lifecycle. That is exactly what separates it
+ * from a MODULE (a surface plus its data plus whatever it needs to run, living
+ * in userDir), and it is the reason a tab can exist before the module system
+ * does. See ADR-0003 and the Tab entry in CONTEXT.md.
+ *
+ * WHOEVER BUILDS THE MODULE SYSTEM: THESE MUST KEEP WORKING. A tab is a
+ * supported surface from day one, so a release that gives someone modules and
+ * quietly stops reading their `tabs` breaks the config they wrote on their first
+ * day, on the update that was meant to give them more. Grow this shape, never
+ * replace it. docs/tabs.md states the same obligation to the reader. */
+export interface HubTab {
+  /** The address this tab lives at (`/tab/<slug>`), the React key, and the id
+   * the browser pane remembers per-tab state under. Derived from the name unless
+   * the config writes an `id`, because a seam whose promise is "a name plus what
+   * it points at" must not require anyone to invent an identifier. */
+  slug: string;
+  /** What the nav shows. Written exactly as the user typed it. */
+  name: string;
+  /** An http(s) address, rendered through the browser pane that already ships.
+   * EXACTLY ONE of url and dir is non-null: a tab points at one thing. */
+  url: string | null;
+  /** Absolute. A folder on this machine, listed and read in place. */
+  dir: string | null;
+}
+
 /** One account you work under. The key in `profiles` is its name, and the wall
  * shows one pane per profile unless `wall.panes` says otherwise. */
 export interface Profile {
@@ -258,6 +286,9 @@ export interface HubConfig {
   /** The accounts. Empty is honest: the wall says it has no panes configured. */
   profiles: Record<string, Profile>;
   wall: WallConfig;
+  /** Your tabs, in nav order. Empty is honest: the nav says no tab is configured
+   * rather than showing a sample one. */
+  tabs: HubTab[];
 }
 
 // ---------------------------------------------------------------- helpers
@@ -619,6 +650,80 @@ function parseWall(root: Record<string, unknown>, profiles: Record<string, Profi
   return { panes, paneKind };
 }
 
+/** A tab's name becomes its address in the hub, so nobody has to invent an id
+ * for a thing whose whole promise is "a name plus what it points at". Lowercase,
+ * and every run of anything that is not a letter or a digit becomes one dash. */
+function tabSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
+/** THE EXTENSION SEAM, parsed. Every message names the exact place in the file
+ * and the edit that fixes it, because the person reading it is someone who has
+ * written no code at all: adding a tab is the first thing this product asks
+ * anyone to do to their config.
+ *
+ * A tab with BOTH a url and a dir, or with NEITHER, is a mistake rather than a
+ * thing to half-honour. Picking one silently would put a surface on screen that
+ * is not the one they described. */
+function parseTabs(root: Record<string, unknown>): HubTab[] {
+  const raw = root["tabs"];
+  if (raw === undefined || raw === null) return [];
+  if (!Array.isArray(raw)) throw configError("tabs", "a list of tabs");
+
+  const taken = new Set<string>();
+  return raw.map((entryRaw, i): HubTab => {
+    const where = `tabs[${i}]`;
+    const entry = asRecord(entryRaw, where);
+
+    const name = optString(entry, "name", `${where}.name`);
+    if (name === null) throw configError(`${where}.name`, "a non-empty name (it is what the nav shows)");
+
+    const written = optString(entry, "id", `${where}.id`);
+    if (written !== null && !SLUG.test(written)) {
+      throw configError(`${where}.id`, `${SLUG_EXPECTED} (the id becomes this tab's address, /tab/${written.toLowerCase()})`);
+    }
+    const slug = written ?? tabSlug(name);
+    // A name with no letters and no digits in it cannot become an address. That
+    // includes a name written in an alphabet this rule does not cover, which is
+    // exactly what the optional `id` is for, so the message offers it.
+    if (slug === "") {
+      throw configError(
+        `${where}.name`,
+        'a name with a letter or a number in it, or an "id" next to it (the name becomes this tab\'s address)',
+      );
+    }
+    // Two tabs at one address is two tabs pointing at one page, and the second
+    // one would be unreachable. Naming the collision beats a last-one-wins shrug.
+    if (taken.has(slug)) {
+      throw configError(where, `a tab with an address of its own ("${slug}" is already taken, so give this one an "id")`);
+    }
+    taken.add(slug);
+
+    const url = optString(entry, "url", `${where}.url`);
+    const dir = optString(entry, "dir", `${where}.dir`);
+    if (url !== null && dir !== null) {
+      throw configError(where, 'either a "url" or a "dir", never both (a tab points at one thing)');
+    }
+    if (url === null && dir === null) {
+      throw configError(where, 'either a "url" (a web address) or a "dir" (a folder on this machine)');
+    }
+    if (url !== null && !/^https?:\/\//.test(url)) {
+      throw configError(`${where}.url`, "a web address starting with http:// or https://"); // hub-no-request: names the two schemes a tab may carry. Nothing is fetched here.
+    }
+
+    return {
+      slug,
+      name,
+      url,
+      dir: dir === null ? null : resolvePath(dir),
+    };
+  });
+}
+
 // ---------------------------------------------------------------- load
 
 let cached: HubConfig | null = null;
@@ -670,6 +775,7 @@ export function loadConfig(): HubConfig {
     // The wall validates pane.profile against the profiles above, so it is
     // parsed last and takes them as an argument rather than re-reading the file.
     wall: parseWall(root, profiles),
+    tabs: parseTabs(root),
   };
   return cached;
 }

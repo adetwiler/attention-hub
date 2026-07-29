@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import Shell from "@/components/Shell";
 import { loadConfig } from "@/lib/config";
 import { safeLedgerSnapshot } from "@/lib/stream";
+import { tabsViewWith } from "@/lib/tabs";
 import { hubVersion } from "@/lib/version";
 import "./globals.css";
 
@@ -27,10 +28,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     // the room says so honestly on the page itself
   }
 
+  // The user's own tabs, in the nav on every page. Never throws, for the same
+  // reason the name above falls back: the nav is on the page that explains the
+  // mistake, so it cannot be the thing that takes that page down.
+  const tabs = tabsViewWith(loadConfig);
+
   return (
     <html lang="en">
       <body>
-        <Shell hubName={hubName} version={hubVersion()} initial={safeLedgerSnapshot()}>
+        <Shell
+          hubName={hubName}
+          version={hubVersion()}
+          initial={safeLedgerSnapshot()}
+          tabs={tabs.tabs}
+          tabsProblem={tabs.problem}
+        >
           {children}
         </Shell>
       </body>
