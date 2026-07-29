@@ -82,10 +82,9 @@ passes a non-empty check while protecting nothing is worse than no gate. It
 looks armed. Confirm you are happy with a stranger meeting this on their first
 commit, or say the word and contributors get a marker-file exemption.
 
-**3. `marked` is installed and nothing uses it yet.** It is in the slice-1
-dependency list from the issue, but the first consumer is slice 7's markdown
-module. It sits in a repo that preaches a lean dependency list. Keep it (one
-fewer install step later) or drop it until slice 7 needs it? I kept it.
+**3. RESOLVED by slice 2: `marked` now has a real consumer.** It renders a
+markdown file an attention item links to, inside the hub, via
+`src/lib/markdown.ts`. Keeping it was the right call.
 
 **4. No icons, anywhere, on purpose.** The house rule is inline Lucide SVG and
 never emoji. The approved mock's hub screenshot uses coloured dots and no icons,
@@ -119,7 +118,44 @@ The consequence to know about: live pickup of a user's own modules and pages is
 a dev-mode property, so slice 7 has to either make module changes work in
 production or say plainly that they need a restart.
 
-**8. The browser pane needs YOU once, and it cannot be done without you (slice
+**8. The attention feed does not rotate, and slice 2 left it that way on
+purpose.** One line per item plus one per answer, so it grows slowly, and
+everything answered is history. The contract says so out loud
+([docs/attention-feed.md](docs/attention-feed.md)) with the honest advice to move
+old lines by hand. Worth revisiting only if a real install ever notices; a
+rotation scheme that splits the file is a new way for an answer to go missing.
+
+**9. The Chrome walk for slice 2 is OWED, and it needs you.** The release gate
+(the plan node, 2026-07-29) is a Claude-in-Chrome end-to-end walk, and the connect
+step is deliberately human: the extension needs you to pick the browser. The walk
+to do: file an item from a terminal, watch it toast live, answer it, confirm
+`hub get <id>` reads the answer back, then resolve a review ask and see the
+closing row appended. Everything except the in-browser half is verified by the
+suite and by hand (see the comment on issue #2).
+
+**10. RESOLVED, and it was never the product: the Turbopack NFT warning is an
+artifact of building inside a nested worktree.** `Encountered unexpected file in
+NFT list` appeared on the slice-2 branch and not on `main`, which looked like the
+slice had introduced it. It had not, and the first comparison was not apples to
+apples: the branch was built inside a worktree under `.claude/worktrees/` while
+`main` was built in the normal checkout.
+
+The measurement that settled it: the SAME slice-2 commit, checked out to a
+worktree at a non-nested path and built there, produces **zero** warnings. The
+warning names the worktree's own `next.config.ts`, which is the tell. Building
+under `.claude/` makes Turbopack's file tracing walk up into a directory that is
+inside the project it is tracing, so it reports that the whole project was traced
+unintentionally.
+
+Nothing to fix in `src/`, and the removed `turbopackIgnore` markers were correctly
+removed: they were never going to help. The lesson, which applies to every agent
+worktree, is in
+[docs/claude/parallel-agent-builds.md](docs/claude/parallel-agent-builds.md):
+**a build warning seen only in a nested worktree is suspect until reproduced from
+a normal checkout.** Compare like with like before recording a defect in a
+public-bound repo.
+
+**11. The browser pane needs YOU once, and it cannot be done without you (slice
 13).** Three things, all human by nature:
 
 - **Seed a real profile.** `node scripts/seed-browser-profile.mjs` reads your
@@ -136,7 +172,7 @@ production or say plainly that they need a restart.
   marked `untested` and the UI says so. Nothing marks the browser pane that way on
   Linux right now, and one honest sentence in the README would.
 
-**9. Two decisions in slice 13 are mine, and both are cheap to change now.**
+**12. Two decisions in slice 13 are mine, and both are cheap to change now.**
 
 - **`browser.profiles` is a SECOND list next to the top-level `profiles`.** One is
   accounts (a label and your AI tool's config directory), the other is browser data
@@ -150,16 +186,14 @@ production or say plainly that they need a restart.
 
 ## Owed by a later slice, recorded so it cannot be forgotten
 
-**The attention feed (#2) ports TVG HQ's 2026-07-29 honesty + read-in-place fixes,
-not the surfaces as they were the day the port was scoped.** Upstream (the private
-hub, commit `cbf76fd`) after the owner hit both in use: (1) a third `agent-notice` kind in the
-needs-you model - a question row with no options and no "?" is a REPORT (night-runner
-REDs), labeled "reports"/REPORT, never "asks you", and it never takes over the wall;
-(2) `AttentionLink` - a non-http link on an attention item is a file path and opens
-IN the hub (the show/float mechanism) instead of a browser tab; (3) the float window
-renders `.md` as markdown (marked + the shared doc styles, frontmatter stripped),
-which is also the first real consumer for the installed `marked` (call #3 above).
-Port all three with the feed or the stranger inherits the complaint verbatim.
+**DONE in slice 2: the three 2026-07-29 honesty + read-in-place fixes are ported.**
+(1) `agent-notice` is in the CONTRACT, not just the display layer: a row with no
+options and no question mark is a REPORT, labelled REPORT, never "asks you", and a
+writer can declare it explicitly. (2) A non-http `link` is a file path and opens
+IN the hub. (3) The float window renders `.md` as markdown, frontmatter stripped,
+which is also `marked`'s first consumer. The one upstream behaviour NOT ported is
+"a notice never takes over the wall", because in this repo the toast stack is
+capped at three and dismissible and there is nothing for an item to take over.
 
 **The update check is not built (slice 6).** The config section, the README
 bullet and `CONTEXT.md` all say so in as many words. When the code lands, all

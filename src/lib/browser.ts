@@ -9,7 +9,7 @@
 // X-Frame-Options and frame-ancestors are the SITE's headers and no browser is permitted to
 // override them, so a framed pane could show almost nothing. A screencast frames nothing: it
 // carries a picture of a real tab. Full reasoning and the measurements:
-// docs/browser-pane.md and docs/adr/0005-browser-pane-mirrors-a-real-browser.md.
+// docs/browser-pane.md and docs/adr/0006-browser-pane-mirrors-a-real-browser.md.
 //
 // THE CONSTRAINT THAT SHAPES EVERYTHING: since Chrome 136, --remote-debugging-port is IGNORED
 // when the data directory is the default one, deliberately, because remote debugging can read

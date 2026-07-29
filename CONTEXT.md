@@ -16,6 +16,35 @@ Attention items are NOT notifications. A notification tells you something
 happened. An attention item is a thing you can act on, and it stays until you
 act on it.
 
+**The feed.** The append-only JSONL file attention items live in, and the
+product's public integration surface: anything on the machine that can append a
+line can file an item and read the answer back. Its path comes from
+`attention.feed` in config and defaults inside `dataDir`. The full contract is
+[docs/attention-feed.md](docs/attention-feed.md); the reasoning is
+[ADR-0005](docs/adr/0005-attention-feed-append-only-jsonl.md).
+
+**Ask row / answer row.** The two shapes in the feed. An ask row opens an item;
+an answer row carries the same `id` and closes it. **Answers APPEND, and no row
+is ever rewritten**, which is what lets a writing session and the reading hub
+share the file with no lock. The first ask row for an id defines the item, and
+the first closing row is the answer of record.
+
+**Notice.** The third kind of item (`agent-notice`), and a distinction worth the
+word: a REPORT filed through the same channel, which wants triage rather than an
+answer. It is never labelled as asking you. A wall of rows claiming to ask you
+things that are not asking you is how a needs-you surface stops being believed.
+
+**Quiet hours.** One global flag (`manual` OR the schedule) that **suppresses
+surfaces and never data.** While it is on, nothing pops up, the queue fills
+normally, and when it lifts nothing back-fires: the morning list is simply the
+list. Live state, so it lives in the settings table and not in config. Default
+22:00 to 06:00 local, working with nothing configured.
+
+**Arrival.** An item that appeared since the last snapshot. "New" is decided in
+one place (`useArrivals`) with two halves: the FIRST snapshot is a baseline, never
+a storm, and an item is new exactly once. Opening the hub onto nine waiting items
+must not fire nine notifications.
+
 **The ledger.** The `action_ledger` table. The single, complete record of every
 mutation the hub has performed: who, what verb, against what target, with what
 result, producing which artifacts and which commits. Not a log. The jobs strip,

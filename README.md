@@ -10,11 +10,46 @@ to do something new, your own AI builds it.
 
 Free and open source, by Andrew Detwiler / [buildwithamemory.com](https://buildwithamemory.com).
 
-> **Early.** This is the running skeleton, not the finished product. TODAY
-> renders, the database and the live stream work, and the rooms behind BOARD,
-> SESSIONS and JOBS are not built yet. Neither is the update check described
-> below: the setting is there, the code that would use it is not. What is here
-> is honest about what is not.
+> **Early.** This is not the finished product. What works: TODAY, the attention
+> feed described below, the live stream, and the database under it. What does not
+> exist yet: the rooms behind BOARD, SESSIONS and JOBS, and the update check
+> described further down (the setting is there, the code that would use it is
+> not). What is here is honest about what is not.
+
+## When something needs you
+
+Anything on your machine can put something in front of you and read your answer
+back. There is nothing to install for it and no port to reach: it appends a line
+to a file, and the hub notices within a second and a half.
+
+```
+hub ask "Two rows collide on the same key. Keep the newer one?" --option "keep newer" --option "stop"
+hub review "The migration touches a shipped table" --link notes/migration.md
+```
+
+(`npm link` once in the hub directory puts `hub` on your PATH. Or run
+`node scripts/hub.mjs` and skip that step.)
+
+It shows up at the top of TODAY and pops up wherever you are in the hub. You
+answer it there, in one click, and the session that asked reads the answer back:
+
+```
+answer=$(hub ask "Which one?" --option a --option b --wait)
+```
+
+The hub does not have to be running when something files a question. One filed at
+3am is waiting when you open it, which is the case that matters.
+
+**Anything can write to it.** The file format is documented in
+[docs/attention-feed.md](docs/attention-feed.md), and a shell one-liner or six
+lines of Python is a perfectly good client. The `hub` command is a convenience
+over the same file, not a privileged one. There is an
+[AI-session skill](.claude/skills/README.md) that ships with the hub too.
+
+**Quiet hours** suppress the pop-ups and nothing else. The list is never filtered,
+nothing is delayed, and when quiet lifts nothing arrives in a pile: whatever came
+in is simply on the list, oldest first. Default 22:00 to 06:00, and there is a
+switch on the card.
 
 ## Your data is yours
 

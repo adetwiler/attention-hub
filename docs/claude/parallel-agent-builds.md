@@ -83,6 +83,27 @@ the exact failure `CLAUDE.md` forbids. From then on, parallel slices that need
 schema either take an assigned index up front, or one of them lands first and the
 other rebases onto it.
 
+## A build warning seen only in a worktree is suspect
+
+Agent worktrees here live under `.claude/worktrees/`, which is INSIDE the project
+being built. That makes Turbopack's file tracing walk up into the enclosing
+project and report `Encountered unexpected file in NFT list`, naming the
+worktree's own `next.config.ts`. It looks exactly like a real tracing bug
+introduced by whatever slice you happen to be building.
+
+It cost a round: slice 2 recorded it as an open defect, and a first comparison
+against `main` seemed to confirm the slice had introduced it. That comparison was
+wrong, because the branch was built in a nested worktree and `main` was built in
+the normal checkout. **Compare like with like.** The same slice-2 commit, checked
+out to a worktree at a path outside the repo and built there, produces zero
+warnings.
+
+So: before recording any build warning as a defect, reproduce it from a
+non-nested checkout. `git worktree add --detach <path-outside-the-repo> <ref>`
+plus `npm ci` is the whole measurement, and it is cheaper than the guessing it
+replaces. Recording a phantom defect in a public-bound repo is worse than not
+noticing it, because the next person budgets real time against it.
+
 ## Landing the work
 
 Branch per slice, pushed to origin. No agent merges to `main` and no agent

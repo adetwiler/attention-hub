@@ -65,6 +65,21 @@ over months. It also guarantees that BROKEN IS NOT EMPTY: `safeLedgerSnapshot()`
 never throws, but a database it cannot read comes back with `degraded` set and
 logged once, never as a convincing empty hub.
 
+**`src/lib/feed.ts`** guarantees that the public contract has ONE
+implementation, and that it can be tested without the app. It imports nothing at
+all, exactly as `migrate.ts` imports only a type, which is what lets
+`test/feed.test.mjs` load it with no config, no database and no Next.js runtime.
+Everything that touches a file, a database or the ledger lives in
+`src/lib/attention.ts` instead.
+
+**`src/lib/attention.ts`** guarantees that the feed is read cheaply and reported
+honestly: the parse is cached against the file's size and mtime, a missing file is
+an honest empty queue, and a file that exists and cannot be read comes back with
+a reason that lands on `LedgerSnapshot.degraded`. It also guarantees the guard on
+opening an item's files: the browser names an ITEM, never a path, so
+`/api/attention/doc` cannot be walked into reading anything the feed was not
+already pointing at.
+
 **`src/lib/sse.ts`** guarantees the poll-fallback contract: `?once=1` returns
 the identical snapshot as plain JSON, because ONE `snapshot()` function feeds
 both branches. Unchanged snapshots emit nothing; a forced emit every
@@ -85,7 +100,7 @@ than guessed: an error turns polling on, the next event turns it off.
 
 | Slice | Plugs into | Notes |
 |---|---|---|
-| 2, attention queue | `LedgerSnapshot.attention` | The array and the `AttentionItem` type already ride the stream, so the client contract does not move. Fill the producer, render items in `AttentionCard`. |
+| 2, attention queue | BUILT. `LedgerSnapshot.attention` and `.quiet` | The producer is `src/lib/attention.ts` over the contract in `src/lib/feed.ts`. `AttentionItem` is now DEFINED by the feed and re-exported from `stream.ts`, so there is one shape and not two. |
 | 3, jobs and the supervisor | `action_ledger.job` / `pid` / `transcript` | Columns already exist in migration 0. The child process writes files; only the web process touches SQLite. |
 | 4, board | a new room + its own snapshot | Reuse `sseResponse` and `makeStreamHook`; do not hand-roll a second stream helper. |
 | 5, self-build | `runThroughLedger` + `HUB_DIST_DIR` | Building the hub inside the hub needs the scratch dist (`npm run build:check`), or the build kills the instance serving the page you are watching. |
@@ -159,3 +174,35 @@ the transaction, which is why `runMigrations` owns the loop.
 reach-it-from-anywhere advice with a proxy in front sees a page that renders and
 then updates only via the 5s poll, or not at all. `sseResponse` sets
 `x-accel-buffering: no`.
+
+**A gate marker has to sit on the LINE, not above it.** The no-telemetry hook
+reads one line at a time, so `// hub-allow-network: ...` on the line before a
+`fetch(` does not excuse it. Put the marker on the fetch line itself, even when
+that makes the line long. Cost: one rejected commit per person who assumes
+otherwise.
+
+**A `.ts` module a test loads through `loadTs()` must not import another project
+module at runtime.** Node's type stripping erases a type-only import but does not
+resolve an extensionless relative one, so the whole suite file dies with
+`ERR_MODULE_NOT_FOUND`. That is why `feed.ts` and `quiet.ts` take what they need
+as arguments rather than reaching for config or the database: `computeQuiet()`
+receives the stored settings, and `src/lib/attention.ts` is the only side that
+knows where they came from.
+
+**Two implementations of one rule need a test, not a comment.** The `hub` CLI
+cannot import TypeScript (it supports Node 20), so "where is the feed" and "what
+counts as answered" exist in both `scripts/hub.mjs` and `src/lib/`.
+`test/hub-cli.test.mjs` runs both over the same input and fails if they disagree,
+which is the same shape `test/serve-config.test.mjs` uses for the config. A
+comment asking the next person to remember is not a mechanism.
+
+**The NFT-list warning survives a `turbopackIgnore` marker when the dynamic path
+is not a `process.cwd()` join.** `src/lib/attention.ts` reads a file whose path
+came from config, and the build prints one "Encountered unexpected file in NFT
+list" warning tracing `next.config.ts` to `config.ts` to `attention.ts` to a
+route. Markers on those `statSync`/`readFileSync`/`appendFileSync` calls, and on
+the `path.join` that builds the default feed path, were tried and changed nothing,
+so they were removed rather than left in place implying they did something. The
+build SUCCEEDS and all five gates are green; what the warning costs is a slower
+trace, not correctness. Whether the warning predates this slice was not
+established (see OPEN.md), so do not assume it is new before checking `main`.

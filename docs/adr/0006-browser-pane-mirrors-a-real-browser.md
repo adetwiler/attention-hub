@@ -1,4 +1,4 @@
-# ADR-0005: The browser pane mirrors a real browser instead of framing a page
+# ADR-0006: The browser pane mirrors a real browser instead of framing a page
 
 - **Status:** accepted
 - **Date:** 2026-07-29

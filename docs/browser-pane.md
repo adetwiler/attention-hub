@@ -3,7 +3,7 @@
 A pane that holds a real browser, mirrored in over the Chrome DevTools Protocol,
 with your clicks and keystrokes forwarded back to it.
 
-Read [ADR-0005](adr/0005-browser-pane-mirrors-a-real-browser.md) for WHY it is
+Read [ADR-0006](adr/0006-browser-pane-mirrors-a-real-browser.md) for WHY it is
 shaped this way (an iframe cannot show most of the web, and the hub can never
 drive the browser you have open). This file is HOW it works and, mostly, the
 traps. Every trap below was measured, and each one cost real time. None of them
