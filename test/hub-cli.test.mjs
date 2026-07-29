@@ -213,3 +213,110 @@ describe("the hub CLI", () => {
     },
   );
 });
+
+// ---------------------------------------------------------------- the digest
+//
+// THE ONE OUTBOUND PATH IN THE PRODUCT (ADR-0008), and every test in here runs
+// with the network untouched, because every one of them stops before the send.
+// That is not a limitation of the suite, it is the shape of the feature: the
+// digest refuses more often than it sends, and each refusal is a promise.
+describe("the email digest", () => {
+  /** A hub root with a feed already holding one open item and one answered one. */
+  function withFeed(t, email) {
+    const dir = hubRoot(t, email === null ? {} : { email });
+    hub(dir, ["ask", "Keep the newer row?", "--option", "keep", "--from", "docs-site"]);
+    const answered = hub(dir, ["ask", "Already answered?"]).stdout.trim();
+    const feed = path.join(dir, "data", "attention.jsonl");
+    writeFileSync(
+      feed,
+      readFileSync(feed, "utf8") +
+        JSON.stringify({ id: answered, at: "2026-07-29T10:00:00.000Z", answer: "yes" }) +
+        "\n",
+    );
+    return dir;
+  }
+
+  test("OFF is the default, and the refusal names what to do", (t) => {
+    const dir = withFeed(t, null);
+    const res = hub(dir, ["digest", "--dry-run"]);
+    assert.equal(res.code, 2);
+    assert.match(res.stderr, /the email digest is off/);
+    assert.match(res.stderr, /Nothing was sent/);
+  });
+
+  test("A SECRET IN THE CONFIG IS REFUSED BY NAME", (t) => {
+    // hub.config.json is the file people paste into bug reports. A key in it
+    // leaves by the door marked "help me", so the loader and the CLI both refuse
+    // it, and both say what to do instead.
+    for (const forbidden of ["apiKey", "key", "token", "password", "secret"]) {
+      const dir = withFeed(t, { enabled: true, [forbidden]: "sk-live-should-never-be-here" });
+      const res = hub(dir, ["digest", "--dry-run"]);
+      assert.equal(res.code, 2, `${forbidden} was not refused`);
+      assert.match(res.stderr, /apiKeyFile/);
+      assert.ok(!res.stdout.includes("sk-live"), "the refusal must not echo the secret back");
+    }
+  });
+
+  test("an enabled digest missing an address refuses and names what is missing", (t) => {
+    const dir = withFeed(t, { enabled: true, to: "you@example.com" });
+    const res = hub(dir, ["digest", "--dry-run"]);
+    assert.equal(res.code, 2);
+    assert.match(res.stderr, /"email\.from"/);
+    assert.match(res.stderr, /"email\.apiKeyFile"/);
+  });
+
+  test("nothing waiting sends nothing at all", (t) => {
+    const dir = hubRoot(t, {
+      email: { enabled: true, to: "you@example.com", from: "hub@example.com", apiKeyFile: "k" },
+    });
+    const res = hub(dir, ["digest"]);
+    assert.equal(res.code, 0);
+    assert.match(res.stderr, /nothing is waiting/);
+  });
+
+  test("a dry run renders what is open, and never the key", (t) => {
+    const dir = withFeed(t, {
+      enabled: true,
+      to: "you@example.com",
+      from: "hub@example.com",
+      apiKeyFile: "secret.key",
+    });
+    writeFileSync(path.join(dir, "secret.key"), "sk-live-not-in-the-output\n");
+    const res = hub(dir, ["digest", "--dry-run"]);
+    assert.equal(res.code, 0);
+    assert.match(res.stdout, /Keep the newer row\?/);
+    assert.ok(!res.stdout.includes("Already answered?"), "an answered item is not still waiting");
+    assert.ok(!res.stdout.includes("sk-live"), "a dry run is a thing you paste into an issue");
+    assert.match(res.stderr, /nothing was sent/);
+  });
+
+  test("the mail is TABLE BASED with inline styles, and has a plain text half", (t) => {
+    // Mail clients strip stylesheets, and several common ones lay out no flex
+    // and no grid. This assertion is why the markup looks like 2004.
+    const dir = withFeed(t, {
+      enabled: true,
+      to: "you@example.com",
+      from: "hub@example.com",
+      apiKeyFile: "k",
+    });
+    const out = hub(dir, ["digest", "--dry-run"]).stdout;
+    assert.match(out, /<table role="presentation"/);
+    assert.match(out, /style="[^"]*border-left:/, "severity is a coloured border, not an icon");
+    assert.ok(!/display:\s*(flex|grid)/.test(out), "no flex and no grid in an email");
+    assert.ok(!/<link|<style/.test(out), "no stylesheet: clients strip them");
+    assert.match(out, /- \[question\] Keep the newer row\?/, "the plain text half exists");
+  });
+
+  test("an item's text is escaped, because whatever filed it wrote it", (t) => {
+    const dir = hubRoot(t, {
+      email: { enabled: true, to: "you@example.com", from: "hub@example.com", apiKeyFile: "k" },
+    });
+    hub(dir, ["ask", "<script>alert(1)</script> ok?"]);
+    const out = hub(dir, ["digest", "--dry-run"]).stdout;
+    // The plain text half carries the item verbatim, which is correct: it is
+    // text. Only the HTML half is checked, and it starts at the doctype.
+    const html = out.slice(out.indexOf("<!doctype html>"));
+    assert.match(html, /&lt;script&gt;/);
+    assert.ok(!html.includes("<script>alert(1)</script>"), "unescaped markup reached the mail body");
+  });
+});

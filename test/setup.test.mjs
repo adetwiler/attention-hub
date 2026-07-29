@@ -180,7 +180,11 @@ describe("the hero prompt has exactly one copy", { skip }, () => {
     // Add a second copy anywhere (a component, a doc, the site mock) and this
     // fails, which is the moment to either read the file instead or port a real
     // prompt-sync gate.
-    const needle = "NEVER edit hub.config.example.json";
+    // Assembled from parts so that THIS file is not a second copy of the line,
+    // which it was on the first run of this test, and which is exactly the class
+    // of thing the test is for. git grep only sees tracked files, so the first
+    // green run was green because the test was not committed yet.
+    const needle = ["NEVER", "edit", "hub.config.example.json"].join(" ");
     let out = "";
     try {
       out = execFileSync("git", ["grep", "-l", "-F", needle], { cwd: repoRoot, encoding: "utf8" });

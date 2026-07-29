@@ -154,6 +154,23 @@
     "idleMinutes": 30
   },
 
+  "email": {
+    "$comment": "THE EMAIL DIGEST, AND IT SHIPS OFF. This is the ONE outbound path in the whole product, and it exists only if you build it: a command YOU schedule (hub digest) reads your attention feed and emails YOU what is still waiting, through an email provider YOU chose, with YOUR key. The hub itself still calls nothing: no timer runs inside it, nothing under src/ sends anything, and if you never set this up nothing ever leaves this machine. It exists because a hub that can only reach you on the machine you walked away from cannot tell you anything while you are out. Read docs/email-digest.md, which says plainly what your provider can see. Turn it on by setting enabled true and filling in the three keys below.",
+    "$secret": "NEVER PUT THE KEY IN THIS FILE. There is no apiKey setting and there never will be: this is the file people paste into a bug report when something breaks, so a secret in it is a secret that eventually leaves. Put the key on its own line in its own file, chmod 600, and name that file in apiKeyFile below. The hub refuses to start if it finds apiKey, key, token, password or secret in this section, and it names the key it refused.",
+    "enabled": false,
+    "$provider": "Only \"resend\" is built. It is one HTTPS request, so the digest costs no dependency and no mail library ships in the tree. SMTP would need one, and it is a wishlist row rather than a quiet omission.",
+    "provider": "resend",
+    "$to": "Where the digest goes. Yours.",
+    "to": null,
+    "$from": "The address it comes from. Your provider has to have verified it for you, or the send is refused with their error, printed as they wrote it.",
+    "from": null,
+    "$apiKeyFile": "Path to a file holding ONLY your provider API key. A path may start with ~. Never the key itself.",
+    "apiKeyFile": null,
+    "$subject": "The stable half of the subject line. The digest appends what is waiting.",
+    "subject": "Attention Hub",
+    "$schedule": "There is no schedule here, on purpose. The hub has no scheduler and does not grow one for this: you run \"hub digest\" from your own cron or launchd, as often as you want it, which is also why quiet hours do not apply to it. Check it without sending anything first: hub digest --dry-run"
+  },
+
   "modules": {
     "$comment": "Core modules ship with the hub and stay updatable. Your own modules live in userDir. List the ones you want switched on; an empty list means the core defaults.",
     "enabled": []
