@@ -169,9 +169,15 @@ function tmuxHasSession(session) {
   return spawnSync("tmux", ["has-session", "-t", `=${session}`], { stdio: "ignore" }).status === 0;
 }
 
-/** Create the session detached, at the size of the client that asked for it.
- * -x and -y matter: a session created without them is stuck at 80x24 forever,
- * because every attach after this one deliberately ignores client size. */
+/** Create the session detached, asking for the size of the client that wants it.
+ *
+ * -x and -y are a REQUEST, not a guarantee, and this cost an hour: with
+ * window-size at its default of "latest" and a tmux server that already has
+ * clients (the normal case on a working machine), a detached session ignores
+ * -x/-y and inherits the size of another client entirely. Asked for 200x49 and
+ * measured 116x32. What actually settles the size is the FIRST attach, which is
+ * why the attach below omits -f ignore-size when it just created the session and
+ * carries it every other time. See docs/terminal.md. */
 function tmuxCreate(session, cwd, shell, cols, rows) {
   const args = ["new-session", "-d", "-s", session, "-c", cwd, "-x", String(cols), "-y", String(rows)];
   if (shell !== null) args.push(shell);
@@ -179,14 +185,30 @@ function tmuxCreate(session, cwd, shell, cols, rows) {
   return made.status === 0 ? null : (made.stderr ?? "tmux could not create the session").trim();
 }
 
-/** The visible history, so a reattach is not a blank screen. */
+/** The visible history, so a reattach is not a blank screen.
+ *
+ * THE TARGET NEEDS THE TRAILING COLON, and this one was caught by verification
+ * rather than by reading: `capture-pane -t =<session>` fails with "can't find
+ * pane", because `=name` is a session target and this command takes a PANE
+ * target. It exits 1 and prints to stderr, so the replay comes back EMPTY and
+ * the feature it exists to provide is silently gone: a reattach shows a blank
+ * screen, which is exactly the symptom the replay was written to prevent.
+ * `=<session>:` resolves to that session's active pane AND keeps the exact-match
+ * `=`, which matters because a plain name is a PREFIX match: with panes "shell"
+ * and "shell2" the sessions are hub-shell and hub-shell2, and a prefix match
+ * would replay the wrong one. Measured on tmux 3.5a. */
 function tmuxReplay(session, lines) {
   if (lines <= 0) return "";
-  const out = spawnSync("tmux", ["capture-pane", "-p", "-t", `=${session}`, "-S", `-${lines}`], {
+  const out = spawnSync("tmux", ["capture-pane", "-p", "-t", `=${session}:`, "-S", `-${lines}`], {
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
   });
-  if (out.status !== 0) return "";
+  if (out.status !== 0) {
+    // Never silent. An empty replay looks like a broken product, so if the
+    // capture itself failed, say so where a person can read it.
+    console.warn(`[pty] could not replay history for ${session}: ${(out.stderr ?? "").trim()}`);
+    return "";
+  }
   // Normalise to CRLF: a terminal emulator needs the carriage return, and
   // capture-pane emits bare newlines, so without this the replay staircases.
   return (out.stdout ?? "").replace(/\n/g, "\r\n");
@@ -374,6 +396,7 @@ async function attach(live, msg) {
   let args = ["-l"];
   let replay = "";
 
+  let sizedByThisClient = false;
   if (tmux) {
     const existed = tmuxHasSession(grant.session);
     if (!existed) {
@@ -382,14 +405,25 @@ async function attach(live, msg) {
         fail(ws, `tmux could not create ${grant.session}: ${bad}`);
         return;
       }
+      sizedByThisClient = true;
     } else {
       replay = tmuxReplay(grant.session, Number.isInteger(grant.scrollback) ? grant.scrollback : scrollback);
     }
     file = "tmux";
     args = ["attach-session", "-t", `=${grant.session}`];
-    // TRAP 2. Without this flag both clients get the smaller size and a phone
-    // destroys the desk layout. Not optional, and loud when it is unavailable.
-    if (canIgnoreSize) args.push("-f", "ignore-size");
+    // TRAP 2, and the exact rule, both halves measured on a real machine:
+    //
+    //   A session this connection just CREATED is sized BY this attach, so the
+    //   flag is left off. tmux then works out the real geometry itself, status
+    //   bar included (a 49-row client gives a 48-row window), which no explicit
+    //   resize-window arithmetic here would get right for every configuration.
+    //
+    //   A session that ALREADY EXISTS belongs to whoever is in it, so the flag
+    //   goes on and this attach cannot change its size. Without it, a phone at
+    //   60x19 collapses a 200x48 desk session to 60x18 and destroys the layout
+    //   from the pocket. Measured both ways: no flag gives 200x48 then 60x18,
+    //   flag gives 200x48 then 200x48.
+    if (canIgnoreSize && !sizedByThisClient) args.push("-f", "ignore-size");
   } else if (grant.tmux === true) {
     send(ws, {
       type: "status",
@@ -434,6 +468,8 @@ async function attach(live, msg) {
     tmux,
     idleMinutes: Number.isInteger(grant.idleMinutes) ? grant.idleMinutes : idleMinutes,
     ignoreSize: tmux ? canIgnoreSize : false,
+    /** True when THIS attach created the session, and therefore set its size. */
+    created: sizedByThisClient,
   });
 
   // TRAP 3: history first, THEN live. A reattach that starts blank looks broken
@@ -482,6 +518,19 @@ setInterval(() => {
 }, SWEEP_MS).unref();
 
 // ---------------------------------------------------------------- start
+
+// A port already in use is the most likely start-up failure (a sidecar is
+// already running, or something else took the port), and Node's default for it
+// is an unhandled 'error' event and a stack trace. Say the useful thing instead.
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`[pty] port ${port} is already in use, so this sidecar did not start.`);
+    console.error("[pty] Another copy is probably already running. Check it, or change terminal.port in your config.");
+  } else {
+    console.error(`[pty] could not listen on ${BIND_HOST}:${port}: ${err.message}`);
+  }
+  process.exit(1);
+});
 
 server.listen(port, BIND_HOST, () => {
   console.log(`[pty] listening on ws://${BIND_HOST}:${port}`); // hub-no-request: prints the local address

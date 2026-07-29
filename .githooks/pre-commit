@@ -48,12 +48,21 @@ git diff --cached --unified=0 --no-color -- . | awk '
 # product where opening a socket is legitimate, and a directory left outside the
 # scan is exactly where the next one would hide. Every line in there that really
 # does connect carries the hub-allow-network marker and a reason.
+LOCKFILES='^[^:]*(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.lock|poetry\.lock|uv\.lock):'
+
 hub_scan "$HUB_SCRATCH/added" -E '^(src|scripts|pty)/'
+printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/inroots"
+# A lockfile inside a shipped root (pty/package-lock.json) is machine generated,
+# and every dependency in it resolves from a registry URL. Those are not an
+# outbound-network shape anybody wrote, so the code slice is AUTHORED code only.
+# Without this the gate blocks its own npm install output, which is how a real
+# gate gets disabled by the people it protects.
+hub_scan "$HUB_SCRATCH/inroots" -vE "$LOCKFILES"
 printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/code"
 
 # Machine-generated lockfiles carry upstream package-author addresses. An npm
-# author's email is not your content problem, so they are out of gate (c) only.
-hub_scan "$HUB_SCRATCH/added" -vE '^[^:]*(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.lock|poetry\.lock|uv\.lock):'
+# author's email is not your content problem, so they are out of gate (c) too.
+hub_scan "$HUB_SCRATCH/added" -vE "$LOCKFILES"
 printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/authored"
 
 fail=0
