@@ -32,6 +32,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [test/README.md](../test/README.md) | You are adding a test, or wondering why there is no test framework dependency. | internal |
 | [docs/verification/](verification/) | You want to know what was actually walked, and what was not. One file per walk, newest last. | internal |
 | [docs/mocks/buildwithamemory-front-page.html](mocks/buildwithamemory-front-page.html) | You are changing the hub's look, or the site section that announces it. Owner-approved design truth, including the embedded hub screenshot the shell is built to. | internal |
+| [docs/release/site-section-copy.md](release/site-section-copy.md) | You are about to announce this, edit the site section, tag, or publish. The copy that is true today, the three places the approved mock's COPY is pre-cut, the drafted release notes, and the trigger list. Nothing in it has been applied. | internal |
 | [docs/marketing/README.md](marketing/README.md) | You are about to take, place, or publish a screenshot of the hub. The eligibility rule, the five-asset set, and why no raw frame lives in this repo. | internal |
 | [docs/marketing/screenshots.manifest.json](marketing/screenshots.manifest.json) | You are capturing shots. The recipe: demo profile, presets, targets, redaction patterns. | internal |
 | [hub.config.example.json](../hub.config.example.json) | You need to know what a setting does. Every key carries a `$comment`. | public |
