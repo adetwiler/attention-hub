@@ -21,6 +21,8 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [docs/attention-feed.md](attention-feed.md) | Something needs to file an item for the human, or you are changing how items are read or written. THE public integration surface: the JSONL rows, the three kinds, the `hub` CLI and its exit codes. | public |
 | [docs/adr/0005-attention-feed-append-only-jsonl.md](adr/0005-attention-feed-append-only-jsonl.md) | You are wondering why the feed is a file rather than an endpoint or a table, why it is polled rather than watched, or why two small rules are implemented twice. | internal |
 | [.claude/skills/README.md](../.claude/skills/README.md) | You want the AI-session side of the feed: the skill that ships with the hub, and how to use it outside this repo. | public |
+| [docs/tabs.md](tabs.md) | You are adding a tab, or you are about to tell a user how to extend the hub. The two kinds, the rules, the recipes, and the plain statement of why these docs stop at the config seam. | public |
+| [prompt.txt](../prompt.txt) | The copy-paste setup prompt: the user hands it to their own AI, which reads the config example and writes their config. ONE copy lives here, CC0 per ADR-0001. Slice 8 embeds it in the setup page and ports the prompt-sync gate in the same commit. | public |
 | [docs/adr/0006-browser-pane-mirrors-a-real-browser.md](adr/0006-browser-pane-mirrors-a-real-browser.md) | You are wondering why a whole sidecar process exists to show a web page, why it is not an iframe, or how a browser pane squares with the no-telemetry promise. | internal |
 | [docs/browser-pane.md](browser-pane.md) | You are touching `chrome/`, `src/lib/browser.ts`, the browser routes or `WebPane`. Every measured trap, and each one cost real time. Read it before changing any of them. | internal |
 | [docs/adr/0007-terminal-sidecar-and-its-trust-model.md](adr/0007-terminal-sidecar-and-its-trust-model.md) | Before changing anything about the terminal: why it is a separate process, why tmux, why the grant, and the two rules about it that are permanent. | internal |
@@ -45,6 +47,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | `src/lib/stream.ts` | The one snapshot every live surface renders. |
 | `src/lib/feed.ts` | The attention feed CONTRACT, and nothing else. Imports nothing, so it is tested on its own. |
 | `src/lib/attention.ts` | The feed where it meets the machine: reading the file, appending the answer, the ledger rows. |
+| `src/lib/tabs.ts` | The extension seam: config into nav entries, and the one room behind a tab. Holds the containment rule that keeps a folder tab pointed where you pointed it. |
 | `src/lib/quiet.ts` | Quiet hours, pure. The midnight wrap lives here. |
 | `src/lib/settings.ts` | The settings table: live state that is not registry. |
 | `src/lib/markdown.ts` | Markdown to HTML for documents shown in place. Read its header before touching it. |

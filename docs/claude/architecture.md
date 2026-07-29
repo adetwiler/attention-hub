@@ -80,6 +80,16 @@ opening an item's files: the browser names an ITEM, never a path, so
 `/api/attention/doc` cannot be walked into reading anything the feed was not
 already pointing at.
 
+**`src/lib/tabs.ts`** guarantees that v1's extension seam has exactly one
+meaning. Config becomes nav entries (pure, no filesystem, because the nav renders
+on every request of every page) and one room per tab (which does touch the disk).
+It also guarantees the containment rule that makes a folder tab safe: the FOLDER
+comes from config and the PATH INSIDE IT comes from the request, symlinks resolved
+on both sides before comparing, so a tab can only ever show you what you pointed
+it at. It takes the config loader as an argument for the same reason `wall.ts`
+does, and it deliberately does NOT render markdown: it reports that a file is
+markdown and the page calls `renderMarkdown`.
+
 **`src/lib/sse.ts`** guarantees the poll-fallback contract: `?once=1` returns
 the identical snapshot as plain JSON, because ONE `snapshot()` function feeds
 both branches. Unchanged snapshots emit nothing; a forced emit every
@@ -105,7 +115,8 @@ than guessed: an error turns polling on, the next event turns it off.
 | 4, board | a new room + its own snapshot | Reuse `sseResponse` and `makeStreamHook`; do not hand-roll a second stream helper. |
 | 5, self-build | `runThroughLedger` + `HUB_DIST_DIR` | Building the hub inside the hub needs the scratch dist (`npm run build:check`), or the build kills the instance serving the page you are watching. |
 | 6, updates | `config.update` | The one allowed network call, and it is NOT built: the README, `CONTEXT.md` and the config `$comment` all say so, and all three have to change in the same pass that builds it. Mark the call `hub-allow-network:` or the hook blocks it. |
-| 7, markdown modules | `config.modules` + `userDir` | `marked` is already a dependency for this. |
+| 7, markdown modules | `config.modules` + `userDir` | `marked` is already a dependency for this. **IT MUST NOT ORPHAN TABS.** `config.tabs` is a supported surface as of slice 14, so a release that gives someone modules and stops reading their `tabs` breaks the config they wrote on their first day. Grow `HubTab`, never replace it. [ADR-0003](../adr/0003-tab-seam-over-module-system-for-v1.md), and the same note is on the type. |
+| 14, tabs | BUILT. `config.tabs` + `src/lib/tabs.ts` + `/tab/[slug]` | The whole of "make it yours" in v1: a name plus a url or a dir. A `url` tab renders through the browser pane that already exists, so nothing in `src/` gained a way to reach the network. |
 | 8, release copy | `Shell.tsx` footer, README | The attribution seam is already in the footer; fill the text and the link. |
 | 9, quad view | `config` panes | Panes are config-driven; the grid adapts to the configured count. |
 

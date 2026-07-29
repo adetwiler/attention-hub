@@ -85,7 +85,13 @@ underneath you.
 in v1: a name plus what it points at (a URL, or a directory), declared in
 `hub.config.json`. It appears in the nav. You write no code. A tab owns no data
 and has no lifecycle, which is exactly what separates it from a module, and the
-reason it can exist before the module system does.
+reason it can exist before the module system does. Built in slice 14: `tabs` in
+config, `src/lib/tabs.ts`, `/tab/<slug>`, and [docs/tabs.md](docs/tabs.md).
+Because it is supported from day one, **the module system must not orphan it**.
+
+A tab points at ONE thing. A row with both a `url` and a `dir`, or with neither,
+is a config error naming the row, because picking one would put a surface on
+screen that is not the one you described.
 
 The word matters because "widget", "tab", "pane" and "module" get used
 interchangeably in conversation and they are four different promises. A **pane**
@@ -156,8 +162,11 @@ diverge: the SSE stream, and `?once=1` returning the identical JSON.
 **The poll fallback.** When the stream errors, the client polls `?once=1` until
 a stream event arrives, then stops. Health is observed, never guessed.
 
-**Room.** A top-level surface in the hub, one per nav entry: TODAY, BOARD,
-SESSIONS, JOBS. TODAY is the one you land in.
+**Room.** A top-level surface in the hub, one per nav entry: TODAY, the WALL,
+BOARD, SESSIONS, JOBS. TODAY is the one you land in, and BOARD, SESSIONS and JOBS
+are labelled not built rather than linking nowhere. **Your tabs are rooms too**
+(`/tab/<slug>`), sitting after ours in the nav, which is the point: the seam is
+not a second-class corner of the app.
 
 **Honest empty state.** A surface with no data says so, in plain words, and
 never shows a sample row. A dashboard that greets a new user with invented data
