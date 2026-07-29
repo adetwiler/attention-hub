@@ -47,6 +47,19 @@ round, the pane component shipped with a self-contained props interface on a
 standalone route, and wiring it into the grid was a small follow-up. Neither
 agent blocked on the other, and neither guessed.
 
+## 5. Commit incrementally, from the first file that typechecks
+
+A long agent run dies for reasons that have nothing to do with the work: a
+transient API 500 mid-response ended two of the three agents in the first round
+here, both of them partway through writing a file. Uncommitted work in a
+worktree survives that, but only because the worktree happened to persist, and
+resuming an agent that has committed nothing means re-establishing where it was.
+
+So the branch gets created and pushed as soon as anything typechecks, however
+incomplete, and then again at every coherent step: sidecar, then lib, then
+routes, then component, then docs. Batching the commits to the end turns a
+five-minute interruption into a lost run.
+
 ## Landing the work
 
 Branch per slice, pushed to origin. No agent merges to `main` and no agent
