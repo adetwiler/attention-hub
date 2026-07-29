@@ -6,6 +6,7 @@
 import AttentionCard from "@/components/AttentionCard";
 import DegradedNote from "@/components/DegradedNote";
 import JobsStrip from "@/components/JobsStrip";
+import NotBuilt from "@/components/NotBuilt";
 import { loadConfig } from "@/lib/config";
 import { safeLedgerSnapshot } from "@/lib/stream";
 import { todayLabel } from "@/lib/time";
@@ -60,6 +61,10 @@ export default function Today() {
           <p className="empty">{setup.note}</p>
         </section>
       ) : null}
+
+      {/* The absences, named. Last on the page on purpose: what is running comes
+          first, and this is the thing you read once and then act on. */}
+      <NotBuilt />
 
       <p className="version">
         Attention Hub v{hubVersion()}. Running on this machine only. No telemetry:

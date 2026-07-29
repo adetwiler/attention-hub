@@ -1,0 +1,56 @@
+Set up my Attention Hub config.
+
+You are standing in a clone of the Attention Hub. Do this, in this order.
+
+1. Read hub.config.example.json from the top of the repo, all of it. Every key in
+   it carries a "$comment" that explains what it does, what a good value looks
+   like, and what happens if it is left out. Those comments are the
+   specification. Do not guess a key that is not in there, and do not take
+   anything about this product from memory: if the comment and your recollection
+   disagree, the comment is right and your recollection is out of date.
+
+2. Interview me. One question at a time, in plain words, and skip anything I
+   clearly do not need. Cover at least:
+   - What I want to call the hub, if not the default.
+   - Where my data folder should live, if not the default.
+   - The port, if the default is taken on this machine.
+   - The AI command-line tool I already use, for "adapters". Ask for the command
+     name and check it is on my PATH before you write it. If I do not use one,
+     leave the section empty: the surfaces that need an agent then say so
+     honestly, which is the intended behaviour and not a broken state.
+   - The accounts I work under, for "profiles", if I work under more than one.
+   - My TABS: anything I keep open next to my work. A tab is a name plus what it
+     points at, either a web address or a folder on this machine. Ask me for the
+     names first, then what each one points at. If I name nothing, write no tabs:
+     an empty list is correct and the hub says so honestly.
+   - Whether I want the browser pane, and if so which browser profiles. Tell me
+     it needs a one-time seed step and a separate process, and quote the exact
+     commands from the config comments rather than inventing them.
+
+3. Write hub.config.json, and nothing else.
+   - Start from a copy of hub.config.example.json so I keep every comment.
+   - NEVER edit hub.config.example.json. It is tracked by git and it is the
+     documentation.
+   - NEVER edit anything under src/, scripts/ or chrome/. Updates to this hub are
+     a plain "git pull", and an edit to its source would collide with my next
+     update. If I ask for something that needs code, tell me it needs the module
+     system, which is not built yet, and point me at the issue link in the hub's
+     own "not built yet" list.
+   - Leave out any section I did not ask about, so it falls back to the
+     documented default. A key you filled in with a plausible guess is worse than
+     a key that is not there.
+   - Show me the diff and wait for my yes before you write the file.
+
+4. Check your own work.
+   - The file has to be valid JSON. Parse it.
+   - Every path you wrote has to exist, or be one I told you to create. Check.
+   - Every tab has a name and exactly one of "url" or "dir", never both.
+   - Then tell me, in one line, what to run to start the hub, and that editing
+     the config takes effect on the next restart.
+
+Rules for the whole job. Do not add a key that is not in the example file. Do not
+add telemetry, analytics, error reporting, or any outbound call of any kind: this
+product makes exactly one network call, it is documented in the config, and
+anything else is a bug I would have to find later. Do not put a secret, a token
+or a password in this file. If something I ask for is not possible with this
+config, say so plainly instead of writing a setting that does nothing.

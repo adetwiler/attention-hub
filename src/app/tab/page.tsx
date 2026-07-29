@@ -6,8 +6,8 @@
 //
 // IT IS NOT THE SETUP PAGE. Slice 8 owns that, and it covers the whole config.
 // This page covers one seam, and it points at the copy-paste prompt rather than
-// carrying a second copy of it: the prompt lives in docs/setup-prompt.md, once,
-// so it cannot drift from the config comments that are its specification.
+// carrying a second copy of it: the prompt lives in prompt.txt, once, so it
+// cannot drift from the config comments that are its specification.
 import { loadConfig } from "@/lib/config";
 import { tabsViewWith } from "@/lib/tabs";
 
@@ -81,9 +81,9 @@ export default function TabsRoom() {
           is in it, markdown rendered as markdown. One or the other, never both.
         </p>
         <p className="empty">
-          If you would rather not edit JSON: hand <code>docs/setup-prompt.md</code> to the AI tool
-          you already use. It reads <code>hub.config.example.json</code>, asks you what you want,
-          and writes the file. Recipes and the exact rules are in <code>docs/tabs.md</code>.
+          If you would rather not edit JSON: hand <code>prompt.txt</code> to the AI tool you
+          already use. It reads <code>hub.config.example.json</code>, asks you what you want, and
+          writes the file. Recipes and the exact rules are in <code>docs/tabs.md</code>.
         </p>
       </section>
 

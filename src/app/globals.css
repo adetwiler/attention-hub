@@ -1177,3 +1177,28 @@ body {
   font-size: 10.5px;
   color: var(--ink-faint);
 }
+
+/* The "not built yet" list on TODAY. Each row is a name you can click and one
+   honest sentence, so the absences read as a decision rather than a gap. */
+.wishes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wish {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hair);
+}
+
+.wish-what {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
