@@ -111,7 +111,19 @@ longer substitutes a default over a value you actually wrote, so it can no
 longer announce and bind a port you never asked for. Say the word if you want
 the full merge anyway.
 
-**7. Production is now the default run mode.** `./start.sh` builds once if
+**7. Production is now the default run mode, and as of 2026-07-29 `start` also
+REBUILDS when the source is newer than the build.** That second half was a
+release blocker found by the first run of the integrated hub: `start` checked
+only whether a build EXISTED, so with three slices merged and a 13-hour-old
+build, `/wall` and `/browser` both returned 404 on a tree that had just passed
+every gate. Since v1 updates are plain `git pull` and production is the default,
+the shipped update path was "pull a release, restart, get the old hub". Fixed in
+`scripts/serve.mjs`; a runtime `hub.config.json` change deliberately does NOT
+trigger a rebuild. Record:
+[docs/verification/2026-07-29-integrated-v1-smoke-and-stale-build.md](docs/verification/2026-07-29-integrated-v1-smoke-and-stale-build.md).
+The original note follows.
+
+**Production is the default run mode.** `./start.sh` builds once if
 needed and serves the built app; `./start.sh dev` is the contributor path. This
 is a user-facing change from the first draft, recorded as ADR-0002 decision 8.
 The consequence to know about: live pickup of a user's own modules and pages is
