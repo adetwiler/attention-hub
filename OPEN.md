@@ -133,6 +133,17 @@ to do: file an item from a terminal, watch it toast live, answer it, confirm
 closing row appended. Everything except the in-browser half is verified by the
 suite and by hand (see the comment on issue #2).
 
+**10. One Turbopack build WARNING, unresolved, and I could not establish whether
+it is new.** `Encountered unexpected file in NFT list`, tracing `next.config.ts`
+to `src/lib/config.ts` to `src/lib/attention.ts` to a route. The build succeeds
+and all five gates pass; the cost is a slower trace, not correctness. I tried the
+documented `turbopackIgnore` marker on every filesystem call and on the default
+feed-path join, it changed nothing, and I removed the markers rather than leave
+them implying they helped. What I did NOT do is build `main` to see whether the
+warning was already there, which is the cheap first question and needs a checkout
+with its own `node_modules`. Worth one measurement before anyone spends real time
+on it.
+
 ## Owed by a later slice, recorded so it cannot be forgotten
 
 **DONE in slice 2: the three 2026-07-29 honesty + read-in-place fixes are ported.**
