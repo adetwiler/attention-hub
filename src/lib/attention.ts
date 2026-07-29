@@ -32,6 +32,7 @@ import { loadConfig } from "./config";
 import { answerRow, parseFeed } from "./feed";
 import type { AttentionItem, FeedRead } from "./feed";
 import { runThroughLedger } from "./ledger";
+import { renderMarkdown } from "./markdown";
 import { computeQuiet, isValidTime } from "./quiet";
 import type { QuietState } from "./quiet";
 import { settingGet, settingSet } from "./settings";
@@ -323,20 +324,11 @@ export function readAttachment(id: string, which: Attachment): AttachmentResult 
     ok: true,
     message: "",
     name,
-    // Rendering happens here rather than in the browser so the parser stays on
-    // one side of the wire and the client component holds no markdown logic.
-    html: isMarkdown ? renderMarkdownLazy(text) : null,
+    // Rendering happens on THIS side of the wire so the parser lives in one
+    // place and the client component holds no markdown logic at all.
+    html: isMarkdown ? renderMarkdown(text) : null,
     text,
   };
-}
-
-/** `marked` is only pulled in when a markdown document is actually opened, so
- * the parser is not part of the module graph of every page that renders the
- * feed. `require` rather than a top level import for exactly that reason. */
-function renderMarkdownLazy(text: string): string {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- no eslint here; kept as a note for whoever adds it
-  const mod = require("./markdown") as { renderMarkdown: (source: string) => string };
-  return mod.renderMarkdown(text);
 }
 
 /** Expand a leading ~ the same way the config loader does. A path written into
