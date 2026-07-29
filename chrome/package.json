@@ -1,0 +1,17 @@
+{
+  "name": "attention-hub-browser-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The Attention Hub browser sidecar: a loopback WebSocket to Chrome DevTools Protocol bridge that mirrors a real browser tab into a hub pane. It has its OWN package.json on purpose. `next build` traces anything in the app's dependencies, and a WebSocket server has no business in a browser bundle.",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
