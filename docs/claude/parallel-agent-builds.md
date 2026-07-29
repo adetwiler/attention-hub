@@ -60,6 +60,29 @@ incomplete, and then again at every coherent step: sidecar, then lib, then
 routes, then component, then docs. Batching the commits to the end turns a
 five-minute interruption into a lost run.
 
+## The one conflict that is not a text conflict: `MIGRATIONS`
+
+`MIGRATIONS` in `src/lib/migrate.ts` is an ordered array and **the index IS the
+version**. Two parallel branches each correctly append their migration, and both
+land at index 1. Git may merge that cleanly, and the result is still wrong,
+because whichever merges second silently becomes a different version than the one
+its branch was written and tested against.
+
+It happened in round one: slice 2 appended a `settings` table at index 1 and
+slice 13 appended a `browser_tokens` table at index 1, in separate worktrees, each
+following the rule.
+
+**Resolution, and it only works before release.** With no installs in the wild,
+merge order decides the index and the second one is simply renumbered. Nothing
+breaks because no database has applied either string yet. Do it at the merge, in
+one place, deliberately, and never by having each agent guess an index.
+
+**After v1.0.0 this becomes a real hazard**, because renumbering an applied
+migration makes an installed database silently disagree with the code, which is
+the exact failure `CLAUDE.md` forbids. From then on, parallel slices that need
+schema either take an assigned index up front, or one of them lands first and the
+other rebases onto it.
+
 ## Landing the work
 
 Branch per slice, pushed to origin. No agent merges to `main` and no agent
