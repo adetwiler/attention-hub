@@ -52,6 +52,18 @@ promise. This is the headline feature of the extension model, not an
 implementation detail: you can build your own pages and the hub can still update
 underneath you.
 
+**Tab.** The smallest unit of making the hub yours, and the only one that ships
+in v1: a name plus what it points at (a URL, or a directory), declared in
+`hub.config.json`. It appears in the nav. You write no code. A tab owns no data
+and has no lifecycle, which is exactly what separates it from a module, and the
+reason it can exist before the module system does.
+
+The word matters because "widget", "tab", "pane" and "module" get used
+interchangeably in conversation and they are four different promises. A **pane**
+is one cell of the wall. A **tab** is config. A **module** is code that owns a
+surface. Anything described as a widget is one of those three, and saying which
+is the point.
+
 **User space.** Everything of yours that the hub must never overwrite:
 `hub.config.json`, `userDir`, and `dataDir`. All three are gitignored, which is
 why a plain `git pull` is a safe way to take an update.

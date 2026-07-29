@@ -2,6 +2,39 @@
 
 What the hub shows a stranger, and the rules for producing it.
 
+## The three beats (settled 2026-07-29, see ADR-0003)
+
+Every surface tells the story in this order. Leading with the wrong beat was a
+real risk: the goal is a command center people shape to their own work, and
+opening with that is a platform pitch with an empty first run.
+
+1. **One screen. Everything running, and the one thing that needs you.** The
+   concrete hero. A stranger has to see value before they are asked to build
+   anything. Asset A5, the full wall.
+2. **Then make it yours.** Add a tab, point it at a URL or a folder, two lines
+   of config and no code. This beat must stay demonstrable in whatever ships:
+   the moment it describes something not built, the whole page is a promise.
+3. **We may build these in. Tell us which.** A named list of what is NOT built,
+   each row linking to a prefilled GitHub issue. Reactions are the vote count.
+   Static links, not a live feed, because a live feed would be a second outbound
+   call and the one-call privacy claim is the clearest differentiator this
+   product has.
+
+**Beat 3 is a list of real absences, never a teaser.** Today: the board,
+self-build, teams, and the module system. A row leaves the list the day it
+ships.
+
+## The asset set follows the beats
+
+| Asset | Beat | Status |
+|---|---|---|
+| A5 the full wall | 1 | shot |
+| A1 the decision card | 1 | shot |
+| A2 the live pane header | 1 | shot |
+| A4 the browser quadrant | 1 | shot |
+| Two config lines becoming a tab | 2 | **not shot, and beat 2 has no image without it** |
+| The wishlist | 3 | not shot |
+
 ## The rule, and the failure mode on both sides of it
 
 A shot is eligible when it contains nothing that genuinely should not be public: real

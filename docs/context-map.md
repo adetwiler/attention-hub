@@ -16,6 +16,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [LICENSE](../LICENSE) | Licensing. MIT. | public |
 | [docs/adr/0001-mit-license-cc0-setup-prompt.md](adr/0001-mit-license-cc0-setup-prompt.md) | Why MIT, why CC0 on the setup prompt, why attribution is a product feature and not a licence term. | internal |
 | [docs/adr/0002-hub-architecture.md](adr/0002-hub-architecture.md) | Before changing the spine, or when a decision looks arbitrary: local-only, no telemetry, config-first, ledger-as-history, user-space separation, multi-adapter. | internal |
+| [docs/adr/0003-tab-seam-over-module-system-for-v1.md](adr/0003-tab-seam-over-module-system-for-v1.md) | You are about to build the extension story, or wondering why a `tabs` array exists next to a planned module system. The three marketing beats, the seam v1 ships, and why the setup wizard is a prompt. | internal |
 | [docs/claude/architecture.md](claude/architecture.md) | You are writing code in `src/`. How the files fit, where your slice plugs in, and the traps already paid for. | internal |
 | [test/README.md](../test/README.md) | You are adding a test, or wondering why there is no test framework dependency. | internal |
 | [docs/verification/](verification/) | You want to know what was actually walked, and what was not. One file per walk, newest last. | internal |

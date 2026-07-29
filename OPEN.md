@@ -24,6 +24,24 @@ unaffected; what waits is Andrew becoming the first template install.
 
 Full record + the reasoning: `~/.claude/memory/project_attention_hub_giveaway.md`.
 
+**0a. v1 GAINED A SIXTH PIECE OF WORK on 2026-07-29: the tab seam.** Grilled and
+accepted as [ADR-0003](docs/adr/0003-tab-seam-over-module-system-for-v1.md). The
+marketing leads with a concrete hero and makes "then make it yours" the second
+beat, and that beat needs something a stranger can actually try on day one. So
+v1 ships ONE extension seam: a tab declared in `hub.config.json` (a name plus a
+URL or a directory), appearing in the nav, no code written by the user. The
+module system (#7) and self-build (#5) stay `post-v1` and become the top rows of
+a named "not built, tell us if you want it" list.
+
+This is the first thing added back since the quad-first re-cut reduced v1 to five
+items, and #8 (release) is blocked behind the whole set, so it moves the release
+date by whatever the seam costs. **It needs an issue and a `v1` label.** Two
+things ride with it: the setup wizard is a PROMPT (the user's own AI reads
+`hub.config.example.json`, interviews them, writes their config) and never a
+built screen, and the docs stop at the config seam and say plainly why, since
+`user/` does not ship until #7 and `git pull` updates would collide with source
+edits.
+
 **0b. Marketing shots are CLEARED, with one preference left.** Three quad-wall captures
 (2026-07-29) are the source set and need no redaction: the maintainer's name and home path
 are published under his own byline, the projects on screen have public pages, the creative
