@@ -16,10 +16,19 @@ is the update channel, the memory network, the modules, and the author.
 
 ## The rules that are not negotiable
 
-**NO TELEMETRY, EVER.** The hub holds none of the user's data. The ONLY
-outbound call the product will ever make is the daily GitHub Releases check
-(not built yet), and it sends nothing about them. Two mechanisms hold this, and
-both exist because a promise in a README is worth nothing:
+**NO TELEMETRY, EVER.** The hub holds none of the user's data, and **this release
+makes ZERO outbound calls of its own**: the GitHub Releases check is post-v1, so
+the honest claim is stronger than "one call". Two things are true beside it, and
+neither weakens it:
+
+- The **email digest** (ADR-0008) is a second outbound path, and it lives in
+  `scripts/hub.mjs`, off by default, run by the USER's own scheduler, with the
+  USER's key. Nothing under `src/` sends anything, and nothing in the hub decides
+  to. Keep it that way: a timer in the web process would break the claim.
+- The Releases check, when it lands (slice 6), sends nothing about the user.
+
+Two mechanisms hold all of this, and both exist because a promise in a README is
+worth nothing:
 
 - `scripts/next-run.mjs` is the ONE place Next.js is launched from, because that
   is where `NEXT_TELEMETRY_DISABLED` is set. Never spawn `next` anywhere else.
@@ -55,10 +64,19 @@ to another tool to find a network address, and nothing ever falls open to
 **TYPESCRIPT STRICT, NEVER `any`.** Use `unknown` and narrow it. The config
 loader is the worked example.
 
-**WINDOWS IS FIRST CLASS.** No shell-string spawning, no POSIX-only paths, no
-`PREFIX=value` inline env in npm scripts. Line endings are pinned in
-`.gitattributes`, and the reason is written there: a silent CRLF break cost a
-real install once already.
+**THE CODE STAYS WINDOWS FRIENDLY, AND v1 SHIPS macOS AND LINUX.** Those are two
+different statements and both hold.
+
+- *The rule for code you write:* no shell-string spawning, no POSIX-only paths,
+  no `PREFIX=value` inline env in npm scripts. Line endings are pinned in
+  `.gitattributes`, and the reason is written there: a silent CRLF break cost a
+  real install once already. Keeping these habits is what makes Windows support
+  later a piece of work rather than a rewrite.
+- *The rule for what we CLAIM:* the released platform matrix is macOS and Linux.
+  The terminal sidecar is tmux-backed and browser discovery is POSIX shaped, so
+  two modules cannot work on Windows, and nothing has been run there. **Never
+  imply Windows works.** Linux is shipped `untested` and the docs say so, which
+  is the same convention adapters use. See the README's Platforms table.
 
 ## The architecture, in five sentences
 

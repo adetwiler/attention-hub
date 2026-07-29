@@ -26,6 +26,9 @@ You are standing in a clone of the Attention Hub. Do this, in this order.
    - Whether I want the browser pane, and if so which browser profiles. Tell me
      it needs a one-time seed step and a separate process, and quote the exact
      commands from the config comments rather than inventing them.
+   - Whether I want the email digest, which is off by default and is the only
+     thing in this product that sends anything anywhere. If I do, put my API key
+     in its own file and write only the PATH to it in the config, never the key.
 
 3. Write hub.config.json, and nothing else.
    - Start from a copy of hub.config.example.json so I keep every comment.
@@ -50,7 +53,10 @@ You are standing in a clone of the Attention Hub. Do this, in this order.
 
 Rules for the whole job. Do not add a key that is not in the example file. Do not
 add telemetry, analytics, error reporting, or any outbound call of any kind: this
-product makes exactly one network call, it is documented in the config, and
-anything else is a bug I would have to find later. Do not put a secret, a token
-or a password in this file. If something I ask for is not possible with this
-config, say so plainly instead of writing a setting that does nothing.
+hub makes no network calls of its own, the one thing that can send anything is
+the email digest and it is off unless I ask you for it, and anything else is a
+bug I would have to find later. NEVER put a secret, a token, a password or an API
+key in this file: if a setting needs one, it takes the PATH to a file holding it,
+and the hub refuses to start if it finds a key here. If something I ask for is
+not possible with this config, say so plainly instead of writing a setting that
+does nothing.
