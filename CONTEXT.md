@@ -99,6 +99,18 @@ is one cell of the wall. A **tab** is config. A **module** is code that owns a
 surface. Anything described as a widget is one of those three, and saying which
 is the point.
 
+**Account pane.** A pane bound to one of your `profiles`, meaning that account's
+config directory. It watches an account and can run nothing. Four accounts give
+you the four-up wall, which is where the product's hero picture comes from.
+
+**Shell pane.** A pane bound to a DIRECTORY (`wall.panes[].cwd`) and to no
+account at all: a real terminal on this machine, off by default, needing
+`terminal.enabled` plus a second process before it exists. The two words stay
+separate deliberately (OPEN 15, settled 2026-07-29): "a pane points at a place"
+reads tidier and hides that one of the two kinds can read your keys and push your
+code, which is the exact thing the setup page's warning needs a reader to notice.
+Tidier prose that buries the dangerous surface is a bad trade.
+
 **User space.** Everything of yours that the hub must never overwrite:
 `hub.config.json`, `userDir`, and `dataDir`. All three are gitignored, which is
 why a plain `git pull` is a safe way to take an update.
@@ -166,7 +178,17 @@ a stream event arrives, then stops. Health is observed, never guessed.
 BOARD, SESSIONS, JOBS. TODAY is the one you land in, and BOARD, SESSIONS and JOBS
 are labelled not built rather than linking nowhere. **Your tabs are rooms too**
 (`/tab/<slug>`), sitting after ours in the nav, which is the point: the seam is
-not a second-class corner of the app.
+not a second-class corner of the app. SETUP sits last and is deliberately not one
+of the five: it is a page you need twice and then rarely, not a room you work in.
+
+**The setup page.** `/setup`, and the answer to "how does a non-developer get
+going". Every step LEADS WITH A PROMPT the user hands to their own AI tool, with
+the manual version underneath, which is the product's premise applied to its own
+setup. It absorbed the old `/tab` page in slice 8, because the tab seam is one
+step of setup and two pages explaining one seam is two copies of the same words
+waiting to disagree. The whole-config prompt is not embedded in it: the page
+reads `prompt.txt` at request time, so the hero prompt has exactly one copy in
+the tree and nothing can drift.
 
 **Honest empty state.** A surface with no data says so, in plain words, and
 never shows a sample row. A dashboard that greets a new user with invented data
@@ -211,13 +233,22 @@ a phone joining from the sofa collapses the desk layout. See
 
 **Local only.** The hub binds loopback and runs on your machine against your
 database. There is no hosted version, no account, and no sign-in. It is also
-single user today: teams is on the public roadmap and is not built.
+single user today: teams is on the public roadmap and is not built. **macOS and
+Linux** in v1, and Windows is not supported, which is a claim about the release
+and not a licence to write POSIX-only code (see CLAUDE.md).
 
-**No telemetry.** We hold none of your data. The only network call the product
-will ever make is the daily check for a new release (not built yet), and it
-tells GitHub nothing about you beyond the fact that a request happened, which is
-your IP address and a user agent, the same as any browser. Feedback happens
-through GitHub issues, which is the only channel.
+**No telemetry.** We hold none of your data. **This release makes zero outbound
+calls**, with no exception: the release check is not built, so the claim is
+stronger than "one call", not weaker. When that check lands it will tell GitHub
+nothing about you beyond the fact that a request happened, which is your IP
+address and a user agent, the same as any browser. Feedback happens through
+GitHub issues, which is the only channel.
+
+**Untested.** Built to spec, never exercised, and saying so. The convention
+started with adapters (`untested: true` on the row, and the UI says it) and now
+covers a platform: Linux ships untested in v1, because the browser discovery
+paths and the systemd unit were written from documented locations and never run.
+Shipping something we have not exercised is fine. Implying we have is not.
 
 **Production mode.** What a user gets by default. `./start.sh` builds once if it
 has to and then serves the built app; `./start.sh dev` is the contributor mode.

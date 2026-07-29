@@ -54,6 +54,7 @@ const TERMINAL_ENABLED_DEFAULT = false;
  * and the example config) and asserted equal by .githooks/release-check.sh. */
 const TERMINAL_PORT_DEFAULT = 2888; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and pty/server.mjs by release-check.sh
 const TERMINAL_TMUX_DEFAULT = true;
+
 const TERMINAL_PREFIX_DEFAULT = "hub";
 const TERMINAL_SCROLLBACK_DEFAULT = 2000;
 const TERMINAL_IDLE_MINUTES_DEFAULT = 30;

@@ -1302,3 +1302,97 @@ body {
   color: var(--ink-faint);
   line-height: 1.5;
 }
+
+/* ---------------------------------------------------------------- setup
+
+   The setup page (/setup). Every step is a card with the same three parts in
+   the same order: what it gets you, the prompt you hand to your own AI tool,
+   then the same job by hand. The ordering IS the design, so the styling makes
+   the prompt the loudest thing in each card. */
+
+.setup-step {
+  gap: 12px;
+}
+
+/* What your config says about this step right now. Never a guess: "unknown"
+   means the config could not be read, and it reads as a problem rather than as
+   a tidy nothing. */
+.setup-badge {
+  justify-self: start;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 2px 10px;
+  border: 1px solid var(--hair-strong);
+  color: var(--ink-muted);
+}
+
+.setup-badge.on {
+  color: var(--st-done);
+  border-color: color-mix(in srgb, var(--st-done) 45%, transparent);
+}
+
+.setup-badge.unknown {
+  color: var(--st-need);
+  border-color: color-mix(in srgb, var(--st-need) 45%, transparent);
+}
+
+.setup-sub {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--hair);
+  padding-top: 10px;
+}
+
+.setup-manual {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+.copyblock {
+  display: grid;
+  gap: 8px;
+}
+
+.copyhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.copywarn {
+  font-size: 11px;
+  color: var(--st-need);
+  line-height: 1.5;
+  max-width: 60ch;
+}
+
+/* A prompt is long, so the block scrolls rather than pushing the page to a
+   mile: the reader is copying it, not reading every line. */
+.copyblock .doc-raw {
+  max-height: 380px;
+  overflow: auto;
+}
+
+/* SETUP sits at the end of the nav, dimmer than a room and brighter than a
+   disabled one: it is a real page you need on your first day and rarely after,
+   so it is reachable from everywhere and never competes with the work. */
+.nav .tab.setup {
+  opacity: 0.6;
+  margin-left: 4px;
+}
+
+.nav .tab.setup:hover,
+.nav .tab.setup.on {
+  opacity: 1;
+}

@@ -50,7 +50,7 @@ You are standing in a clone of the Attention Hub. Do this, in this order.
 
 Rules for the whole job. Do not add a key that is not in the example file. Do not
 add telemetry, analytics, error reporting, or any outbound call of any kind: this
-product makes exactly one network call, it is documented in the config, and
-anything else is a bug I would have to find later. Do not put a secret, a token
-or a password in this file. If something I ask for is not possible with this
-config, say so plainly instead of writing a setting that does nothing.
+hub makes NO network calls at all, that is its headline promise, and anything you
+add would be a bug I would have to find later. Never put a secret, a token or a
+password in this file. If something I ask for is not possible with this config,
+say so plainly instead of writing a setting that does nothing.

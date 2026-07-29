@@ -22,7 +22,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [docs/adr/0005-attention-feed-append-only-jsonl.md](adr/0005-attention-feed-append-only-jsonl.md) | You are wondering why the feed is a file rather than an endpoint or a table, why it is polled rather than watched, or why two small rules are implemented twice. | internal |
 | [.claude/skills/README.md](../.claude/skills/README.md) | You want the AI-session side of the feed: the skill that ships with the hub, and how to use it outside this repo. | public |
 | [docs/tabs.md](tabs.md) | You are adding a tab, or you are about to tell a user how to extend the hub. The two kinds, the rules, the recipes, and the plain statement of why these docs stop at the config seam. | public |
-| [prompt.txt](../prompt.txt) | The copy-paste setup prompt: the user hands it to their own AI, which reads the config example and writes their config. ONE copy lives here, CC0 per ADR-0001. Slice 8 embeds it in the setup page and ports the prompt-sync gate in the same commit. | public |
+| [prompt.txt](../prompt.txt) | The copy-paste setup prompt: the user hands it to their own AI, which reads the config example and writes their config. ONE copy lives here, CC0 per ADR-0001, and the setup page READS this file rather than embedding it, which is why no prompt-sync gate exists (`test/setup.test.mjs` asserts the one copy). | public |
 | [docs/adr/0006-browser-pane-mirrors-a-real-browser.md](adr/0006-browser-pane-mirrors-a-real-browser.md) | You are wondering why a whole sidecar process exists to show a web page, why it is not an iframe, or how a browser pane squares with the no-telemetry promise. | internal |
 | [docs/browser-pane.md](browser-pane.md) | You are touching `chrome/`, `src/lib/browser.ts`, the browser routes or `WebPane`. Every measured trap, and each one cost real time. Read it before changing any of them. | internal |
 | [docs/adr/0007-terminal-sidecar-and-its-trust-model.md](adr/0007-terminal-sidecar-and-its-trust-model.md) | Before changing anything about the terminal: why it is a separate process, why tmux, why the grant, and the two rules about it that are permanent. | internal |
@@ -33,6 +33,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [test/README.md](../test/README.md) | You are adding a test, or wondering why there is no test framework dependency. | internal |
 | [docs/verification/](verification/) | You want to know what was actually walked, and what was not. One file per walk, newest last. | internal |
 | [docs/mocks/buildwithamemory-front-page.html](mocks/buildwithamemory-front-page.html) | You are changing the hub's look, or the site section that announces it. Owner-approved design truth, including the embedded hub screenshot the shell is built to. | internal |
+| [docs/release/site-section-copy.md](release/site-section-copy.md) | You are about to announce this, edit the site section, tag, or publish. The copy that is true today, the three places the approved mock's COPY is pre-cut, the drafted release notes, and the trigger list. Nothing in it has been applied. | internal |
 | [docs/marketing/README.md](marketing/README.md) | You are about to take, place, or publish a screenshot of the hub. The eligibility rule, the five-asset set, and why no raw frame lives in this repo. | internal |
 | [docs/marketing/screenshots.manifest.json](marketing/screenshots.manifest.json) | You are capturing shots. The recipe: demo profile, presets, targets, redaction patterns. | internal |
 | [hub.config.example.json](../hub.config.example.json) | You need to know what a setting does. Every key carries a `$comment`. | public |
@@ -49,6 +50,8 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | `src/lib/feed.ts` | The attention feed CONTRACT, and nothing else. Imports nothing, so it is tested on its own. |
 | `src/lib/attention.ts` | The feed where it meets the machine: reading the file, appending the answer, the ledger rows. |
 | `src/lib/tabs.ts` | The extension seam: config into nav entries, and the one room behind a tab. Holds the containment rule that keeps a folder tab pointed where you pointed it. |
+| `src/lib/setup.ts` | The setup steps, the one-paste agent prompts, and what your config says about each. Pure: the config arrives as an argument. Reads `prompt.txt` for the one prompt it does not own. |
+| `src/app/setup/` | The setup page. Prompt first, manual underneath, the terminal warning in its own section. |
 | `src/lib/quiet.ts` | Quiet hours, pure. The midnight wrap lives here. |
 | `src/lib/settings.ts` | The settings table: live state that is not registry. |
 | `src/lib/markdown.ts` | Markdown to HTML for documents shown in place. Read its header before touching it. |

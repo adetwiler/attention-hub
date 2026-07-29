@@ -11,12 +11,16 @@ at sitting in the nav next to it, because you added them to a config file.
 Free and open source, by Andrew Detwiler / [buildwithamemory.com](https://buildwithamemory.com).
 
 > **Early.** This is not the finished product. What works: TODAY, the attention
-> feed described below, the live stream, the wall, the browser pane, tabs, and the
-> database under it all. What does not exist yet: the rooms behind BOARD, SESSIONS
-> and JOBS, the module system, the hub building itself, and the update check
+> feed described below, the live stream, the wall, the terminal, the browser pane,
+> tabs, the setup page, and the database under it all. What does not exist yet:
+> the rooms behind BOARD, SESSIONS and JOBS, the module system, the hub building
+> itself, more than one person, an email digest, and the update check
 > described further down (the setting is there, the code that would use it is
 > not). [Not built yet](#not-built-yet) lists those and how to ask for one. What
 > is here is honest about what is not.
+
+> **macOS and Linux.** Windows is not supported in this release. See
+> [Platforms](#platforms) for what that means and why.
 
 ## When something needs you
 
@@ -92,33 +96,65 @@ answer is not "have your AI edit the source": updates here are a plain
 
 ## Your data is yours
 
-- **No telemetry. Ever.** The hub sends nothing about you anywhere. We hold none
-  of your data, because there is nowhere for it to go: the database lives in a
-  folder on your machine and it belongs to you.
-- **One network call in the whole product, and it is not built yet.** When it
-  lands, once a day it will ask GitHub whether a newer release exists. It will
-  send no identifiers and nothing about your usage. Being exact about the part a
-  promise like that usually skips: GitHub will see the request itself, which
-  means your IP address and a user agent, the same as any web request from any
-  browser. Nothing about you, your work, or your hub rides along with it. Set
-  `update.enabled` to `false` and even that never happens.
+- **This release makes ZERO outbound calls.** Not one, and there is no
+  exception. The hub sends nothing about you anywhere, and we hold none of your
+  data, because there is nowhere for it to go: the database lives in a folder on
+  your machine and it belongs to you. There is no server on our side, and there
+  never has been.
 - **Local only.** It listens on `127.0.0.1`, which means this machine and
-  nothing else, until you decide otherwise.
+  nothing else, until you decide otherwise. There is no login, which is safe
+  exactly while that stays true, so reaching it from another device means a
+  private network in front of it, never a port forward.
 - **Analytics that a framework would have turned on by default are turned off**
   in the code that starts and builds the app, not just in a README sentence.
   Every path to Next.js in this repo runs through one file that sets the switch,
   and the release check refuses to pass if any command bypasses it.
+- **The promise is enforced mechanically, because a promise in a README is worth
+  nothing.** A pre-commit gate blocks any non-loopback address, any
+  network-capable import and any shell-out to curl or wget in the shipped code,
+  unless the line carries an explicit marker and a written reason. Every marked
+  line in this repo today is loopback: the hub talking to its own two sidecars on
+  this machine.
+- **The update check is NOT BUILT YET.** The `update` setting exists and the code
+  that would use it does not. When it lands, once a day it will ask GitHub
+  whether a newer release exists, send no identifiers and nothing about your
+  usage, and be switchable off. Being exact about the part such a promise usually
+  skips: GitHub would see the request itself, meaning your IP address and a user
+  agent, the same as any browser. **Until then, updating is a plain `git pull`**
+  (see [Updating](#updating)).
 - Feedback happens through
   [GitHub issues](https://github.com/adetwiler/attention-hub/issues). That is
-  the only channel, and it is the only place anything you say reaches us.
+  the only channel, and it is the only place anything you say reaches us. If you
+  do not say it, nobody knows it: nothing here reports anything.
+
+## Platforms
+
+| | The hub, the feed, tabs | The browser pane | The terminal |
+|---|---|---|---|
+| **macOS** | works, and this is where it was built and walked | works | works |
+| **Linux** | should work, **untested** | **untested**: the discovery paths were written from documented locations and never run | **untested**: the systemd unit is written and never run |
+| **Windows** | **not supported in this release** | no | no, and there is no path to one: sessions are kept alive with tmux |
+
+**Untested means untested**, and it is the same convention this project uses for
+adapters: something built to spec that nobody has exercised says so rather than
+implying it was checked. Linux should work. If it does not, that is worth an
+issue and it is not you.
+
+**Windows is not supported in this release.** Two of the modules are POSIX
+shaped, and shipping a "works on Windows" claim that breaks on first use is worse
+than a stated gap. The code itself avoids Windows-hostile shapes (no shell-string
+spawning, no POSIX-only path assumptions, pinned line endings) so that supporting
+it later is work rather than a rewrite, and `start.cmd` is in the tree, but
+nothing here has been run on Windows and this release does not claim it.
+[Ask for it](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20Windows&body=I%20want%20this.)
+if you want it.
 
 ## Requirements
 
 - **Node.js 20 or newer.**
 - A C toolchain, only if npm cannot find a prebuilt binary for your machine.
-  The database driver is a native module. Most people never notice. On Windows,
-  if `npm install` fails while building it, install the "Desktop development
-  with C++" workload from the Visual Studio Build Tools and try again.
+  The database driver is a native module. Most people never notice.
+- **tmux**, only if you switch the terminal module on.
 
 ## Quick start
 
@@ -126,28 +162,40 @@ answer is not "have your AI edit the source": updates here are a plain
 git clone https://github.com/adetwiler/attention-hub.git
 cd attention-hub
 cp hub.config.example.json hub.config.json
-```
-
-Then, on macOS or Linux:
-
-```
 ./start.sh
 ```
 
-On Windows:
-
-```
-start.cmd
-```
-
 The first run installs dependencies and builds the app once, which takes a
-minute. After that it starts straight away. When it says it is ready, open
-<http://127.0.0.1:2886>.
+minute. After that it starts straight away. When it says it is ready, open the
+address it prints, which is <http://127.0.0.1:2886> unless you changed the port.
+
+**Then open SETUP in the nav.** That page is the rest of this README, in the
+product: every step leads with a prompt you hand to the AI command-line tool you
+already use, which does the step for you, and the manual version is underneath
+it. Nothing on it is required to keep the hub running.
 
 That is production mode, and it is the default on purpose: it is faster, it does
 not sit watching your files all day, and it avoids a confusing class of
 development-only failure. If you are working on the hub itself and want your
-edits picked up live, run `./start.sh dev` (or `start.cmd dev`) instead.
+edits picked up live, run `./start.sh dev` instead.
+
+## Updating
+
+```
+git pull
+./start.sh
+```
+
+That is the whole update path in this release. It is safe because the three
+things that are yours are not in the repository: `hub.config.json`, your `data`
+folder and your `user` folder are all gitignored, so a pull cannot touch your
+settings, your database, or anything you built. `start.sh` notices that the
+source is newer than the last build and rebuilds before serving, so a pull
+followed by a start gives you the hub you just pulled.
+
+There is no in-app updater and no update check yet. When there is, it will be
+[the one described above](#your-data-is-yours), and it will still be off with one
+setting.
 
 ## Configuration
 
@@ -161,12 +209,19 @@ never touch your settings, your database, or anything you built yourself.
 
 **Editing the config takes effect on the next restart.**
 
-Four settings worth knowing about up front:
+**If you would rather not edit JSON at all, the SETUP page in the hub hands you a
+prompt that writes this file for you**, by interviewing you and reading the
+comments in the example. The prompt is [`prompt.txt`](prompt.txt), it works with
+any AI command-line tool, and it is public domain (CC0).
+
+Five settings worth knowing about up front:
 
 - **`bind.host`** is `127.0.0.1`, meaning this machine only. To reach the hub
   from your phone or another computer, the right answer is a private network
   (something like Tailscale) in front of it, not opening this up. The hub has no
-  login, and that is only safe while it is not reachable.
+  login, and that is only safe while it is not reachable. The setup page walks
+  through it, including why `tailscale serve` is better than changing this
+  setting at all.
 - **`adapters`** is where you name the AI command-line tool you already use. The
   hub is not tied to any one vendor. Until you fill it in, the surfaces that
   need an agent say so instead of pretending.
@@ -193,10 +248,22 @@ a date.
 | [The board](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20the%20board&body=I%20want%20this.) | The room behind BOARD: work in flight as cards you move. |
 | [More than one person](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20more%20than%20one%20person&body=I%20want%20this.) | The hub is single user today, and that is stated up front rather than implied away. |
 | [The update check](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20the%20update%20check&body=I%20want%20this.) | The one network call described above. The setting exists; the code that would use it does not. Updating today is `git pull`. |
+| [Windows](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20Windows&body=I%20want%20this.) | This release is macOS and Linux. The terminal needs a non-tmux path and browser discovery needs Windows locations. See [Platforms](#platforms). |
+| [An email digest](https://github.com/adetwiler/attention-hub/issues/new?title=Wishlist%3A%20an%20email%20digest&body=I%20want%20this.) | Being emailed what is waiting while you are away from the machine. It was built and then cut from this release, because zero outbound calls is a stronger promise than one with a footnote, and nobody had asked for it yet. |
 
 Each link opens a prefilled issue. What gets asked for gets built, and reactions
 on those issues are the only vote count there is. The same list is in the hub, at
 the bottom of TODAY.
+
+## If something is wrong
+
+[Open an issue.](https://github.com/adetwiler/attention-hub/issues/new) Say what
+you did, what happened, and what you expected. The exact words a surface put on
+your screen are worth more than a description of them.
+
+That link is in the hub too, at the bottom of the SETUP page. It is the only
+feedback channel there is: nothing in this product reports anything to anyone, so
+if you do not say it, nobody knows it.
 
 ## For contributors
 

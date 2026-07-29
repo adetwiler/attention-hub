@@ -4,9 +4,30 @@ Decisions that are not settled, and things a human should look at. Resolved rows
 move out to their real home (an ADR, a topic doc, CONTEXT.md) rather than
 accumulating here.
 
-Last swept: 2026-07-28 (after the slice-1 review pass).
+Last swept: 2026-07-29 (slice 8, the release slice).
 
 ## Needs a call from Andrew
+
+**0-A. SLICE 8 IS BUILT ON `slice-8-release`, NOT MERGED, AND NOTHING IS
+TRIGGERED.** What landed: the setup page (`/setup`), the attribution line
+ADR-0001 owed, the README's platform matrix and its corrected privacy section,
+the machine verification pass, and your Chrome walk as a numbered checklist
+([docs/verification/2026-07-29-owner-chrome-walk-checklist.md](docs/verification/2026-07-29-owner-chrome-walk-checklist.md)).
+
+**What is staged and waiting on YOU, deliberately untouched:** the tag (no
+`v1.0.0`), the GitHub Release, making the repo public, and the
+buildwithamemory.com section. The site copy that section needs is written down in
+[docs/release/site-section-copy.md](docs/release/site-section-copy.md) rather than
+applied anywhere, because the live site is yours and the release is deferred
+behind another giveaway.
+
+**THE EMAIL DIGEST WAS BUILT AND CUT** in the same slice, on your call: an
+off-by-default bring-your-own-key module was defensible, and "zero outbound
+calls, full stop" is a stronger asset than a claim with a footnote. It is on the
+not-built list in the README and on TODAY, with the honest reason. The code, the
+config section, the docs and the ADR are all gone; every network marker left in
+the tree is loopback, and CLAUDE.md now says adding the first non-loopback one is
+an owner decision and an ADR, not a commit.
 
 **0. v1 WAS RE-CUT QUAD-FIRST on 2026-07-29, and this doc has not caught up.** Owner
 approved: v1 is now exactly FIVE items - #2 attention feed, #11 terminal room port (the
@@ -46,8 +67,38 @@ edits.
 the nav entries, `/tab/<slug>`, the not-built list, `prompt.txt`, and
 [docs/tabs.md](docs/tabs.md). The three calls it left are 0a-ii, immediately below.
 
-**0a-ii. THE TAB SEAM LANDED (slice 14, 2026-07-29), and three calls in it are
-mine.** All three are cheap to change now and none of them blocks anything.
+**0a-ii. THE TAB SEAM'S THREE CALLS, ANSWERED BY SLICE 8 WITH A RECOMMENDATION
+EACH.** Slice 8 recommended one of each, implemented the two that are reversible,
+and left them flagged here rather than deciding quietly. Overrule any of them and
+each is a small change.
+
+- **`prompt.txt` stays where it is, with that name. RECOMMENDED: keep.** Three
+  reasons and none of them is inertia. The reference gate kit expects the name, so
+  the day a second copy exists the gate is a port rather than a design. It sits at
+  the top of the repo, which is where a stranger looks on the GitHub landing page.
+  And it matches the copy-this-file convention the site already uses, so the same
+  artifact reads the same way in both homes. The site's own download can still be
+  called something friendlier: the mock names it `attention-hub-setup.txt`, and
+  that is a different artifact (it sets the hub up from nothing; `prompt.txt`
+  writes a config inside a clone). **Implemented: no change.**
+- **The wishlist rows keep pointing at PREFILLED NEW ISSUES. RECOMMENDED: keep.**
+  The alternative gathers reactions on one row per feature and does it by sending
+  strangers into internal slice text: #3, #5 and #7 are labelled `post-v1`, they
+  quote agent instructions and blocked-by chains, and they are written for you.
+  Scattered votes are a tidiness problem you can fix at any time by closing
+  duplicates onto a canonical row; a stranger reading "blocked by #2 #3 #4" and
+  concluding the project is stalled is a first impression you cannot take back.
+  The prefilled titles are fixed strings, so duplicates land under one search.
+  **Implemented: no change.** If you ever want the other behaviour it is one line
+  per row in `src/components/NotBuilt.tsx` and the README table.
+- **`/tab` IS ABSORBED into the setup page. RECOMMENDED and DONE.** The tab seam
+  is one step of setup, and two pages explaining one seam is two copies of the
+  same words waiting to disagree. `/tab` now 307s to `/setup#tabs` rather than
+  404ing, because it was a real address and a bookmark should land somewhere
+  honest. The nav's `+ TAB` empty state points there too. `/tab/<slug>` is
+  untouched. Reversible: restore the old page from `git show 20bf17c:src/app/tab/page.tsx`.
+
+The original text of the three follows.
 
 - **The setup prompt lives at `prompt.txt`, as ONE copy, and nothing embeds it.**
   It is the whole-config prompt (it interviews you about the hub name, dataDir,
@@ -215,7 +266,14 @@ public-bound repo.
   `{}` placeholder so any engine works. There is no vendor written into the code.
   Pick a different default if you would rather.
 
-**13. THE SETUP PAGE (#8) HAS TO CARRY THE TERMINAL WARNING, LOUDLY, AND HERE IS
+**13. DONE in slice 8: the setup page carries the terminal warning in its own
+red-edged card**, above the terminal step, with all five bullets below in the
+words they were written in, plus one more (there is no settings toggle, and there
+is not going to be one). Machine-verified: items 6 to 11 and 28 to 29 of
+[the machine pass](docs/verification/2026-07-29-slice-8-release-machine-pass.md).
+The original brief follows, because the wording is worth keeping.
+
+**13-orig. THE SETUP PAGE (#8) HAS TO CARRY THE TERMINAL WARNING, LOUDLY, AND HERE IS
 EXACTLY WHAT IT SAYS.** The terminal module (#11) is in v1 and ships switched
 off. The mechanisms are all in place (loopback bind, same-origin single-use
 grant, idle timeout, a ledger row per attach, owner-only pinned in code and by
@@ -240,17 +298,42 @@ Wording that already exists and can be lifted: the `$comment` and `$security`
 keys on the `terminal` section of `hub.config.example.json`, and the Security
 section of [docs/terminal.md](docs/terminal.md).
 
-**14. `terminal.enabled` is the whole switch, and there is no UI for it.** Turning
-the module on means editing config and starting a second process, which is a
-deliberate speed bump on the product's most powerful surface. If you would rather
-it be a toggle on a settings screen, that is a decision to take with #8, and it
-should stay a two-step (config plus sidecar) rather than becoming one click.
+**14. SETTLED, and it stays as built: `terminal.enabled` plus the sidecar, with no
+UI toggle.** Two steps on the product's most powerful surface is the speed bump,
+not an omission. Slice 8's setup copy now says out loud that there is no switch on
+a settings screen, so nobody goes looking for one.
 
-**15. A `terminal` pane needs no profile, so the wall's pane story is now two
-stories.** A profile pane is bound to an account directory; a terminal pane is
-bound to a working directory (`wall.panes[].cwd`). Both render in the same grid
-and the example config documents both. If that reads as two concepts where you
-wanted one, the cheap moment to say so is before #8 writes the setup copy.
+**15. SETTLED (owner, 2026-07-29): the wall has TWO KINDS of pane and the copy
+names both.** An ACCOUNT pane is bound to a profile's config directory. A SHELL
+pane is bound to a directory (`wall.panes[].cwd`) and to no account. Unifying them
+into "a pane points at a place" was rejected, and the reason is the one worth
+holding: unified language hides that one of the two kinds is a real shell that can
+read your keys and push your code, which is exactly what item 13's warning needs a
+reader to notice. Tidier prose that buries the dangerous surface is a bad trade.
+Both terms are in CONTEXT.md, both are on the setup page, and the config already
+documented them separately, so the copy describes reality rather than inventing a
+distinction.
+
+**18. SPLIT DNS AND SHARED DNS: I wrote what I believe you meant, and you should
+check it.** The slice-8 brief listed "set up split DNS" and "set up shared DNS"
+with no more detail, so the setup page describes them as Tailscale admin-console
+features: split DNS as routing one domain of yours through a nameserver you
+choose, so the hub answers on a name of your own rather than the tailnet name, and
+shared DNS as everyone you invited resolving the same names, so the address you
+tell your household is the address that works. Neither changes how the hub binds,
+and the page says so. **If you meant something more specific (a particular
+provider, or a name you already own), that paragraph is the place to fix it.**
+Everything else in that section is verified: the Tailscale free Personal plan
+covers up to 6 users and 100 devices, and signing up with a public-domain address
+such as a Gmail one enrols you automatically (tailscale.com/pricing and the
+pricing-v4 post, both cited on the page so nobody re-derives them).
+
+**19. LINUX SHIPS `untested`, AND THAT IS NOW A CLAIM IN THE README.** The
+platform matrix says macOS works and was walked, Linux should work and has never
+been run by this project, and Windows is not supported in this release. That is
+item 11's third bullet answered in the direction of honesty. The moment you (or
+anyone) runs it on a Linux box, that table is the thing to update, and it is the
+only place the claim lives.
 
 ## Owed by a later slice, recorded so it cannot be forgotten
 
@@ -268,22 +351,22 @@ bullet and `CONTEXT.md` all say so in as many words. When the code lands, all
 three change in the SAME pass, and the transport-level clause (GitHub sees an IP
 address and a user agent, and nothing else) stays.
 
-**Attribution footer text (slice 8).** The seam is in `src/components/Shell.tsx`
-and currently renders the hub name plus "free and open source". Per ADR-0001 the
-released line is "Attention Hub, free and open source, by Andrew Detwiler /
-buildwithamemory.com" with the link. It is deliberately not written yet because
-slice 8 owns the release copy.
+**DONE in slice 8: the attribution footer.** `src/components/Shell.tsx` renders
+"free and open source, by Andrew Detwiler / buildwithamemory.com" with the link,
+per ADR-0001. The BRAND stays the user's own hub name, because a footer arguing
+with the topbar is not a credit, and the credit is the "by" clause the ADR
+actually specifies, so a default install reads exactly as written there.
 
-**The prompt-sync gate (slice 8), and `prompt.txt` now EXISTS.** The reference
-gate kit compares the README's embedded prompt against `prompt.txt` on every
-commit that touches either. Slice 14 wrote `prompt.txt` (the tab seam needs the
-prompt, because the seam is config and the prompt is how a non-developer writes
-config), and deliberately embedded it NOWHERE: the README and the `/tab` page name
-the file rather than quoting it, so today there is exactly one copy and nothing
-can drift. **The moment slice 8 embeds it** in the setup page, the site copy, or
-the collapsed prompt card in the buildwithamemory mock, port the gate in the SAME
-commit. Two drifting copies of the hero prompt is the most embarrassing inaccuracy
-this repo could ship.
+**RESOLVED in slice 8, and there is no gate, because there is nothing to sync.**
+The setup page needed the prompt, and rather than embedding a second copy it
+**READS `prompt.txt` at request time** (`readSetupPrompt` in `src/lib/setup.ts`).
+One copy on disk cannot drift from itself, which is a stronger answer than a gate
+that catches drift after someone writes it. What replaces the gate is an assertion
+in `test/setup.test.mjs`: a distinctive line of the prompt must appear in exactly
+ONE tracked file. **If a second copy ever lands (a component, a doc, the site
+mock), that test fails and names the file**, and that is the moment to either read
+the file instead or port the real gate. The test caught itself on its first run,
+which is a reasonable sign it works.
 
 **The module system (#7) MUST NOT ORPHAN TABS.** Recorded in four places on
 purpose, because it is an obligation and not an intention: the `HubTab` type in
