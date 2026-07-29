@@ -8,6 +8,31 @@ npm test
 Zero dependencies, so this does not touch the "no new dependencies" rule: the
 rule is about third-party packages, and there are none here.
 
+## Never pass a path to `node --test`
+
+The script is bare `node --test`, with no positional argument, and it has to
+stay that way.
+
+`node --test test/` shipped here first and it looked fine, because it IS fine on
+Node 20 and Node 22, where a positional argument may be a directory. On Node 24
+positional arguments are globs, `test/` matches nothing, and the run dies with
+`Cannot find module .../test`. The suite stops running entirely on a machine
+whose only difference is a newer Node inside the supported range.
+
+Globs are not the fix either: `node --test "test/*.test.mjs"` fails on Node 20,
+which has no glob support there, and an unquoted glob depends on shell expansion
+that `cmd.exe` does not do. Bare `node --test` finds the same files on 20
+through 24 on every platform, so that is the rule. `release-check.sh` fails the
+build if a positional path ever comes back.
+
+The bare form also picks up `_ts.mjs` (it lives under `test/`) as a file with no
+tests in it, which is why the count reads one higher than the number of
+assertions.
+
+**The wider lesson, and the reason this cost anything: run the DOCUMENTED
+command.** Two verify walks recorded a green `node --test` and neither ran
+`npm test`, which is what every doc in this repo tells a contributor to type.
+
 ## Why these tests and not others
 
 The load-bearing logic of the foundation is pure and cheap to test, and the

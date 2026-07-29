@@ -210,6 +210,11 @@ Two of them exist because the review found real traps:
 
 ## What could NOT be walked, and why
 
+> **The browser gap below is now closed.** See
+> [2026-07-29-slice-1-browser-walk.md](2026-07-29-slice-1-browser-walk.md),
+> which walked it with ledger rows present and a clean console, and which found
+> that `npm test` had stopped running any tests at all on Node 24.
+
 **No browser.** The Chrome extension was not connected during this walk, and
 unlike the first walk there was no Playwright run either. So hydration was NOT
 observed in a real browser this time. What that leaves unverified:

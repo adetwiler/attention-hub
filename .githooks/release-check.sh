@@ -120,6 +120,27 @@ if command -v node >/dev/null 2>&1; then
   '; then :; else say_fail "a package.json script bypasses the Next.js boot path"; fi
 fi
 
+# --- 7. The test script runs on every supported Node ------------------------
+# `node --test test/` accepts a directory on Node 20 and 22 and REFUSES it on
+# Node 24, where positional arguments became globs: it reports
+# "Cannot find module .../test" and every test stops running. That shipped here,
+# because the verify walk ran bare `node --test` and never ran `npm test`.
+# Bare `node --test` finds the same files on 20 through 24, so the rule is that
+# the test script passes no positional path at all.
+if command -v node >/dev/null 2>&1; then
+  if node -e '
+    const fs = require("node:fs");
+    const cmd = (JSON.parse(fs.readFileSync("package.json", "utf8")).scripts ?? {}).test ?? "";
+    const rest = cmd.replace(/^node\s+/, "").split(/\s+/).filter((a) => a !== "" && !a.startsWith("-"));
+    if (rest.length > 0) {
+      console.error("the test script passes a positional path to node --test: " + cmd);
+      console.error("Node 24 reads it as a glob and matches nothing, so the suite silently stops running.");
+      console.error("Use bare `node --test`, which resolves the same files on Node 20 through 24.");
+      process.exit(1);
+    }
+  '; then :; else say_fail "the test script does not run on every supported Node"; fi
+fi
+
 echo ""
 if [ "$fail" -ne 0 ]; then
   echo "RELEASE CHECK FAILED. Fix the items above before anything ships."
