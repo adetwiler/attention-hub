@@ -143,10 +143,11 @@ export default function SetupRoom() {
         </p>
         {platform === "win32" ? (
           <p className="empty">
-            <b>This release supports macOS and Linux.</b> You are on Windows, so the terminal module
-            and the browser pane will not work here: the terminal keeps sessions alive with tmux and
-            browser discovery looks in POSIX locations. The rest of the hub runs. Nothing here will
-            pretend otherwise, and there is a wishlist row for Windows if you want it.
+            <b>This release supports macOS and Linux, and you are on Windows.</b> The terminal
+            module and the browser pane cannot work here: the terminal keeps sessions alive with
+            tmux, and browser discovery looks in POSIX locations. Nothing in this release has been
+            run on Windows, so nothing here will tell you the rest works. There is a wishlist row
+            for Windows, and no date.
           </p>
         ) : platform === "linux" ? (
           <p className="empty">
