@@ -1,0 +1,41 @@
+# Line endings. Windows users are first class here, and the failure this file
+# prevents is SILENT.
+#
+# Why (first real Windows install of our other tooling, 2026-07-27): a tracked
+# text file checked out with CRLF, so a POSIX shell read a value as "name\r",
+# matched nothing, and installed nothing without a single error message. Any
+# file a script READS AS DATA has the same failure mode, and it is invisible.
+#
+# Rule: everything is LF in the repo and in the working tree, with two
+# deliberate exceptions below.
+
+* text=auto eol=lf
+
+# Shell scripts must be LF or bash reports a bogus syntax error on Windows
+# checkouts under WSL / Git Bash.
+*.sh text eol=lf
+
+# NOT redundant with *.sh: .githooks/pre-commit has no extension, and it is the
+# single most important script in the repo.
+.githooks/* text eol=lf
+
+# Batch files are the exception: older cmd.exe mis-parses a multi-line .cmd with
+# LF endings, so these stay CRLF on purpose.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Generated / machine-compared files: pin them so a byte-for-byte check never
+# reports "out of date" forever on identical content.
+package-lock.json text eol=lf
+
+# Binaries: never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.db binary

@@ -1,0 +1,39 @@
+# denylist.example - copy to denylist.local (gitignored) and fill in for real.
+# bash .githooks/install.sh does the copy for you.
+#
+# One term or extended-regex pattern per line; lines starting with # are
+# comments. The pre-commit hook and .githooks/content-audit.sh join these with |
+# and grep case-insensitively over the staged additions and the tracked tree.
+#
+# BECAUSE THESE ARE REGEXES, ESCAPE THE PUNCTUATION IN A REAL NAME. A company
+# called "Acme (Holdings" is an unbalanced parenthesis, which is not a valid
+# pattern. The gate refuses rather than silently checking nothing, and it names
+# the offending line, but writing "Acme \(Holdings" up front saves you the trip.
+#
+# SAVE THIS FILE WITH UNIX LINE ENDINGS. On Windows, a CRLF save used to disable
+# the whole list invisibly: every term ended up with a trailing carriage return
+# and matched nothing. The loader strips them now, but plain LF is still right.
+#
+# Put in everything that must never appear in this public repo: your home paths,
+# personal or client domains, internal project names, and live-key shapes.
+#
+# NEVER COMMIT THE REAL LIST. Publishing your content scanner must never publish
+# the list of things you are keeping out. That is why denylist.local is
+# gitignored and this example holds only shapes.
+
+# Home paths, all three platforms.
+/Users/<your-username>
+/home/<your-username>
+C:\\Users\\<your-username>
+
+# Names that mean something to you and nothing to a stranger.
+my-internal-name
+my-client-name
+my-personal-domain\.example
+
+# Live-key shapes.
+sk-[A-Za-z0-9]{16,}
+sk_live_[A-Za-z0-9]+
+pk_live_[A-Za-z0-9]+
+ghp_[A-Za-z0-9]{20,}
+AKIA[0-9A-Z]{16}

@@ -1,0 +1,34 @@
+{
+  "name": "attention-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A free, local-only command center for AI-assisted work. Your machine, your database, no telemetry.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node scripts/serve.mjs dev",
+    "start": "node scripts/serve.mjs start",
+    "build": "node scripts/build.mjs",
+    "build:check": "node scripts/build.mjs --scratch",
+    "typecheck": "tsc --noEmit",
+    "check": "node scripts/check-paths.mjs",
+    "test": "node --test test/",
+    "release-check": "bash .githooks/release-check.sh"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.1",
+    "marked": "^18.0.7",
+    "next": "^16.2.12",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

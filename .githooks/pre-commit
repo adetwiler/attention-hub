@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+#
+# pre-commit: the blocking gates for this repo.
+#   (a) em dash:        no em dash in any staged added line.
+#   (b) denylist:       no denylisted term (your paths, keys, internal names).
+#   (c) personal data:  no real home path and no email address, ANYWHERE, not
+#                       just under src/. Docs and READMEs are where a pasted
+#                       terminal path and a real address actually land.
+#   (d) no telemetry:   no outbound-network shape under src/ or scripts/.
+#   (e) config first:   no absolute path under src/ or scripts/.
+#   (f) binaries:       staged binary blobs are scanned through their printable
+#                       strings, because grep -I cannot see inside them.
+#
+# Gates (a) to (e) scan only the STAGED ADDITIONS, so an existing line elsewhere
+# in a touched file never blocks an unrelated commit. Without that, one legacy
+# line poisons every future commit that touches its file and people start
+# reaching for --no-verify.
+#
+# The fail-closed machinery lives in .githooks/gate-lib.sh, shared with
+# .githooks/content-audit.sh so the two can never drift. Read its header before
+# changing anything here: it documents the three ways a shell gate silently
+# passes everything while looking green.
+#
+# Install once per clone (and once per worktree):  bash .githooks/install.sh
+# Whole-tree check before publishing:              bash .githooks/release-check.sh
+#
+# Portable: POSIX awk only, so it runs on the BSD awk that ships with macOS as
+# well as on gawk. Do not reach for a gawk 3-arg match().
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+# shellcheck source=.githooks/gate-lib.sh
+. "$repo_root/.githooks/gate-lib.sh"
+hub_scratch_init
+
+# --unified=0 is LOAD BEARING, not an optimization: with no context lines, every
+# non-header line starting with + is a real addition, so the line-number
+# arithmetic below is exact. Add context back and it silently drifts.
+git diff --cached --unified=0 --no-color -- . | awk '
+  /^\+\+\+ / { file=$0; sub(/^\+\+\+ b\//,"",file); sub(/^\+\+\+ /,"",file); next }
+  /^@@ /     { plus=$3; sub(/^\+/,"",plus); sub(/,.*/,"",plus); ln=plus+0; next }
+  /^\+/      { print file ":" ln ": " substr($0,2); ln++ }
+' > "$HUB_SCRATCH/added"
+
+# The src/ and scripts/ slice, for the gates that only apply to shipped code.
+hub_scan "$HUB_SCRATCH/added" -E '^(src|scripts)/'
+printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/code"
+
+# Machine-generated lockfiles carry upstream package-author addresses. An npm
+# author's email is not your content problem, so they are out of gate (c) only.
+hub_scan "$HUB_SCRATCH/added" -vE '^[^:]*(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.lock|poetry\.lock|uv\.lock):'
+printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/authored"
+
+fail=0
+report() {
+  echo "BLOCKED: $1"
+  printf '%s\n' "$2" | sed 's/^/  /'
+  echo ""
+  echo "$3"
+  echo ""
+  fail=1
+}
+
+# --- Gate (a): em dash (U+2014) ---
+# Em dash only. En dash (U+2013) is correct typography for numeric and version
+# ranges (10-20Hz, 5.3-5.8); gating it just trains people to disable the hook.
+# Byte escape so this file never contains the character it bans: the hook is not
+# self-excluded, it scans itself like every other file.
+EMDASH="$(printf '\342\200\224')"
+hub_scan "$HUB_SCRATCH/added" -F -e "$EMDASH"
+if [ -n "$HUB_SCAN_OUT" ]; then
+  report "staged change adds an em dash:" "$HUB_SCAN_OUT" \
+    "Use a period, comma, colon, or parentheses instead."
+fi
+
+# --- Gate (b): denylisted terms ---
+# Terms live in .githooks/denylist.local (gitignored), one per line, comments
+# allowed. A missing, empty, malformed, unproven or still-placeholder denylist
+# REFUSES the commit: a gate with nothing to check silently passes everything,
+# which is the worst failure mode a guard can have.
+#
+# DO NOT REGRESS THIS: an earlier version of this kit embedded the term list
+# inline in the hook, which made the content scanner ITSELF the thing it was
+# hiding. An adversarial audit caught it. The list stays out of the tree.
+denylist_file="$repo_root/.githooks/denylist.local"
+if [ ! -f "$denylist_file" ]; then
+  echo "BLOCKED: .githooks/denylist.local is missing."
+  echo "Run: bash .githooks/install.sh   (then fill in your real terms)"
+  echo "It is gitignored and never committed. A fresh worktree needs its own."
+  exit 1
+fi
+if ! hub_load_denylist "$denylist_file" "BLOCKED"; then
+  exit 1
+fi
+
+hub_scan "$HUB_SCRATCH/added" -iE "$HUB_DENYLIST"
+if [ -n "$HUB_SCAN_OUT" ]; then
+  report "staged change adds a denylisted term:" "$HUB_SCAN_OUT" \
+    "This repo is public. Remove the personal path, key, or internal name
+before committing. Whole-tree scan: bash .githooks/release-check.sh"
+fi
+
+# --- Gate (c): personal data, everywhere ---
+# NOT limited to src/ and scripts/. A home path pasted out of a terminal and a
+# real email address land in a README, a doc, or a config example far more often
+# than they land in code, and those are the files a stranger reads first. This
+# rule used to live only in the release check, which meant the gate a
+# contributor actually meets protected nothing personal at all.
+hub_scan "$HUB_SCRATCH/authored" -E "$HUB_HOMEPATH"
+if [ -n "$HUB_SCAN_OUT" ]; then
+  report "staged change adds an absolute home path:" "$HUB_SCAN_OUT" \
+    "Use ~ or a placeholder. In code, read it from hub.config.json."
+fi
+
+hub_scan "$HUB_SCRATCH/authored" -E "$HUB_EMAIL"
+if [ -n "$HUB_SCAN_OUT" ]; then
+  printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/emails"
+  hub_scan "$HUB_SCRATCH/emails" -ivE "$HUB_EXAMPLE_DOMAINS"
+  if [ -n "$HUB_SCAN_OUT" ]; then
+    report "staged change adds an email address:" "$HUB_SCAN_OUT" \
+      "Use a reserved documentation domain (example.com) or drop it."
+  fi
+fi
+
+# --- Gate (d): no telemetry ---
+# The product promise is that the hub holds none of your data and makes no
+# network calls except the documented update check. That promise is worth
+# exactly as much as the mechanism enforcing it, so here is the mechanism.
+#
+# THE RULE IS REACH, NOT NAMES. An earlier version enumerated known-bad call
+# names (fetch, axios, posthog), which meant curl through child_process, a
+# WebSocket, undici, node:net and an image beacon all committed clean. So the
+# rule is now: any non-loopback URL, any import of a network-capable module, and
+# any shell-out to curl or wget is blocked under src/ and scripts/. A new
+# exfiltration shape has to be explicitly excused rather than merely unlisted.
+#
+# Two markers, both on the same line as the code, because the gate reads one
+# line at a time:
+#   hub-allow-network: <why>   this line really does open a connection.
+#   hub-no-request: <why>      this line only CONTAINS a URL (a printed
+#                              address, a link in a comment). Nothing is sent.
+NET_LOOPBACK='(127\.0\.0\.1|localhost|\[::1\]|0\.0\.0\.0)'
+NET_MODULES='(from|require\()[[:space:]]*["'"'"']node:(http|https|net|dgram|dns|tls)["'"'"']|(from|require\()[[:space:]]*["'"'"'](undici|got|node-fetch|axios|superagent|request|ws)["'"'"']'
+NET_CALLS='\bfetch\(|XMLHttpRequest|navigator\.sendBeacon|new[[:space:]]+WebSocket|WebSocket\(|EventSource\(|new[[:space:]]+Image\(|https?\.request\(|posthog|mixpanel|amplitude|segment\.io|google-analytics|gtag\('
+NET_SHELL='(curl|wget)[[:space:]]+-|["'"'"'`](curl|wget)[[:space:]]'
+
+hub_scan "$HUB_SCRATCH/code" -E "(https?|wss?)://"
+printf '%s\n' "$HUB_SCAN_OUT" > "$HUB_SCRATCH/urls"
+# POSIX ERE has no lookahead, so the loopback exemption is a second pass.
+hub_scan "$HUB_SCRATCH/urls" -vE "(https?|wss?)://${NET_LOOPBACK}"
+url_hits="$HUB_SCAN_OUT"
+
+hub_scan "$HUB_SCRATCH/code" -E "${NET_MODULES}|${NET_CALLS}|${NET_SHELL}"
+shape_hits="$HUB_SCAN_OUT"
+
+printf '%s\n%s\n' "$url_hits" "$shape_hits" > "$HUB_SCRATCH/net"
+hub_scan "$HUB_SCRATCH/net" -vE 'hub-allow-network:|hub-no-request:'
+if [ -n "$HUB_SCAN_OUT" ]; then
+  report "staged change adds an outbound-network shape under src/ or scripts/:" "$HUB_SCAN_OUT" \
+    "This hub makes no network calls except the documented update check.
+If this line IS that check, mark it:        // hub-allow-network: <why>
+If it only mentions a URL and sends nothing: // hub-no-request: <why>"
+fi
+
+# --- Gate (e): config first ---
+# Every path and every port comes from hub.config.json. Same reasoning as (d):
+# a rule nobody enforces is a rule that rots. scripts/check-paths.mjs runs the
+# same rule over the whole tree; this catches it one commit earlier.
+ABSPATH='/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|[A-Za-z]:[\\/]+Users[\\/]+|/Volumes/'
+hub_scan "$HUB_SCRATCH/code" -E "$ABSPATH"
+if [ -n "$HUB_SCAN_OUT" ]; then
+  report "staged change adds an absolute path under src/ or scripts/:" "$HUB_SCAN_OUT" \
+    "Read it from hub.config.json instead."
+fi
+
+# --- Gate (f): staged binaries ---
+# grep -I and git diff both skip binary content, so a screenshot carrying
+# metadata, a stray database, or a compiled artifact sails past every gate above
+# while the audit reports clean. Their printable strings get the denylist and
+# the home-path rule.
+git diff --cached --numstat --diff-filter=d -- . \
+  | awk -F'\t' '$1 == "-" && $2 == "-" && $3 !~ / => / { print $3 }' > "$HUB_SCRATCH/binaries"
+binary_count=0
+while IFS= read -r blob; do
+  [ -z "$blob" ] && continue
+  binary_count=$((binary_count + 1))
+  git show ":$blob" 2>/dev/null | hub_printable > "$HUB_SCRATCH/blob.txt" || true
+  hub_scan "$HUB_SCRATCH/blob.txt" -iE "${HUB_DENYLIST}|${HUB_HOMEPATH}"
+  if [ -n "$HUB_SCAN_OUT" ]; then
+    report "staged BINARY file $blob carries denylisted content:" \
+      "$(printf '%s\n' "$HUB_SCAN_OUT" | head -20)" \
+      "Binary files are invisible to a normal diff. Strip the metadata or drop the file."
+  fi
+done < "$HUB_SCRATCH/binaries"
+if [ "$binary_count" -gt 0 ]; then
+  echo "[gate] scanned $binary_count staged binary file(s) through their printable strings."
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "Commit rejected. Fix the lines above and re-commit."
+  exit 1
+fi
+exit 0

@@ -1,0 +1,299 @@
+/* The hub's chrome. Tokens and type come from the approved design
+   (docs/mocks/buildwithamemory-front-page.html, the embedded hub screenshot,
+   owner-approved 2026-07-27): a dark lamplight world, mono type for the
+   interface, ember for the brand, and colour reserved for STATE.
+
+   Hand written on purpose. There is no CSS framework here, and the dependency
+   list stays honest because of it. Everything is a custom property, so a user
+   who wants their own look changes values, not markup. */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #100a06;
+  --panel: #1c120a;
+  --panel-2: #221609;
+  --hair: rgba(224, 198, 150, 0.13);
+  --hair-strong: rgba(224, 198, 150, 0.24);
+
+  --ink: #f2e9d7;
+  --ink-muted: #b6a488;
+  --ink-faint: #8a7a5f;
+
+  --ember: #f5a94b;
+  --ember-hot: #ffd79a;
+
+  /* State, and only state. */
+  --st-need: #e05c4b;
+  --st-run: #f5a94b;
+  --st-done: #7fbf6a;
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+  --maxw: 900px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.6 var(--mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- shell */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px clamp(14px, 4vw, 28px);
+  border-bottom: 1px solid var(--hair);
+  background: #0d0b08;
+  flex-wrap: wrap;
+}
+
+.topbar .logo {
+  color: var(--ember);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 12.5px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav .tab {
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+}
+
+.nav .tab.on {
+  color: var(--ink);
+  border-bottom-color: var(--ember);
+}
+
+.nav .tab.off {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.topbar .stat {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ink-faint);
+  display: flex;
+  gap: 7px;
+}
+
+.topbar .stat b {
+  color: var(--st-run);
+  font-weight: 600;
+}
+
+.topbar .stat .sep {
+  opacity: 0.5;
+}
+
+/* ---------------------------------------------------------------- room */
+
+.room {
+  flex: 1;
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 34px) clamp(14px, 4vw, 28px) 40px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.room-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.room-head h1 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.room-date {
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+}
+
+/* ---------------------------------------------------------------- cards */
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.card .hd {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card.needs .hd {
+  color: var(--st-need);
+}
+
+.card .hd .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.card .hd .count {
+  margin-left: auto;
+  color: var(--ink);
+}
+
+.card.note {
+  border-color: var(--hair-strong);
+  background: var(--panel-2);
+}
+
+.card.note.bad .hd {
+  color: var(--st-need);
+}
+
+.empty {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  line-height: 1.65;
+  max-width: 64ch;
+}
+
+.item {
+  display: grid;
+  gap: 6px;
+  border-left: 2px solid var(--hair-strong);
+  padding-left: 10px;
+}
+
+.item .who {
+  color: var(--ink-faint);
+  font-size: 10.5px;
+}
+
+.item .ask {
+  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------- jobs */
+
+.job {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-muted);
+  font-size: 11.5px;
+}
+
+.job .st {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ink-faint);
+}
+
+.job .st.run {
+  background: var(--st-run);
+  box-shadow: 0 0 8px var(--st-run);
+}
+
+.job .st.done {
+  background: var(--st-done);
+}
+
+.job .st.need {
+  background: var(--st-need);
+}
+
+.job-verb {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-meta {
+  color: var(--ink-faint);
+  margin-left: auto;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- foot */
+
+.version {
+  margin: 6px 0 0;
+  color: var(--ink-faint);
+  font-size: 11px;
+  line-height: 1.7;
+  max-width: 70ch;
+}
+
+.foot {
+  border-top: 1px solid var(--hair);
+  padding: 12px clamp(14px, 4vw, 28px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--ink-faint);
+  flex-wrap: wrap;
+}
+
+.foot-brand {
+  color: var(--ember);
+  letter-spacing: 0.06em;
+}
+
+.foot-ver {
+  margin-left: auto;
+}

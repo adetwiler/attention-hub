@@ -1,0 +1,41 @@
+{
+  "$comment": "The Attention Hub registry. Copy this file to hub.config.json and edit THAT one: hub.config.json is gitignored, so an update never touches your settings. Every path and every port the hub uses comes from here, so nothing is hardcoded in the code. A path may start with ~ and it will be expanded to your home directory. Any section you leave out falls back to the documented default, so the hub boots and runs honestly on an empty file. Keys starting with $ are comments and are ignored. Editing this file takes effect on the next restart.",
+
+  "hub": {
+    "$comment": "Cosmetics, and the name the hub records against the actions it takes for you.",
+    "name": "Attention Hub",
+    "actor": "you"
+  },
+
+  "bind": {
+    "$comment": "Where the server listens. 127.0.0.1 means THIS MACHINE ONLY, and that is the default on purpose: nothing reaches the hub from your network until you decide it should. To reach it from your phone or another machine, the setup page recommends putting a private network in front of it rather than opening this up.",
+    "host": "127.0.0.1",
+    "port": 2886,
+    "$allowedDevOrigins": "Extra hostnames you reach the hub through (a proxy, a private-network name, a domain). If you leave one out, the page loads and every click is dead, which is a very confusing failure. Loopback never needs to be listed.",
+    "allowedDevOrigins": []
+  },
+
+  "$dataDir": "Where the hub keeps its SQLite database and its working files. Relative paths resolve against the hub directory. This database is YOURS: nothing in it is ever sent anywhere.",
+  "dataDir": "data",
+
+  "$userDir": "Where YOUR own modules, pages and notes live. Updates never touch anything under here, by construction.",
+  "userDir": "user",
+
+  "update": {
+    "$comment": "NOT BUILT YET: this section is the settled shape, and the code that reads it lands in a later release. When it does, it is the ONLY network call the hub makes. Once a day it will ask GitHub whether a newer release exists, and raise a normal attention item if one does. It sends nothing about you: no identifiers, no usage, no telemetry, ever. To be exact about the part such a promise usually skips, GitHub sees the request itself, meaning your IP address and a user agent, exactly as it would from a browser. Set enabled to false and even that never happens.",
+    "enabled": true,
+    "repo": "adetwiler/attention-hub",
+    "checkEveryHours": 24
+  },
+
+  "adapters": {
+    "$comment": "Your AI command-line tools. The hub is not tied to any one vendor: name whatever you already use and already pay for. Left empty, the surfaces that need an agent say so honestly instead of pretending.",
+    "default": null,
+    "agents": {}
+  },
+
+  "modules": {
+    "$comment": "Core modules ship with the hub and stay updatable. Your own modules live in userDir. List the ones you want switched on; an empty list means the core defaults.",
+    "enabled": []
+  }
+}

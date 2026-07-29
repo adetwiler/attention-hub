@@ -1,2 +1,30 @@
 .DS_Store
 node_modules/
+
+# Build output. .next-check is the scratch dist so a build never kills the
+# instance that is currently serving you (see next.config.ts).
+.next/
+.next-check/
+out/
+*.tsbuildinfo
+
+# Your config and your data. Both are YOURS: an update never touches them.
+# The tracked default lives in hub.config.example.json.
+hub.config.json
+data/
+user/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# The real denylist is machine local and is never committed: publishing your
+# content scanner must never publish the list of things you are keeping out.
+.githooks/denylist.local
+
+# Environment
+.env
+.env.*
+
+# Next generated ambient types
+next-env.d.ts
