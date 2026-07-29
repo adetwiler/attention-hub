@@ -106,10 +106,27 @@ export default function Shell({ hubName, version, initial, tabs, tabsProblem, ch
       <main className="room">{children}</main>
 
       <footer className="foot">
-        {/* Attribution is a product feature, not a licence term (ADR-0001).
-            The full line and the link land with the release copy in slice 8. */}
+        {/* ATTRIBUTION IS A PRODUCT FEATURE, NOT A LICENCE TERM (ADR-0001). The
+            licence is MIT, so stripping this line is permitted and fine. It
+            ships in the code so a fork carries it by default.
+
+            The BRAND is the user's own hub name, because they may rename their
+            hub and a footer arguing with the topbar is not a credit, it is a
+            bug. The credit is the "by" clause, which is the part ADR-0001
+            actually specifies, and on a default install the whole line reads
+            exactly as that ADR writes it. */}
         <span className="foot-brand">{hubName}</span>
-        <span className="foot-dim">free and open source</span>
+        <span className="foot-dim">
+          free and open source, by Andrew Detwiler /{" "}
+          <a
+            className="link"
+            href="https://buildwithamemory.com" // hub-no-request: the address of a link the USER clicks. Nothing in this file fetches anything.
+            target="_blank"
+            rel="noreferrer"
+          >
+            buildwithamemory.com
+          </a>
+        </span>
         <span className="foot-ver">v{version}</span>
       </footer>
     </div>
