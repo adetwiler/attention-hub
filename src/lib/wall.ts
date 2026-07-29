@@ -63,17 +63,31 @@ export function wallView(config: HubConfig): WallView {
   const declared =
     wall.panes.length > 0
       ? wall.panes
-      : Object.keys(profiles).map((name) => ({ id: name, kind: wall.paneKind, profile: name, label: null }));
+      : Object.keys(profiles).map((name) => ({
+          id: name,
+          kind: wall.paneKind,
+          profile: name,
+          label: null,
+          cwd: null,
+        }));
 
-  const panes = declared.map((pane): PaneSpec => {
+  const panes = declared.map((pane, i): PaneSpec => {
     const profile = pane.profile === null ? undefined : profiles[pane.profile];
     const dir = profile?.configDir ?? null;
     return {
       id: pane.id,
       kind: pane.kind,
       label: pane.label ?? profile?.label ?? pane.id,
-      detail: dir,
-      problem: dir === null ? null : dirProblem(`profiles.${pane.profile}.configDir`, dir),
+      detail: dir ?? pane.cwd,
+      // Two ways a pane can point at a directory that is not there, and both are
+      // the same class of config typo, so both name the exact key. A pane's own
+      // cwd is only ever set on an explicit pane list, which is why the message
+      // can name its index. The terminal module's own default cwd is checked
+      // where it is used (src/lib/terminal.ts), not here: this module must stay
+      // free of runtime project imports to remain loadable by the test suite.
+      problem:
+        (dir === null ? null : dirProblem(`profiles.${pane.profile}.configDir`, dir)) ??
+        (pane.cwd === null ? null : dirProblem(`wall.panes[${i}].cwd`, pane.cwd)),
     };
   });
 

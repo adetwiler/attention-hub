@@ -41,6 +41,17 @@ const UPDATE_HOURS_DEFAULT = 24;
 /** What a wall pane holds when nothing says otherwise. See PANE_KINDS below. */
 const PANE_KIND_DEFAULT: PaneKind = "placeholder";
 
+/** OFF. A browser shell is the largest surface this product has, so a stranger's
+ * first install does not come with one open. docs/terminal.md says why at length. */
+const TERMINAL_ENABLED_DEFAULT = false;
+/** The pty sidecar's loopback port. Written in three places (here, the sidecar,
+ * and the example config) and asserted equal by .githooks/release-check.sh. */
+const TERMINAL_PORT_DEFAULT = 2887; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and pty/server.mjs by release-check.sh
+const TERMINAL_TMUX_DEFAULT = true;
+const TERMINAL_PREFIX_DEFAULT = "hub";
+const TERMINAL_SCROLLBACK_DEFAULT = 2000;
+const TERMINAL_IDLE_MINUTES_DEFAULT = 30;
+
 /** A profile name and a pane id both become an id in a DOM attribute and a
  * localStorage key, so they are slugs. The error message says so in plain words. */
 const SLUG = /^[a-z0-9][a-z0-9_-]*$/;
@@ -126,6 +137,11 @@ export interface WallPane {
   profile: string | null;
   /** An explicit override. null falls back to the profile label, then the id. */
   label: string | null;
+  /** Absolute working directory, for a pane whose kind uses one (today only
+   * `terminal`). null falls back to `terminal.cwd`, then your home directory.
+   * The cwd is resolved HERE, on the server, from config: a client never sends
+   * one, so a browser cannot pick the directory a shell opens in. */
+  cwd: string | null;
 }
 
 export interface WallConfig {
@@ -134,6 +150,36 @@ export interface WallConfig {
   panes: WallPane[];
   /** The kind a derived (profile) pane gets. */
   paneKind: PaneKind;
+}
+
+/** The pty sidecar. A `terminal` pane is a real shell on this machine, so every
+ * knob here is a security knob and the section ships switched OFF.
+ *
+ * macOS and Linux only, stated plainly: the sidecar is tmux-backed. The repo's
+ * Windows-first-class rule does not reach this one module and pretending
+ * otherwise would ship a broken promise. See docs/terminal.md. */
+export interface TerminalConfig {
+  /** OFF by default. Nothing about the terminal exists until you set this true. */
+  enabled: boolean;
+  /** The sidecar's port on loopback. The sidecar binds 127.0.0.1 and nothing else. */
+  port: number;
+  /** An explicit WebSocket URL, for reaching the sidecar through your own proxy.
+   * null builds ws://127.0.0.1:<port>, which is the local case. */
+  url: string | null;
+  /** tmux-backed sessions, so a session survives navigation, a sidecar restart
+   * and sleep, and stays attachable from a real terminal. false is a raw pty:
+   * it works, and it survives none of that. */
+  tmux: boolean;
+  /** Prefix for the tmux session name, which is `<prefix>-<pane id>`. */
+  sessionPrefix: string;
+  /** Default working directory for a terminal pane. null = your home directory. */
+  cwd: string | null;
+  /** The shell to run. null = the SHELL environment variable, else /bin/sh. */
+  shell: string | null;
+  /** Lines of tmux history replayed on attach, so a reattach is not a blank screen. */
+  scrollback: number;
+  /** Minutes of silence before the socket is dropped. The tmux session survives. */
+  idleMinutes: number;
 }
 
 export interface HubConfig {
@@ -149,6 +195,7 @@ export interface HubConfig {
   /** The accounts. Empty is honest: the wall says it has no panes configured. */
   profiles: Record<string, Profile>;
   wall: WallConfig;
+  terminal: TerminalConfig;
 }
 
 // ---------------------------------------------------------------- helpers
@@ -356,14 +403,49 @@ function parseWall(root: Record<string, unknown>, profiles: Record<string, Profi
       throw configError(`${where}.profile`, `the name of a configured profile (have: ${known})`);
     }
     const entryKind = entry["kind"];
+    const cwd = optString(entry, "cwd", `${where}.cwd`);
     return {
       id,
       profile,
       kind: entryKind === undefined || entryKind === null ? paneKind : parsePaneKind(entryKind, `${where}.kind`),
       label: optString(entry, "label", `${where}.label`),
+      cwd: cwd === null ? null : resolvePath(cwd),
     };
   });
   return { panes, paneKind };
+}
+
+function parseTerminal(root: Record<string, unknown>): TerminalConfig {
+  const raw = section(root, "terminal");
+  const port = int(raw, "port", "terminal.port", TERMINAL_PORT_DEFAULT);
+  if (port < 1 || port > 65535) throw configError("terminal.port", "a number between 1 and 65535");
+
+  // A tmux session name may not contain a dot or a colon (tmux reads those as
+  // window and pane addresses), and the prefix also lands in a process argument.
+  // A slug avoids both problems and the message says which characters are fine.
+  const sessionPrefix = str(raw, "sessionPrefix", "terminal.sessionPrefix", TERMINAL_PREFIX_DEFAULT);
+  if (!SLUG.test(sessionPrefix)) {
+    throw configError("terminal.sessionPrefix", `${SLUG_EXPECTED} (it becomes part of the tmux session name)`);
+  }
+
+  const scrollback = int(raw, "scrollback", "terminal.scrollback", TERMINAL_SCROLLBACK_DEFAULT);
+  if (scrollback < 0) throw configError("terminal.scrollback", "zero or a positive number of lines");
+  const idleMinutes = int(raw, "idleMinutes", "terminal.idleMinutes", TERMINAL_IDLE_MINUTES_DEFAULT);
+  if (idleMinutes < 1) throw configError("terminal.idleMinutes", "at least 1 minute");
+
+  const cwd = optString(raw, "cwd", "terminal.cwd");
+  const shell = optString(raw, "shell", "terminal.shell");
+  return {
+    enabled: bool(raw, "enabled", "terminal.enabled", TERMINAL_ENABLED_DEFAULT),
+    port,
+    url: optString(raw, "url", "terminal.url"),
+    tmux: bool(raw, "tmux", "terminal.tmux", TERMINAL_TMUX_DEFAULT),
+    sessionPrefix,
+    cwd: cwd === null ? null : resolvePath(cwd),
+    shell: shell === null ? null : expandPath(shell),
+    scrollback,
+    idleMinutes,
+  };
 }
 
 // ---------------------------------------------------------------- load
@@ -414,6 +496,7 @@ export function loadConfig(): HubConfig {
     // The wall validates pane.profile against the profiles above, so it is
     // parsed last and takes them as an argument rather than re-reading the file.
     wall: parseWall(root, profiles),
+    terminal: parseTerminal(root),
   };
   return cached;
 }
