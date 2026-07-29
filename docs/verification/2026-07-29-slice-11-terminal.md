@@ -62,6 +62,24 @@ to, not a terminal redraw: a screen repaint can fake the second, not the first.
   at 72 seconds with a status message explaining that the session is still
   running, and `has-session` was still true afterwards.
 
+**Off by default, which is the state every stranger meets**
+
+With `terminal.enabled: false`, all three doors say the same sentence and name the
+same key:
+
+- the readiness GET answers `ready: false` with the reason,
+- the mint POST refuses (409) with the reason,
+- the sidecar **refuses to start at all**, so "off" means the socket does not
+  exist rather than a hidden button.
+
+**The pane, server-rendered (curl, no JavaScript)**
+
+`GET /wall` returns the terminal pane in its `CHECKING` state with the ATTACH
+button disabled, beside a placeholder pane. This is why "checking" exists as a
+phase: rendering the ATTACH invitation first and retracting it after the
+readiness check would put a shell offer on screen for a paint, on a module that
+ships off.
+
 **The size trap, measured both ways**
 
 One session, two pty clients, window size read from `tmux list-windows`:

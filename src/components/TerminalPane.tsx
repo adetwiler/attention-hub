@@ -30,8 +30,14 @@ import type { FitAddon } from "@xterm/addon-fit";
 import type { PaneContentProps } from "./paneContent";
 import "@xterm/xterm/css/xterm.css";
 
-/** What the pane is doing, in the user's words rather than the socket's. */
-type Phase = "idle" | "opening" | "live" | "closed" | "problem";
+/** What the pane is doing, in the user's words rather than the socket's.
+ *
+ * "checking" is the state the SERVER renders, and it exists for one reason: the
+ * module ships switched off, so on most first loads the true answer is "this is
+ * off, and here is what turning it on means". Starting at "idle" instead would
+ * put an ATTACH invitation on screen for one paint and then retract it, which is
+ * the closest thing to a lie a loading state can manage. */
+type Phase = "checking" | "idle" | "opening" | "live" | "closed" | "problem";
 
 interface Note {
   phase: Phase;
@@ -92,7 +98,7 @@ export default function TerminalPane({ pane }: PaneContentProps) {
   const wsRef = useRef<WebSocket | null>(null);
   const grantRef = useRef<Grant | null>(null);
   const [note, setNote] = useState<Note>({
-    phase: "idle",
+    phase: "checking",
     message: "",
   });
   const [detail, setDetail] = useState<string | null>(null);
@@ -135,10 +141,16 @@ export default function TerminalPane({ pane }: PaneContentProps) {
         const body: unknown = await response.json();
         if (!live || typeof body !== "object" || body === null) return;
         const raw = body as Record<string, unknown>;
-        if (raw["ready"] === true) return;
+        if (raw["ready"] === true) {
+          setNote({ phase: "idle", message: "" });
+          return;
+        }
         if (typeof raw["problem"] === "string") setNote({ phase: "problem", message: raw["problem"] });
+        else setNote({ phase: "idle", message: "" });
       } catch {
-        // leave the pane in its idle state; ATTACH will say what is wrong
+        // The check itself failed, which says nothing about the module. Offer the
+        // button: pressing it produces the real reason.
+        if (live) setNote({ phase: "idle", message: "" });
       }
     })();
     return () => {
@@ -296,14 +308,22 @@ export default function TerminalPane({ pane }: PaneContentProps) {
     <div className="termpane">
       <div className="termbar">
         <span className={live ? "termstate on" : "termstate"}>
-          {live ? "LIVE" : note.phase === "opening" ? "OPENING" : note.phase === "problem" ? "PROBLEM" : "NOT ATTACHED"}
+          {live
+            ? "LIVE"
+            : note.phase === "checking"
+              ? "CHECKING"
+              : note.phase === "opening"
+                ? "OPENING"
+                : note.phase === "problem"
+                  ? "PROBLEM"
+                  : "NOT ATTACHED"}
         </span>
         {detail !== null ? <code className="termsession">{detail}</code> : null}
         <span className="termgrow" />
         <button
           type="button"
           className="termbtn"
-          disabled={note.phase === "opening"}
+          disabled={note.phase === "opening" || note.phase === "checking"}
           onClick={live ? detach : () => void connect()}
         >
           {live ? "DETACH" : note.phase === "closed" || note.phase === "problem" ? "REATTACH" : "ATTACH"}
@@ -311,6 +331,10 @@ export default function TerminalPane({ pane }: PaneContentProps) {
       </div>
 
       {note.message !== "" ? <p className={note.phase === "problem" ? "termnote bad" : "termnote"}>{note.message}</p> : null}
+
+      {note.phase === "checking" ? (
+        <p className="empty">Checking whether the terminal module is switched on.</p>
+      ) : null}
 
       {note.phase === "idle" ? (
         <p className="empty">
@@ -322,7 +346,14 @@ export default function TerminalPane({ pane }: PaneContentProps) {
 
       {/* The host element is never unmounted while a terminal exists: the last
           screen of a dropped session is what tells you what happened to it. */}
-      <div className={note.phase === "idle" || note.phase === "problem" ? "termhost hidden" : "termhost"} ref={hostRef} />
+      <div
+        className={
+          note.phase === "checking" || note.phase === "idle" || note.phase === "problem"
+            ? "termhost hidden"
+            : "termhost"
+        }
+        ref={hostRef}
+      />
     </div>
   );
 }
