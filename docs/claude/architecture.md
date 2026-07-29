@@ -195,3 +195,14 @@ counts as answered" exist in both `scripts/hub.mjs` and `src/lib/`.
 `test/hub-cli.test.mjs` runs both over the same input and fails if they disagree,
 which is the same shape `test/serve-config.test.mjs` uses for the config. A
 comment asking the next person to remember is not a mechanism.
+
+**The NFT-list warning survives a `turbopackIgnore` marker when the dynamic path
+is not a `process.cwd()` join.** `src/lib/attention.ts` reads a file whose path
+came from config, and the build prints one "Encountered unexpected file in NFT
+list" warning tracing `next.config.ts` to `config.ts` to `attention.ts` to a
+route. Markers on those `statSync`/`readFileSync`/`appendFileSync` calls, and on
+the `path.join` that builds the default feed path, were tried and changed nothing,
+so they were removed rather than left in place implying they did something. The
+build SUCCEEDS and all five gates are green; what the warning costs is a slower
+trace, not correctness. Whether the warning predates this slice was not
+established (see OPEN.md), so do not assume it is new before checking `main`.
