@@ -56,6 +56,28 @@ export const MIGRATIONS: readonly string[] = [
   CREATE INDEX idx_ledger_state ON action_ledger (state);
   CREATE INDEX idx_ledger_target ON action_ledger (target);
   CREATE INDEX idx_ledger_created ON action_ledger (created_at);`,
+
+  // THE BROWSER PANE's handshake. The hub mints a single-use, short-lived row
+  // here and the sidecar (chrome/server.mjs) burns it on connect, so one
+  // database is the single source of truth for what was granted and restarting
+  // either side cannot desynchronise them.
+  //
+  // THE GRANT LIVES IN THE ROW, NEVER IN THE URL. `profile` says which browser
+  // the socket may drive, so a token that leaks out of a URL bar or a log
+  // cannot be re-pointed at a different signed-in profile.
+  //
+  // Deliberately absent: any record of what was BROWSED. The ledger records
+  // that a pane was opened on a profile and nothing else. A history table here
+  // would be a tracking log of the user's own machine, which is the one thing
+  // this product promises never to keep.
+  `CREATE TABLE browser_tokens (
+    token      TEXT PRIMARY KEY,
+    profile    TEXT NOT NULL,
+    pane       TEXT NOT NULL DEFAULT '',
+    url        TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  );`,
 ];
 
 /** One row of PRAGMA foreign_key_check: a reference with no parent. */
