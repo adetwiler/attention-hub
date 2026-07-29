@@ -133,16 +133,27 @@ to do: file an item from a terminal, watch it toast live, answer it, confirm
 closing row appended. Everything except the in-browser half is verified by the
 suite and by hand (see the comment on issue #2).
 
-**10. One Turbopack build WARNING, unresolved, and I could not establish whether
-it is new.** `Encountered unexpected file in NFT list`, tracing `next.config.ts`
-to `src/lib/config.ts` to `src/lib/attention.ts` to a route. The build succeeds
-and all five gates pass; the cost is a slower trace, not correctness. I tried the
-documented `turbopackIgnore` marker on every filesystem call and on the default
-feed-path join, it changed nothing, and I removed the markers rather than leave
-them implying they helped. What I did NOT do is build `main` to see whether the
-warning was already there, which is the cheap first question and needs a checkout
-with its own `node_modules`. Worth one measurement before anyone spends real time
-on it.
+**10. RESOLVED, and it was never the product: the Turbopack NFT warning is an
+artifact of building inside a nested worktree.** `Encountered unexpected file in
+NFT list` appeared on the slice-2 branch and not on `main`, which looked like the
+slice had introduced it. It had not, and the first comparison was not apples to
+apples: the branch was built inside a worktree under `.claude/worktrees/` while
+`main` was built in the normal checkout.
+
+The measurement that settled it: the SAME slice-2 commit, checked out to a
+worktree at a non-nested path and built there, produces **zero** warnings. The
+warning names the worktree's own `next.config.ts`, which is the tell. Building
+under `.claude/` makes Turbopack's file tracing walk up into a directory that is
+inside the project it is tracing, so it reports that the whole project was traced
+unintentionally.
+
+Nothing to fix in `src/`, and the removed `turbopackIgnore` markers were correctly
+removed: they were never going to help. The lesson, which applies to every agent
+worktree, is in
+[docs/claude/parallel-agent-builds.md](docs/claude/parallel-agent-builds.md):
+**a build warning seen only in a nested worktree is suspect until reproduced from
+a normal checkout.** Compare like with like before recording a defect in a
+public-bound repo.
 
 ## Owed by a later slice, recorded so it cannot be forgotten
 
