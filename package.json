@@ -4,6 +4,9 @@
   "private": true,
   "description": "A free, local-only command center for AI-assisted work. Your machine, your database, no telemetry.",
   "license": "MIT",
+  "bin": {
+    "hub": "scripts/hub.mjs"
+  },
   "scripts": {
     "dev": "node scripts/serve.mjs dev",
     "start": "node scripts/serve.mjs start",

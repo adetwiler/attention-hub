@@ -36,6 +36,12 @@ const BIND_HOST_DEFAULT = "127.0.0.1";
 const BIND_PORT_DEFAULT = 2886; // check-paths-allow: the documented default, asserted equal to hub.config.example.json and scripts/serve.mjs by release-check.sh
 const DATA_DIR_DEFAULT = "data";
 const USER_DIR_DEFAULT = "user";
+/** The attention feed's file name inside dataDir when the config does not name
+ * a path. Duplicated, deliberately and once, in scripts/hub.mjs: the CLI runs
+ * before any TypeScript exists, exactly as the boot script does. The two are
+ * held together by test/hub-cli.test.mjs, which asserts they resolve the same
+ * absolute path rather than trusting that they will. */
+const ATTENTION_FEED_DEFAULT = "attention.jsonl";
 const UPDATE_REPO_DEFAULT = "adetwiler/attention-hub";
 const UPDATE_HOURS_DEFAULT = 24;
 /** What a wall pane holds when nothing says otherwise. See PANE_KINDS below. */
@@ -87,6 +93,13 @@ export interface AdaptersConfig {
   /** Key into `agents`. null = no agent configured, and surfaces say so. */
   default: string | null;
   agents: Record<string, AgentAdapter>;
+}
+
+export interface AttentionConfig {
+  /** Absolute. The append-only JSONL any process on this machine writes to when
+   * it needs the human. Defaults to attention.jsonl inside dataDir. The
+   * contract is docs/attention-feed.md. */
+  feed: string;
 }
 
 export interface ModulesConfig {
@@ -145,6 +158,7 @@ export interface HubConfig {
   userDir: string;
   update: UpdateConfig;
   adapters: AdaptersConfig;
+  attention: AttentionConfig;
   modules: ModulesConfig;
   /** The accounts. Empty is honest: the wall says it has no panes configured. */
   profiles: Record<string, Profile>;
@@ -303,6 +317,17 @@ function parseAdapters(root: Record<string, unknown>): AdaptersConfig {
   return { default: fallback, agents };
 }
 
+/** The feed path. Defaults INSIDE dataDir, which is already gitignored and
+ * already the folder an update never touches, so the integration surface a
+ * stranger writes against is safe by construction rather than by instruction. */
+function parseAttention(root: Record<string, unknown>, dataDir: string): AttentionConfig {
+  const raw = section(root, "attention");
+  const feed = optString(raw, "feed", "attention.feed");
+  return {
+    feed: feed === null ? path.join(dataDir, ATTENTION_FEED_DEFAULT) : resolvePath(feed),
+  };
+}
+
 function parseModules(root: Record<string, unknown>): ModulesConfig {
   const raw = section(root, "modules");
   return { enabled: stringList(raw, "enabled", "modules.enabled") };
@@ -401,14 +426,16 @@ function readRoot(): Record<string, unknown> {
 export function loadConfig(): HubConfig {
   if (cached !== null) return cached;
   const root = readRoot();
+  const dataDir = resolvePath(str(root, "dataDir", "dataDir", DATA_DIR_DEFAULT));
   const profiles = parseProfiles(root);
   cached = {
     hub: parseHub(root),
     bind: parseBind(root),
-    dataDir: resolvePath(str(root, "dataDir", "dataDir", DATA_DIR_DEFAULT)),
+    dataDir,
     userDir: resolvePath(str(root, "userDir", "userDir", USER_DIR_DEFAULT)),
     update: parseUpdate(root),
     adapters: parseAdapters(root),
+    attention: parseAttention(root, dataDir),
     modules: parseModules(root),
     profiles,
     // The wall validates pane.profile against the profiles above, so it is

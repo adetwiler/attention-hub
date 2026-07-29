@@ -28,6 +28,11 @@
     "checkEveryHours": 24
   },
 
+  "attention": {
+    "$comment": "The attention feed: the append-only file any AI session, script or cron job on this machine writes to when it needs YOU. The hub reads it and shows you what is waiting. Leave feed out and it lives inside your dataDir, which is the right answer for almost everyone. Point it somewhere else only if several tools already agree on a file. The full contract, so anything can write to it, is docs/attention-feed.md. Quiet hours are NOT here: they are live state you change from the page, so they live in the database, and they suppress only the pop-up notifications, never the list itself.",
+    "feed": null
+  },
+
   "adapters": {
     "$comment": "Your AI command-line tools. The hub is not tied to any one vendor: name whatever you already use and already pay for. Left empty, the surfaces that need an agent say so honestly instead of pretending.",
     "default": null,

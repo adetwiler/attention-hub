@@ -16,8 +16,12 @@
 // install byte-identical to a healthy fresh one (0 running, 0 queued, "No jobs
 // yet", forever), which is the exact failure the honest-empty-state rule exists
 // to prevent.
+import { attentionQueue, quietState } from "./attention";
 import { ledgerStateCounts, parseArtifacts, readConsistently, recentLedgerRows } from "./db";
 import type { LedgerState, LedgerViewRow } from "./db";
+import type { AttentionItem } from "./feed";
+import { QUIET_DEFAULT } from "./quiet";
+import type { QuietState } from "./quiet";
 
 /** A ledger row as the live surfaces render it. A trimmed LedgerRow: no spec, no pid. */
 export interface JobView {
@@ -35,19 +39,13 @@ export interface JobView {
   ended_at: string | null;
 }
 
-/** An item that genuinely needs the human. Slice 2 fills this; the shape lands now
- * so the stream contract does not change under the client later. */
-export interface AttentionItem {
-  id: string;
-  /** Where it came from ("agent question", "review ask", "update available"). */
-  kind: string;
-  /** The surface it concerns. */
-  source: string;
-  /** What is being asked, in plain language. */
-  ask: string;
-  /** ISO timestamp. */
-  at: string;
-}
+// The attention item's shape is the FEED's shape, not a second one: it is
+// defined by the public JSONL contract (src/lib/feed.ts, docs/attention-feed.md)
+// and re-exported here so a client component can keep importing it from the
+// snapshot module it already imports. Two declarations of this type would be two
+// answers to "what is an attention item", and the wire would eventually carry
+// one while the components rendered the other.
+export type { AttentionItem } from "./feed";
 
 export interface LedgerCounts {
   running: number;
@@ -61,6 +59,12 @@ export interface LedgerSnapshot {
   jobs: JobView[];
   /** Oldest first: the thing that has been waiting longest is the thing to answer. */
   attention: AttentionItem[];
+  /** The one flag every attention-grabbing surface obeys. It rides the snapshot
+   * rather than being fetched separately so the toast stack decides whether to
+   * fire from the SAME payload that told it something arrived. Two round trips
+   * means a window in which an item is known and the quiet state is not, and a
+   * toast fires in that window every time. */
+  quiet: QuietState;
   /** null when the database read succeeded. Otherwise a plain-language reason
    * the numbers above are not the truth. The UI renders it. */
   degraded: string | null;
@@ -92,6 +96,10 @@ function toView(row: LedgerViewRow): JobView {
 /** The snapshot every live surface renders. Server-rendered pages pass it in as
  * the initial value, so first paint is never empty and the stream just takes over. */
 export function ledgerSnapshot(): LedgerSnapshot {
+  // THE FEED IS READ FIRST, and it is read from a file rather than from SQLite.
+  // That ordering is deliberate: what needs you is the one thing on this page
+  // that is worth showing even when the rest of the hub is unwell.
+  const feed = attentionQueue();
   // One transaction: the counts and the rows must describe the same instant.
   // Two independent SELECTs let a write land between them, and the snapshot then
   // says "1 running" over a strip with no running row. It self-corrects in 1.5s,
@@ -108,10 +116,12 @@ export function ledgerSnapshot(): LedgerSnapshot {
       needsAnswer: read.states["needs-answer"],
     },
     jobs: read.rows.map(toView),
-    // Empty until slice 2 builds the attention queue. It renders as an honest
-    // empty state, never as invented rows.
-    attention: [],
-    degraded: null,
+    attention: feed.items,
+    quiet: quietState(),
+    // ONE degraded channel, shared. A feed the hub cannot parse is exactly as
+    // load bearing as a database it cannot open, and a second field would mean
+    // a second place every surface has to remember to render.
+    degraded: feed.error,
     nowMs: Date.now(),
   };
 }
@@ -122,6 +132,10 @@ export function emptySnapshot(degraded: string | null = null): LedgerSnapshot {
     counts: { running: 0, queued: 0, failed: 0, needsAnswer: 0 },
     jobs: [],
     attention: [],
+    // The stored schedule is in the database, and this snapshot exists because
+    // the database could not be read, so the documented default is the honest
+    // answer. It is also the safe one: it never claims to be quiet.
+    quiet: { manual: false, ...QUIET_DEFAULT, scheduled: false, quietNow: false },
     degraded,
     nowMs: Date.now(),
   };
@@ -135,6 +149,7 @@ export function snapshotDiffKey(snap: LedgerSnapshot): string {
     counts: snap.counts,
     jobs: snap.jobs,
     attention: snap.attention,
+    quiet: snap.quiet,
     degraded: snap.degraded,
   });
 }
@@ -156,10 +171,21 @@ export function safeLedgerSnapshot(): LedgerSnapshot {
       lastLogged = detail;
       console.error(`[hub] the hub database could not be read: ${detail}`);
     }
-    return emptySnapshot(
-      "The hub cannot read its own database, so nothing below is real. " +
+    const fallback = emptySnapshot(
+      "The hub cannot read its own database, so the jobs and the counts below are not real. " +
         "Check that the dataDir in your config exists and is writable. " +
         `The error was: ${detail}`,
     );
+    // The attention feed is a FILE, so it is very likely still readable, and it
+    // is the one thing on the page worth showing anyway: a hub with a broken
+    // database can still tell you what is waiting, even though it cannot record
+    // your answer. Never swap a readable list for an empty one just because
+    // something else failed.
+    try {
+      fallback.attention = attentionQueue().items;
+    } catch {
+      // then there is genuinely nothing to show, and the reason is already above
+    }
+    return fallback;
   }
 }
