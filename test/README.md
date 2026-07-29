@@ -48,6 +48,11 @@ So the net covers the four things a regression would hurt most:
 - **`serve-config.test.mjs`.** The boot script's verdict on the same files, so
   the two parsers cannot drift back into disagreeing about your config.
 - **`time.test.mjs`.** The one formatter every surface shares.
+- **`tabs.test.mjs`.** The extension seam, which is the first thing this product
+  asks a stranger to edit, so every refusal message is pinned by its exact
+  wording. It also covers the rule that keeps a folder tab safe: the folder comes
+  from config and the path inside it comes from the request, asserted against a
+  real symlink out of the folder rather than reasoned about in a comment.
 
 ## The TypeScript note
 
