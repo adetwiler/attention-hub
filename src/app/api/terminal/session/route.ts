@@ -48,6 +48,27 @@ function sameOrigin(request: Request): boolean {
   }
 }
 
+/** Could this pane open a shell, and if not, why? MINTS NOTHING.
+ *
+ * It exists so a pane can say "the terminal module is switched off, and here is
+ * what switching it on means" before anybody presses a button. A pane that looks
+ * ready and then fails on click teaches the user to distrust the whole surface,
+ * and the honest-state rule covers a pane that cannot connect too.
+ *
+ * Read-only, same-origin not required: it hands back a sentence about the user's
+ * own config and no authority whatsoever. */
+export function GET(request: Request): Response {
+  const paneId = new URL(request.url).searchParams.get("paneId");
+  if (paneId === null || paneId === "") return no(400, "Expected a paneId.");
+  const resolved = grantFor(loadConfig(), paneId, os.homedir());
+  return Response.json({
+    ready: resolved.problem === null,
+    problem: resolved.problem,
+    ownerOnly: TERMINAL_MODULE.ownerOnly,
+    platforms: TERMINAL_MODULE.platforms,
+  });
+}
+
 export async function POST(request: Request): Promise<Response> {
   if (!sameOrigin(request)) {
     return no(403, "This request did not come from the hub's own pages, so it gets no terminal grant.");
