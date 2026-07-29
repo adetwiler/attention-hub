@@ -233,9 +233,11 @@ export function tabRoom(config: HubConfig, slug: string, relative: string): TabR
   const bad = dirProblem(where, dir);
   if (bad !== null) return { ...EMPTY, tab: spec, root: dir, problem: bad };
 
-  // Normalised so "notes/../.." is refused as one answer rather than depending
-  // on how many segments deep the walk went.
-  const asked = relative.replace(/^\/+/, "");
+  // The request is taken EXACTLY as it arrived. Nothing is stripped or repaired
+  // first: an absolute path or a leading slash resolves outside the tab's folder
+  // and is refused as an escape, where quietly turning it into a relative path
+  // would answer a question nobody asked and report the wrong reason.
+  const asked = relative;
   const full = inside(dir, asked);
   if (full === null) {
     return {
