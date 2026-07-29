@@ -47,8 +47,8 @@ a named "not built, tell us if you want it" list.
 
 This is the first thing added back since the quad-first re-cut reduced v1 to five
 items, and #8 (release) is blocked behind the whole set, so it moves the release
-date by whatever the seam costs. **It needs an issue and a `v1` label.** Two
-things ride with it: the setup wizard is a PROMPT (the user's own AI reads
+date by whatever the seam costs. **Filed as #14, labelled `v1`** (2026-07-29), and
+the night fleet's milestone count moved 5 to 6 to match. Two things ride with it: the setup wizard is a PROMPT (the user's own AI reads
 `hub.config.example.json`, interviews them, writes their config) and never a
 built screen, and the docs stop at the config seam and say plainly why, since
 `user/` does not ship until #7 and `git pull` updates would collide with source

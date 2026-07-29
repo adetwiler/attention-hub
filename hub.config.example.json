@@ -39,6 +39,22 @@
     "agents": {}
   },
 
+  "profiles": {
+    "$comment": "The accounts you work under. One profile is one account: a name, an optional label for the screen, and the config directory that account of your AI tool uses. The WALL shows one pane per profile, so four profiles give you the 2x2 quad and one profile gives you a single big pane. Leave this empty and the wall says it has no panes configured, honestly, rather than inventing any. The name is a lowercase slug (letters, numbers, dashes, underscores) because it becomes the pane's id. configDir is optional: a pane does not have to be tied to an account.",
+    "$example": {
+      "work": { "label": "WORK", "configDir": "~/.config/your-ai-tool" },
+      "personal": { "label": "PERSONAL", "configDir": "~/.config/your-ai-tool-personal" }
+    }
+  },
+
+  "wall": {
+    "$comment": "THE WALL: every pane side by side, on one screen. The grid takes its shape from the COUNT, so adding a profile above is the whole job of adding a pane. Number keys 1 to 9 blow one pane up on its own, 0 brings them all back, F is fullscreen, and the layout you leave is the layout you come back to. You only need the keys below if you want something other than one pane per profile.",
+    "$paneKind": "What a profile's pane HOLDS. \"placeholder\" is the only kind this version can render: it shows the account the pane is bound to and says plainly that its content module is not installed. \"terminal\" and \"browser\" are accepted here so a config written for a later release still loads, and the wall names the pane that is waiting rather than refusing your whole file.",
+    "paneKind": "placeholder",
+    "$panes": "OPTIONAL, and empty is the normal case. Leave it out and the wall is one pane per profile, in the order above. Write it when you want a different set: an ordered list of { \"id\", \"kind\", \"profile\", \"label\" }, where id is a slug unique in the list, profile names one of the profiles above (or is left out for a pane tied to no account), and label overrides the profile's.",
+    "panes": []
+  },
+
   "modules": {
     "$comment": "Core modules ship with the hub and stay updatable. Your own modules live in userDir. List the ones you want switched on; an empty list means the core defaults.",
     "enabled": []
