@@ -24,6 +24,18 @@ unaffected; what waits is Andrew becoming the first template install.
 
 Full record + the reasoning: `~/.claude/memory/project_attention_hub_giveaway.md`.
 
+**0b. Marketing shots: re-shoot against a demo profile, or blur the real ones?**
+Three quad-wall captures (2026-07-29) proved the framing works and are filed in a private
+repo. They cannot ship: nine redaction rows including home paths, real profile tags,
+private repo and project names, and two full panes of unreleased content. The gates here
+read text and cannot read a PNG, so a screenshot is the one thing that walks past every
+leak check. **Recommendation: re-shoot against a seeded demo profile** (config-driven and
+local, so it is cheap) and let it ride along with the Claude-in-Chrome release walk that
+is already required. The alternative is blurring, and the blur lands exactly on the
+content meant to prove work is happening. The five-asset set, the placement table and the
+redaction map are summarised in [docs/marketing/README.md](docs/marketing/README.md); the
+full mock lives with the reference frames in the private repo.
+
 **1. The default port is 2886, picked by me.** It is ATTN on a phone keypad and
 it is in the IANA unassigned range. If you would rather it be something else,
 now is the cheap moment: it is in `hub.config.example.json`, `src/lib/config.ts`

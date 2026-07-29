@@ -1,0 +1,79 @@
+{
+  "$comment": "The recipe for every marketing shot of the hub. Follows the marketing-screenshots standard: presets are exact and repeatable, redaction is mandatory and asserted after masking, and a target that still matches a pattern is skipped rather than delivered. Run it against the DEMO profile (see demoProfile below), never a real working wall. A UI change means re-running this file, not re-framing by hand.",
+  "baseUrl": "http://127.0.0.1:4780",
+  "demoProfile": {
+    "$comment": "Seeded config the capture runs against, so nothing personal is ever in frame. Generic profile names, a project that belongs to nobody, and a queue holding one real question plus enough items to make the count honest.",
+    "config": "hub.config.demo.json",
+    "profiles": ["API", "WEB", "DOCS", "OPS"],
+    "project": "acme-app",
+    "queueItems": 12,
+    "decisionItem": "one genuine agent question with a source link, shown open"
+  },
+  "presets": {
+    "wall": { "w": 2400, "h": 1550, "dpr": 2 },
+    "social": { "w": 1280, "h": 640, "dpr": 2 },
+    "row": { "w": 2000, "h": 1200, "dpr": 2 },
+    "strip": { "w": 2000, "h": 120, "dpr": 2 }
+  },
+  "redact": {
+    "$comment": "A backstop, not the primary defence. The primary defence is that the demo profile never held this data. The SHAPE patterns below are generic and safe to commit. The NAME patterns (your real profiles, repos, projects, clients) come from the untracked .githooks/denylist.local, for the same reason the leak gate keeps its list out of the tree: a committed list of the things you are hiding is itself the leak. Assert zero matches from BOTH sources before a shot is eligible.",
+    "textPatterns": [
+      "/Users/[A-Za-z0-9._-]+",
+      "/home/[A-Za-z0-9._-]+",
+      "/Volumes/[A-Za-z0-9._-]+",
+      "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",
+      "(sk|pk|ghp|xox[bap])[-_][A-Za-z0-9]{16,}"
+    ],
+    "namePatternsFrom": ".githooks/denylist.local",
+    "style": "blur(8px)"
+  },
+  "outDir": "docs/marketing/shots",
+  "targets": [
+    {
+      "name": "a5-full-wall",
+      "path": "/wall",
+      "preset": "wall",
+      "claim": "One screen, everything running, and the one thing that needs you.",
+      "note": "The establishing shot. Compose so the needs-you count survives a 2:1 crop, because this frame is also the social preview source."
+    },
+    {
+      "name": "a5-social",
+      "path": "/wall",
+      "preset": "social",
+      "claim": "Same as a5, cropped for the GitHub social preview and every link unfurl.",
+      "note": "A dedicated crop, never a resize of the wall shot."
+    },
+    {
+      "name": "a1-decision-card",
+      "path": "/wall",
+      "preset": "row",
+      "frame": "the open attention item",
+      "claim": "Your agents stop and ask. The question waits in a counted queue.",
+      "note": "The argument. Show the question text, the source link, the count, and both buttons."
+    },
+    {
+      "name": "a2-pane-header",
+      "path": "/wall",
+      "preset": "strip",
+      "frame": "one pane header",
+      "claim": "Every pane says what it is doing: typing, quiet, or waiting on you.",
+      "note": "Capture with one pane actively typing and the idle timer visible on another."
+    },
+    {
+      "name": "a3-floated-doc",
+      "path": "/wall",
+      "preset": "row",
+      "frame": "the floating artifact panel",
+      "claim": "Open a file where you are. It floats over the wall, rendered.",
+      "note": "Use a demo markdown file. Rendered, not raw."
+    },
+    {
+      "name": "a4-browser-pane",
+      "path": "/wall",
+      "preset": "row",
+      "frame": "the browser quadrant",
+      "claim": "One of the panes is a real browser. Not an embed.",
+      "note": "Point it at a neutral public page. Never a logged-in surface."
+    }
+  ]
+}
