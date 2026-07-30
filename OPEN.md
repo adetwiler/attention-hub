@@ -58,6 +58,21 @@ very organized single-account user, and free for everyone rather than a one-off 
 - **one account, not several**: on a single-account install the account roster is ABSENT,
   not merely hidden.
 
+**0-T. THEMES SHIP AS A PICKER, AND THE PILOT'S PALETTE IS NOT ONE OF THEM (owner,
+2026-07-30).** Approved off the setup mock:
+- **Three themes ship: Hub (the DEFAULT), Neutral, Light.** Hub is the amber this already
+  wears. Neutral is the hub's own identity, owing nothing to any sibling product. Light
+  exists because the hub is dark-only today and plenty of people never leave light mode.
+- **The picker lives on the setup page and applies LIVE**, no restart, and the choice is
+  saved to the user's config so an update cannot overwrite it.
+- **Adding your own theme has to be genuinely easy:** a CSS file in user space declaring
+  roughly a dozen variables, which then appears in the picker. No build step. Document it,
+  and offer the describe-it-to-your-AI-tool path as an alternative rather than the main one.
+- ⚠️ **THE PILOT INSTALL'S PALETTE MUST NOT SHIP HERE.** It belongs in that product's own
+  repo as an install-level theme. Nothing about it, including its colour values, lands in
+  this repo. This also means the theme system has to support an install providing a theme
+  from outside the shipped set.
+
 **0-S. THE PILOT INSTALL IS STYLED FROM ITS SIBLING PRODUCT'S TOKENS (owner, 2026-07-30).**
 So the two read as one family. That palette is dark and warm gold and this hub is already
 amber on near-black, so it is a token swap rather than a redesign. Exact values live in the
