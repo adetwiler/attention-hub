@@ -298,4 +298,6 @@ Start at [CLAUDE.md](CLAUDE.md), then
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT, with one exception: the setup prompt, the thing you are told to copy, is
+public domain (CC0 1.0). See [LICENSE](LICENSE) for the terms and
+[LICENSE-NOTES.md](LICENSE-NOTES.md) for what the exception covers and why.

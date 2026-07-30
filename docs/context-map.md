@@ -13,7 +13,8 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [OPEN.md](../OPEN.md) | Before deciding anything that looks already decided. Open questions and their owners. | internal |
 | [README.md](../README.md) | You are a user, or you are about to change what users are told. | public |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | You just cloned this, or you just made a worktree and every commit is being refused. | public |
-| [LICENSE](../LICENSE) | Licensing. MIT. | public |
+| [LICENSE](../LICENSE) | The operative licence. Bare MIT text, kept bare so GitHub detects it. | public |
+| [LICENSE-NOTES.md](../LICENSE-NOTES.md) | What the MIT terms mean here, and the CC0 setup-prompt exception. Read before editing LICENSE. | public |
 | [docs/adr/0001-mit-license-cc0-setup-prompt.md](adr/0001-mit-license-cc0-setup-prompt.md) | Why MIT, why CC0 on the setup prompt, why attribution is a product feature and not a licence term. | internal |
 | [docs/adr/0002-hub-architecture.md](adr/0002-hub-architecture.md) | Before changing the spine, or when a decision looks arbitrary: local-only, no telemetry, config-first, ledger-as-history, user-space separation, multi-adapter. | internal |
 | [docs/adr/0003-tab-seam-over-module-system-for-v1.md](adr/0003-tab-seam-over-module-system-for-v1.md) | You are about to build the extension story, or wondering why a `tabs` array exists next to a planned module system. The three marketing beats, the seam v1 ships, and why the setup wizard is a prompt. | internal |

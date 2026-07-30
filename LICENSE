@@ -1,22 +1,3 @@
-# License
-
-This repository is MIT licensed, with one deliberate exception: the setup
-prompt, the thing you are told to copy, is public domain.
-
-## The setup prompt (CC0 1.0, public domain)
-
-The copy-paste agent instructions this repo ships for setup (the setup prompt,
-also mirrored on buildwithamemory.com) are released under CC0 1.0. They are
-meant to be copied. Paste them, change them, ship them in your own tool, no
-attribution and no permission needed.
-
-Full text: https://creativecommons.org/publicdomain/zero/1.0/
-
-## Everything else (MIT)
-
-All code, modules, docs, and assets in this repository are released under the
-MIT License. Run it, fork it, sell it if you want to.
-
 MIT License
 
 Copyright (c) 2026 Andrew Detwiler
