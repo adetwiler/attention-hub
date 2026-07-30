@@ -8,6 +8,62 @@ Last swept: 2026-07-29 (slice 8, the release slice).
 
 ## Needs a call from Andrew
 
+**0-Z. SETUP READS AS A CHORE LIST, AND THAT IS THE FIRST THING A STRANGER SEES (owner,
+2026-07-30).** Owner, looking at `/setup` for the first time: *"This set up looks like a holy
+shit chore list. Can you please make that a lot easier?"* He is right, and it is the highest
+priority item on this page, because /setup IS the onboarding for a free tool nobody has
+committed to yet.
+
+**What is wrong, concretely:** the page is long prose; it prints TWO full AI prompts inline;
+it offers a hand-edit-the-JSON path as an equal option; and it mixes product philosophy
+("where this is going", the multi-user roadmap) into the middle of the instructions. Nothing
+on it is false. It is simply a reading assignment where a form belongs.
+
+**The fix, and it inverts the page: DO the setup, do not explain it.**
+- A real form in the hub with working defaults: hub name, data folder, port, AI tool. Save
+  WRITES hub.config.json, and the hub offers the restart. No copying, no JSON, and no AI
+  tool required to finish.
+- One line per step, collapsed, each with a status chip (done / needed / optional). Detail
+  expands only if asked for.
+- The copy-a-prompt path stays as a FALLBACK link for people who prefer it, with the prompt
+  body behind a disclosure rather than printed.
+- The philosophy paragraphs move to the README, which is where someone deciding whether to
+  trust this actually reads.
+- Anything a user needs on first run (see 0-P) is pickable in that form, never a file edit.
+
+**0-W. WINDOWS IS BACK IN v1 (owner, 2026-07-30), REVERSING 0's PLATFORM CALL.** Item 0 below
+still reads "platforms are macOS + Linux, stated plainly" and is now WRONG; it stays visible
+so the reversal is traceable. **Why it had to reverse:** the pilot install this release is
+meant to be proven on runs on WINDOWS, so a v1 excluding Windows could never be validated
+the way the rollout plan says to validate it. Both decisions sat here contradicting each
+other for a day.
+
+**What Windows costs, so the ticket is not a surprise:**
+- the terminal sidecar is tmux-based, and tmux is why a closed pane does not kill a session.
+  There is no tmux on Windows. The code already falls back to a plain shell when tmux is
+  absent, so the decision is what to PROMISE there, not whether it runs.
+- the shell is hardcoded `process.env.SHELL ?? "/bin/zsh"`. Windows wants `pwsh.exe`, which
+  node-pty drives through ConPTY. PowerShell was requested by name.
+- Chrome discovery is POSIX-shaped (item 0's other stated reason).
+- paths: the pilot keeps everything on a second drive, organized. Every path already comes
+  from hub.config.json, so this is config plus path handling, not new plumbing.
+
+**0-P. PROJECTS AND CHECKLISTS JOIN THE FREE PRODUCT (owner, 2026-07-30).** From watching a
+very organized single-account user, and free for everyone rather than a one-off branch:
+- **projects as a first-class thing the USER creates**, distinct from this hub's
+  function-shaped rooms. This is the new core concept and it drives the rest.
+- **files under a project**, rooted wherever the user says.
+- **checklists**, sitting beside attention items.
+- **PowerShell** in the terminal pane (see 0-W).
+- **one account, not several**: on a single-account install the account roster is ABSENT,
+  not merely hidden.
+
+**0-S. THE PILOT INSTALL IS STYLED FROM ITS SIBLING PRODUCT'S TOKENS (owner, 2026-07-30).**
+So the two read as one family. That palette is dark and warm gold and this hub is already
+amber on near-black, so it is a token swap rather than a redesign. Exact values live in the
+owner's private notes, not in this repo.
+
+
 **0-A. SLICE 8 IS BUILT ON `slice-8-release`, NOT MERGED, AND NOTHING IS
 TRIGGERED.** What landed: the setup page (`/setup`), the attribution line
 ADR-0001 owed, the README's platform matrix and its corrected privacy section,
