@@ -306,7 +306,12 @@ export default function SetupRoom() {
           they cost nothing.
         </p>
         <p className="empty">
-          <b>Prefer <code>tailscale serve</code> to changing the bind address.</b> It proxies your
+          {/* The space is written as an explicit expression because the plain one that used to
+              live here did not survive to the rendered HTML: the page shipped "address.It
+              proxies". Every other bold lead on this page happens to be followed by a comma,
+              so this was the only sentence that showed it. */}
+          <b>Prefer <code>tailscale serve</code> to changing the bind address.</b>{" "}
+          It proxies your
           machine&apos;s tailnet name to the hub&apos;s loopback port, so the bind stays on this
           machine, nothing on your local network can reach the hub, and you get a real certificate.
           The certificate matters for more than tidiness: a browser only allows features like the
