@@ -79,8 +79,10 @@ amber on near-black, so it is a token swap rather than a redesign. Exact values 
 owner's private notes, not in this repo.
 
 
-**0-A. SLICE 8 IS BUILT ON `slice-8-release`, NOT MERGED, AND NOTHING IS
-TRIGGERED.** What landed: the setup page (`/setup`), the attribution line
+**0-A. ⚠️ THIS ROW WAS STALE, CORRECTED 2026-07-30: SLICE 8 IS MERGED.** `git merge-base
+--is-ancestor slice-8-release main` passes and the branch is 0 commits ahead, so main
+carries the setup page, the attribution line, the README platform matrix and the
+verification pass. What the row got RIGHT and is still true: **nothing is triggered.** What landed: the setup page (`/setup`), the attribution line
 ADR-0001 owed, the README's platform matrix and its corrected privacy section,
 the machine verification pass, and your Chrome walk as a numbered checklist
 ([docs/verification/2026-07-29-owner-chrome-walk-checklist.md](docs/verification/2026-07-29-owner-chrome-walk-checklist.md)).
