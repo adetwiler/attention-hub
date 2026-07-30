@@ -91,6 +91,28 @@ the exact failure `CLAUDE.md` forbids. From then on, parallel slices that need
 schema either take an assigned index up front, or one of them lands first and the
 other rebases onto it.
 
+## Resolving a CSS conflict by CONCATENATION can eat a brace, silently
+
+The worst merge damage of the v1 round was not a migration index. Two slices had
+both appended to `globals.css`, the conflict was resolved by taking both sides and
+concatenating them, and the concatenation dropped ONE closing brace on `.doc hr`.
+
+Nothing errored. **CSS nesting is real**, so the browser parsed the following
+~3,000 lines as nested inside that rule, computed selectors like `.doc hr .wishes`,
+and matched nothing. A third of the stylesheet was dead through four subsequent
+merges. The visible symptom was a list rendering with default bullets on the first
+screen a stranger reads.
+
+**No gate could catch it and that is the lesson**: `tsc` does not read CSS, the
+unit tests did not read CSS, `next build` compiled it happily because it IS valid
+CSS just nested somewhere useless, and `check-paths` looks for absolute paths.
+
+Two rules follow. **Never resolve a CSS conflict by concatenating hunks without
+re-checking brace balance** (`python3 -c "s=open('src/app/globals.css').read();
+print(s.count('{')-s.count('}'))"` is the whole check). And `test/css-balance.test.mjs`
+now runs it for you on every stylesheet under `src/`, naming the unclosed selector
+and its line, because a count alone does not tell you where to look.
+
 ## A build warning seen only in a worktree is suspect
 
 Agent worktrees here live under `.claude/worktrees/`, which is INSIDE the project
