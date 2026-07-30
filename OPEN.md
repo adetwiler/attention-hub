@@ -38,6 +38,13 @@ meant to be proven on runs on WINDOWS, so a v1 excluding Windows could never be 
 the way the rollout plan says to validate it. Both decisions sat here contradicting each
 other for a day.
 
+**⚠️ THE README NOW CONTRADICTS THIS (drift caught in the 2026-07-30 handoff sweep).** It still
+says "Windows is not supported in this release", and its platform matrix says of Windows "no, and
+there is no path to one: sessions are kept alive with tmux". Wrong twice over now: Windows is back
+in v1, the shell is already config-driven (`grant.shell ?? process.env.SHELL`), and tmux only
+affects PERSISTENCE rather than whether a terminal runs. Fix the README in the same pass as the
+port, never before it: an honest "not supported yet" beats an aspirational "supported".
+
 **What Windows costs, so the ticket is not a surprise:**
 - the terminal sidecar is tmux-based, and tmux is why a closed pane does not kill a session.
   There is no tmux on Windows. The code already falls back to a plain shell when tmux is
