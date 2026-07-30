@@ -22,6 +22,18 @@ Free and open source, by Andrew Detwiler / [buildwithamemory.com](https://buildw
 > **macOS and Linux.** Windows is not supported in this release. See
 > [Platforms](#platforms) for what that means and why.
 
+> ⚠️ **Not verified yet. Use at your own risk.** This is a first public release
+> and verification is still in progress. It has been walked end to end on one
+> machine and one operating system, and that is the whole of the evidence behind
+> it. Nothing here has been through outside testing, a security review, or a
+> second pair of hands. Treat it as something to look at and try, not as
+> something to rely on for work that matters yet.
+>
+> It runs locally, holds your data on your own disk, and sends nothing anywhere,
+> so the blast radius is your own machine. Read what it does before you point it
+> at anything you care about, and keep backups of any folder you configure it to
+> read.
+
 ## When something needs you
 
 Anything on your machine can put something in front of you and read your answer
@@ -133,7 +145,7 @@ answer is not "have your AI edit the source": updates here are a plain
 |---|---|---|---|
 | **macOS** | works, and this is where it was built and walked | works | works |
 | **Linux** | should work, **untested** | **untested**: the discovery paths were written from documented locations and never run | **untested**: the systemd unit is written and never run |
-| **Windows** | **not supported in this release** | no | no, and there is no path to one: sessions are kept alive with tmux |
+| **Windows** | **not supported in this release** | no | no: sessions are kept alive with tmux, and there is none on Windows, so a session would not survive a closed pane |
 
 **Untested means untested**, and it is the same convention this project uses for
 adapters: something built to spec that nobody has exercised says so rather than
