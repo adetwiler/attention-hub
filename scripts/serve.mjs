@@ -37,6 +37,46 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { appRoot, runNext } from "./next-run.mjs";
 
+// ---------------------------------------------------------------- node floor
+//
+// REFUSE, DO NOT SEGFAULT. better-sqlite3 is a native module with a hard Node
+// floor, and below it the failure is not a polite error: the process takes a
+// SIGSEGV on the first request that touches the database. That crash lands
+// AFTER "Ready" prints, so the last line in the log is a success line, and a
+// supervisor with KeepAlive respawns it forever while every request is
+// refused. This is the same rule the header states as YOUR VALUE OR AN ERROR,
+// NEVER A SUBSTITUTE, applied to the runtime instead of the config.
+//
+// The floor is READ FROM package.json, never written here, so this check and
+// the manifest cannot drift apart. Dependency free, like the rest of this file:
+// a two-line parse beats pulling in semver to read one integer.
+
+/** The major from an engines range like ">=22" or ">=22.1.0". Null if unreadable. */
+function requiredNodeMajor() {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(appRoot, "package.json"), "utf8"));
+    const range = pkg?.engines?.node;
+    if (typeof range !== "string") return null;
+    const match = range.match(/(\d+)/);
+    return match ? Number(match[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
+const floor = requiredNodeMajor();
+const running = Number(process.versions.node.split(".")[0]);
+if (floor !== null && running < floor) {
+  console.error(
+    `[hub] Node ${process.versions.node} is too old: this hub needs Node ${floor} or newer, because better-sqlite3 does.`,
+  );
+  console.error("[hub] Below that floor it does not fail politely, it crashes the process on the");
+  console.error("[hub] first request that touches the database, after the ready line has printed.");
+  console.error(`[hub] Fix: switch to Node ${floor} or newer, then run: npm rebuild better-sqlite3`);
+  console.error("[hub] The rebuild is not optional. The installed binary was compiled against the old one.");
+  process.exit(1);
+}
+
 // Defaults first: the hub starts and runs before anyone has written a config.
 // Kept in step with src/lib/config.ts and hub.config.example.json by the
 // release check, which fails if the three disagree.

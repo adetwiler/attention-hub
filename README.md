@@ -163,7 +163,12 @@ if you want it.
 
 ## Requirements
 
-- **Node.js 20 or newer.**
+- **Node.js 22 or newer.** Not a preference: the database driver requires it,
+  and below that floor it does not refuse politely, it crashes the process on
+  the first request that touches the database. The hub checks your version on
+  startup and refuses with an explanation rather than letting that happen. If
+  you switch Node, run `npm rebuild better-sqlite3` afterwards, because the
+  binary on disk was compiled against the old one.
 - A C toolchain, only if npm cannot find a prebuilt binary for your machine.
   The database driver is a native module. Most people never notice.
 - **tmux**, only if you switch the terminal module on.
@@ -190,6 +195,31 @@ That is production mode, and it is the default on purpose: it is faster, it does
 not sit watching your files all day, and it avoids a confusing class of
 development-only failure. If you are working on the hub itself and want your
 edits picked up live, run `./start.sh dev` instead.
+
+**If it says it is ready and then nothing is listening**, that is a known
+failure with a known cause, and it is the first entry in
+[docs/setup-troubleshooting.md](docs/setup-troubleshooting.md). The short
+version: your Node is below the floor. Do not go looking at your firewall.
+
+### Keeping it running
+
+`./start.sh` dies with the terminal or the login session that started it, which
+is fine while you are trying it out and wrong for something you want waiting for
+you. To put it under your system's own supervisor:
+
+```
+node deploy/hub/install.mjs --print    # see the unit file, change nothing
+node deploy/hub/install.mjs            # install and start it
+node deploy/hub/install.mjs --remove   # stop it and take it away
+```
+
+A LaunchAgent on macOS, a systemd user unit on Linux, no sudo either way. The
+browser sidecar has its own, `deploy/browser/install.mjs`, and the two sit side
+by side.
+
+**Know one thing before you rely on it:** a supervisor restarts what it
+supervises, so a hub that crashes on every request still reports RUNNING, with a
+pid that keeps changing. Read the log, not the service state.
 
 ## Updating
 
@@ -269,7 +299,13 @@ the bottom of TODAY.
 
 ## If something is wrong
 
-[Open an issue.](https://github.com/adetwiler/attention-hub/issues/new) Say what
+**Check [docs/setup-troubleshooting.md](docs/setup-troubleshooting.md) first.**
+It covers the failures that have actually happened here, including the two that
+look like something else entirely: a ready line followed by nothing listening,
+and a service that reports healthy while every request fails.
+
+If it is not there:
+[open an issue.](https://github.com/adetwiler/attention-hub/issues/new) Say what
 you did, what happened, and what you expected. The exact words a surface put on
 your screen are worth more than a description of them.
 

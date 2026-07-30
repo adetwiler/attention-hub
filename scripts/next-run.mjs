@@ -96,6 +96,23 @@ export function runNext(args, extraEnv = {}) {
       console.error(`[hub] could not start Next.js: ${err.message}`);
       resolve(1);
     });
-    child.on("exit", (code, signal) => resolve(signal !== null ? 1 : (code ?? 1)));
+    child.on("exit", (code, signal) => {
+      // SAY WHICH SIGNAL. Collapsing a signal death straight to 1 hid a SIGSEGV
+      // from better-sqlite3 on an unsupported Node for an hour: the log's last
+      // line was Next's own ready line, the exit looked like an ordinary
+      // failure, and only running next directly showed status 139. The numeric
+      // contract below is unchanged, because callers branch on it. This is
+      // about the message.
+      if (signal !== null) {
+        console.error(`[hub] Next.js was killed by ${signal}.`);
+        if (signal === "SIGSEGV") {
+          console.error("[hub] A segfault here is almost always a native module built for a different");
+          console.error("[hub] Node than the one running it. Check your Node version against the");
+          console.error("[hub] engines floor in package.json, then run: npm rebuild better-sqlite3");
+          console.error("[hub] See docs/setup-troubleshooting.md");
+        }
+      }
+      resolve(signal !== null ? 1 : (code ?? 1));
+    });
   });
 }

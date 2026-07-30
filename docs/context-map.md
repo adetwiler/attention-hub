@@ -25,6 +25,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | [docs/tabs.md](tabs.md) | You are adding a tab, or you are about to tell a user how to extend the hub. The two kinds, the rules, the recipes, and the plain statement of why these docs stop at the config seam. | public |
 | [prompt.txt](../prompt.txt) | The copy-paste setup prompt: the user hands it to their own AI, which reads the config example and writes their config. ONE copy lives here, CC0 per ADR-0001, and the setup page READS this file rather than embedding it, which is why no prompt-sync gate exists (`test/setup.test.mjs` asserts the one copy). | public |
 | [docs/adr/0006-browser-pane-mirrors-a-real-browser.md](adr/0006-browser-pane-mirrors-a-real-browser.md) | You are wondering why a whole sidecar process exists to show a web page, why it is not an iframe, or how a browser pane squares with the no-telemetry promise. | internal |
+| [docs/setup-troubleshooting.md](setup-troubleshooting.md) | Setup or startup is failing, especially "ready then nothing is listening" or a service that reports healthy while every request fails. The node-floor segfault and its three misleading symptoms. | public |
 | [docs/browser-pane.md](browser-pane.md) | You are touching `chrome/`, `src/lib/browser.ts`, the browser routes or `WebPane`. Every measured trap, and each one cost real time. Read it before changing any of them. | internal |
 | [docs/adr/0007-terminal-sidecar-and-its-trust-model.md](adr/0007-terminal-sidecar-and-its-trust-model.md) | Before changing anything about the terminal: why it is a separate process, why tmux, why the grant, and the two rules about it that are permanent. | internal |
 | [docs/terminal.md](terminal.md) | You are switching the terminal on, running the sidecar, or about to touch it. Setup, the security model, and four traps that all fail silently. | public |
@@ -68,6 +69,7 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | `src/lib/weburl.ts` | What the address box means by what you typed. Imports nothing, because the server AND the client run it. |
 | `chrome/` | The browser sidecar and its OWN `package.json`, so a WebSocket server never reaches the app bundle. Inside the network gate. |
 | `deploy/browser/` | Optional service definition for the sidecar, GENERATED at install time, because a service needs absolute paths and this repo may not contain any. |
+| `deploy/hub/` | Same, for the hub itself. Label `attention-hub`, alongside `attention-hub-browser`. Refuses to install below the node floor, and warns when the node path belongs to a version manager. |
 | `scripts/next-run.mjs` | The ONE place Next.js is launched. Where the telemetry switch lives. |
 | `scripts/` | Start, build, and the config-first check. Dependency free. |
 | `test/` | `node:test`. No dependencies, and it skips loudly rather than silently on a Node that cannot load TypeScript. |
