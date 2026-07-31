@@ -16,6 +16,8 @@ import type { ReactNode } from "react";
 import type { LedgerSnapshot } from "@/lib/stream";
 import type { TabSpec } from "@/lib/tabs";
 import AttentionToasts from "./AttentionToasts";
+import OsAlerts from "./OsAlerts";
+import AlertPermission from "./AlertPermission";
 import { useLedgerStream } from "./useLedgerStream";
 
 /** The rooms in the order the design puts them. `built` flips as slices land. */
@@ -109,6 +111,10 @@ export default function Shell({ hubName, version, initial, tabs, tabsProblem, ch
           >
             SETUP
           </a>
+          {/* Present at most once, ever, and only where a browser could actually grant it.
+              It sits in the nav rather than on SETUP because the whole point is that you see
+              it without going looking, and it removes itself the moment it is answered. */}
+          <AlertPermission />
         </nav>
         <span className="stat">
           <b>{running} running</b>
@@ -122,6 +128,11 @@ export default function Shell({ hubName, version, initial, tabs, tabsProblem, ch
           be true of a component that only exists on TODAY. It renders nothing at
           all until something arrives. */}
       <AttentionToasts initial={initial} />
+
+      {/* The same arrivals, raised as an OS banner for when the tab is NOT in front - which
+          is most of the time, and is the case the toast stack above cannot cover. Headless,
+          quiet-hours aware, no second stream connection, and silent until you grant it. */}
+      <OsAlerts initial={initial} />
 
       <main className="room">{children}</main>
 

@@ -60,6 +60,10 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | `scripts/hub.mjs` | The `hub` CLI. Dependency free, no TypeScript, works with the hub closed. |
 | `src/lib/sse.ts` | The stream route helper and the `?once=1` contract. |
 | `src/components/useEventStream.ts` | One EventSource per page, with the poll fallback. |
+| `src/lib/alert-channel.ts` | How an alert leaves the page and becomes an OS banner. Every silent failure mode is its own named state; read the header before adding a sixth. |
+| `src/lib/service-worker.ts` | Registering `public/sw.js`, in one place. Its header holds the mounting rule that makes the mistake it came from hard to repeat. |
+| `src/components/OsAlerts.tsx` | Headless. The same arrivals as the toasts, raised as an OS banner for when the tab is not in front. Obeys quiet and never storms on load. |
+| `src/components/AlertPermission.tsx` | The one-time permission ask, and `alertHint` for any surface that needs to explain the state in words. |
 | `src/lib/terminal.ts` | The terminal module's rules and its manifest. No I/O, so every refusal is tested. |
 | `src/lib/terminalGrants.ts` | The grant store: mint, single-use redeem, prune. |
 | `src/components/paneContent.tsx` | The pane content registry. One row per kind, exhaustive by type. |

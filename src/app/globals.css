@@ -1,7 +1,7 @@
 /* The hub's chrome. Tokens and type come from the approved design
    (docs/mocks/buildwithamemory-front-page.html, the embedded hub screenshot,
    owner-approved 2026-07-27): a dark lamplight world, mono type for the
-   interface, ember for the brand, and colour reserved for STATE.
+   interface, ember for the brand, and color reserved for STATE.
 
    Hand written on purpose. There is no CSS framework here, and the dependency
    list stays honest because of it. Everything is a custom property, so a user
@@ -667,7 +667,7 @@ body {
 /* ---------------------------------------------------------------- attention
 
    The feed's own chrome: the answer controls, the toast stack, and the float
-   window a linked file opens in. Same tokens as everything else, and colour
+   window a linked file opens in. Same tokens as everything else, and color
    still means STATE and nothing else: --st-need marks the one kind of item that
    is blocking something. */
 
@@ -1079,7 +1079,7 @@ body {
   cursor: default;
 }
 
-/* FOLLOW being on is state, so it takes the state colour. */
+/* FOLLOW being on is state, so it takes the state color. */
 .webchip.on {
   color: var(--bg);
   background: var(--ember);
@@ -1397,4 +1397,25 @@ body {
 .nav .tab.setup:hover,
 .nav .tab.setup.on {
   opacity: 1;
+}
+
+/* THE ALERTS ASK (AlertPermission) rides the nav's own tab styling, so it can never drift
+   from the links beside it. Only the button reset is its own: a <button> does not inherit
+   the font or lose its chrome the way an <a> does. It is present at most once, ever, and
+   never renders at all where it could not work. */
+.nav button.tab.alerts {
+  background: none;
+  border: 1px solid transparent;
+  border-bottom-color: var(--ember);
+  font: inherit;
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0 0 2px;
+  margin-left: 4px;
+}
+
+.nav button.tab.alerts:hover {
+  color: var(--ink);
 }

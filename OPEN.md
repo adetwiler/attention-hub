@@ -541,20 +541,22 @@ the tree**, and `bash .githooks/release-check.sh` does not catch this class eith
 because the whole-tree scan is content, not reach. A one-off `git grep` for
 markers on their own line is the only sweep that finds it.
 
-**18. THE HUB HAS TOASTS AND NO WAY TO REACH YOU WHEN THE TAB IS NOT IN FRONT.**
-`AttentionToasts` renders on the page, which is the only surface that matters
-until you look away. The private build learned this the hard way on 2026-07-31
-and now delivers to the OS through one transport module: the embedded shell's
-message handler where there is one, otherwise the Web Notification API shown
-through the service worker (with `notificationclick` focusing the open window
-rather than spawning a second hub), plus the Badging API for the app icon.
-Three notes for whoever ports it, all of which cost time there:
-**(a)** it needs a severity model first, which this template does not have yet,
-so that is the real prerequisite rather than the delivery code.
-**(b)** register the service worker from a component that ALWAYS mounts. Tying
-it to an install button put it in a top bar, and the wall renders no top bar, so
-it silently never registered in the mode people actually use. The same mistake
-hid the alert component itself.
-**(c)** baseline the first snapshot (`useArrivals` already does) or every reload
-fires one banner per open item. Verify by counting what fires DURING a load, not
-by reading the notification center, which also holds leftovers.
+**18. THE HUB NOW REACHES YOU WHEN THE TAB IS NOT IN FRONT (done, same day it was
+filed).** `AttentionToasts` only interrupts you on a surface you already have open, which is
+not where you are most of the time. `OsAlerts` raises a real OS banner for the same arrivals,
+through `src/lib/alert-channel.ts`, and obeys every rule the toasts obey: the first snapshot is
+a baseline, quiet suppresses the surface and never the data, and nothing back-fires when quiet
+lifts. One button in the nav asks for permission once and then removes itself. Three things
+this cost to learn, all of which are cheap to inherit and expensive to rediscover:
+**(a)** register the service worker from a component that ALWAYS mounts. In the build this came
+from it lived inside an install button, the button lived in a top bar, and one display mode
+rendered no top bar, so the worker silently never registered in the mode people actually used.
+Nothing errored and the typecheck was green. `src/lib/service-worker.ts` exists to make that
+mistake hard to repeat.
+**(b)** prefer `registration.showNotification()` over `new Notification()`. The page-level
+constructor is unreliable once a hub is installed as an app, and only a worker notification can
+have its click handled at all, which is what makes a banner take you back to the hub instead of
+nowhere.
+**(c)** verify by counting what fires DURING a load, not by reading the notification center.
+The center also holds leftovers from earlier runs, so a working build looks like a reload storm
+and you will go fix something that is not broken.
