@@ -80,9 +80,10 @@ function loadPlan() {
 }
 
 function defaultUrl() {
-  // NO FALLBACK PORT, deliberately. If the config cannot be read, guessing a port means the
+  // NO FALLBACK PORT, deliberately. If the config cannot be read, guessing means the
   // walkthrough might quietly pass against something that is not this hub, and a gate that
-  // green-lights the wrong target is worse than one that refuses. Config first, or stop.
+  // green-lights the wrong target is worse than one that refuses.
+  //
   try {
     const cfg = JSON.parse(readFileSync(path.join(appRoot, "hub.config.json"), "utf8"));
     return `http://${cfg.bind.host}:${cfg.bind.port}`; // hub-no-request: builds a string, sends nothing
@@ -171,10 +172,30 @@ async function walk(page, { url, routes, modes, storageKey }) {
 
       // The display mode is a stored preference, so it has to be set BEFORE the app boots or
       // we would be testing the default every time and calling it four passes.
+      //
+      // `probe` rides the same injection, and it is the piece that makes this gate able to
+      // check the thing that actually broke. A HEADLESS component renders no element, so no
+      // selector can prove it mounted; what it does is call something. Spy on that call here,
+      // assert it below, and "is this feature wired up in this mode" becomes a real check
+      // rather than a hope. Every dead feature found on 2026-07-31 was headless or lived in
+      // chrome one mode does not render, and this is the half that would have caught them.
+      const pre = [];
       if (mode !== null && storageKey) {
-        await page.send("Page.addScriptToEvaluateOnNewDocument", {
-          source: `try{localStorage.setItem(${JSON.stringify(storageKey)}, ${JSON.stringify(mode)})}catch(e){}`,
+        pre.push(`try{localStorage.setItem(${JSON.stringify(storageKey)}, ${JSON.stringify(mode)})}catch(e){}`);
+      }
+      if (route.probe) pre.push(route.probe);
+      // REMOVE THE PREVIOUS ONE. addScriptToEvaluateOnNewDocument ACCUMULATES: without the
+      // matching remove, route 2 runs the probe twice, route 3 three times, and a probe that
+      // declares anything dies on "Identifier already declared" - which then shows up as a
+      // console error on every route and buries the real result. Caught by this gate failing
+      // on its own first run, which is a reasonable way to find out.
+      let injected = null;
+      if (pre.length > 0) {
+        // Wrapped so a probe can declare freely without reaching global scope at all.
+        const r = await page.send("Page.addScriptToEvaluateOnNewDocument", {
+          source: `(()=>{${pre.join("\n")}})()`,
         });
+        injected = r.identifier;
       }
       await page.send("Page.navigate", { url: url + route.path });
       // Wait for the app to settle rather than for a fixed time: React mounts after load.
@@ -190,12 +211,29 @@ async function walk(page, { url, routes, modes, storageKey }) {
       const { bodyLen, missing } = JSON.parse(found.result.value);
 
       const before = failures.length;
+
+      // Effect assertions run AFTER settle, against whatever the probe recorded.
+      for (const a of route.assert ?? []) {
+        let ok = false;
+        let detail = "";
+        try {
+          const r = await page.send("Runtime.evaluate", { expression: `!!(${a.expr})`, returnByValue: true });
+          ok = r.result.value === true;
+        } catch (e) {
+          detail = ` (${e.message})`;
+        }
+        if (!ok) failures.push(`${label}: ${a.why ?? a.expr}${detail}`);
+      }
+
       const floor = route.minText ?? 20;
       if (bodyLen < floor) failures.push(`${label}: rendered only ${bodyLen} chars of text, expected at least ${floor}`);
       for (const sel of missing) failures.push(`${label}: expected element not found: ${sel}`);
       for (const e of errors) failures.push(`${label}: console error: ${e}`);
 
       page.off(offConsole);
+      if (injected !== null) {
+        await page.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: injected });
+      }
       // PER-ROUTE, not cumulative. Comparing against the running total marked every route
       // after the first failure as failed too, which buries which one actually broke.
       console.log(`  ${failures.length === before ? "ok  " : "FAIL"} ${label}`);
@@ -238,8 +276,8 @@ async function main() {
     process.exit(2);
   }
 
-  // check-paths-allow: this is the throwaway BROWSER's debug port, not the hub's. It is
-  // derived from the pid so two smoke runs cannot collide, and nothing serves on it.
+  // The throwaway BROWSER's debug port, derived from the pid so two smoke runs cannot
+  // collide. Nothing serves on it.
   const port = 9400 + Math.floor(process.pid % 200); // check-paths-allow: browser debug port, not a hub port
   const profile = path.join(os.tmpdir(), `hub-smoke-${process.pid}`);
   const proc = spawn(

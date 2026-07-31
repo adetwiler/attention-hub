@@ -1,37 +1,64 @@
 {
   "$comment": "THE WALKTHROUGH. scripts/smoke.mjs drives a real headless browser through every route below and fails if a page renders blank, if an expected element is missing, or if anything logs a console error. It is the gate that answers 'does it actually render', which typecheck and the unit tests structurally cannot. Read the header of scripts/smoke.mjs for the failure that made it necessary.",
-
   "$expect": "Each selector here should be a LOAD-BEARING element: something whose absence means a feature stopped working, not a styling detail. A selector that changes every time you touch the CSS will get deleted the third time it cries wolf, and then the route is unguarded. Prefer a structural class the component owns.",
   "$modes": "Display modes are set in localStorage BEFORE the app boots, then every route is walked again. This exists because the bugs that made this file necessary were all 'renders in one mode, not the other'. This hub has no mode preference yet, so the list is empty and each route is walked once. When one lands, put its storage key in modeStorageKey and its values here.",
-
   "modeStorageKey": null,
   "modes": [],
-
   "routes": [
     {
       "path": "/",
-      "expect": [".app", "header.topbar", "nav.nav", "main.room"],
-      "minText": 40
+      "expect": [
+        ".app",
+        "header.topbar",
+        "nav.nav",
+        "main.room"
+      ],
+      "minText": 40,
+      "settleMs": 3500,
+      "probe": "window.__smoke={badge:[],sw:false};const s=navigator.setAppBadge&&navigator.setAppBadge.bind(navigator);if(s)navigator.setAppBadge=n=>{window.__smoke.badge.push(n);return s(n)};const c=navigator.clearAppBadge&&navigator.clearAppBadge.bind(navigator);if(c)navigator.clearAppBadge=()=>{window.__smoke.badge.push(0);return c()};const r=navigator.serviceWorker&&navigator.serviceWorker.register&&navigator.serviceWorker.register.bind(navigator.serviceWorker);if(r)navigator.serviceWorker.register=(...a)=>{window.__smoke.sw=true;return r(...a)};",
+      "assert": [
+        {
+          "expr": "window.__smoke && window.__smoke.badge.length > 0",
+          "why": "OsAlerts never touched the app badge, so the OS alert path is not mounted"
+        },
+        {
+          "expr": "window.__smoke && window.__smoke.sw === true",
+          "why": "the service worker was never registered, so notifications have no host (this is the trap lib/service-worker.ts exists to prevent)"
+        }
+      ]
     },
     {
       "path": "/wall",
-      "expect": [".app", "main.room"],
+      "expect": [
+        ".app",
+        "main.room"
+      ],
       "minText": 20
     },
     {
       "path": "/setup",
-      "expect": [".app", "main.room"],
+      "expect": [
+        ".app",
+        "main.room"
+      ],
       "minText": 200
     },
     {
       "path": "/browser",
-      "expect": [".app", "main.room"],
+      "expect": [
+        ".app",
+        "main.room"
+      ],
       "minText": 20
     },
     {
       "path": "/tab",
-      "expect": [".app", "main.room"],
+      "expect": [
+        ".app",
+        "main.room"
+      ],
       "minText": 20
     }
-  ]
+  ],
+  "$probe": "A headless component renders no element, so no selector can prove it mounted. `probe` installs a spy BEFORE the app boots and `assert` checks what it recorded. That is how 'is the alert path actually wired up' becomes a gate instead of a hope, and it is the only half of this file that could have caught the bugs in the header of scripts/smoke.mjs."
 }
