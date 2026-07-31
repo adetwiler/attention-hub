@@ -10,6 +10,26 @@ at sitting in the nav next to it, because you added them to a config file.
 
 Free and open source, by Andrew Detwiler / [buildwithamemory.com](https://buildwithamemory.com).
 
+**Everything you have running, on one screen.** One pane per account, and the layout you leave
+is the layout you come back to.
+
+![The wall: four panes side by side, each a live session](docs/images/wall.png)
+
+**And the one thing that needs you.** Anything on your machine that can append a line to a file
+can put a question in front of you and read your answer back. `ASKS YOU` is blocked on you and
+`REPORT` is not, because a surface that calls a nightly build's report a question is lying to
+you in a small way all day.
+
+![Today: five items waiting, oldest first, with one-tap answers](docs/images/today.png)
+
+The screenshots above are a demo you can run yourself, and it writes real rows through the same
+feed your own scripts will use:
+
+```bash
+node scripts/demo-seed.mjs          # a believable day, in an empty hub
+node scripts/demo-seed.mjs --undo   # take it back out
+```
+
 > **Early.** This is not the finished product. What works: TODAY, the attention
 > feed described below, the live stream, the wall, the terminal, the browser pane,
 > tabs, the setup page, and the database under it all. What does not exist yet:
