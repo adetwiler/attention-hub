@@ -131,6 +131,15 @@ renders a page, so nothing could have caught it. Read the header of
 `scripts/smoke.mjs` before changing what it asserts, and prove any change still
 fails when it should: `node scripts/smoke.mjs --plan <a plan you know is wrong>`.
 
+⚠️ **THE TARGET MATTERS AS MUCH AS THE ASSERTIONS, and this is why smoke is NOT
+in a pre-push hook here.** A smoke run only means something if it hits the code
+you are about to push. If you are serving a production build (`npm start`), the
+running hub can be days older than your working tree, so a hook would smoke the
+OLD build and report green on your NEW commit. That false green is worse than no
+gate. Run smoke against `npm run dev`, or against a build you just made, and know
+which one you hit. The first real red this gate ever produced was exactly this:
+correct assertions, stale target.
+
 The pre-commit hook runs automatically once you have run
 `bash .githooks/install.sh` in this checkout. **Run it in every worktree**: the
 denylist is machine local, so a fresh worktree correctly refuses every commit
