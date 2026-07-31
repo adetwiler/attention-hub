@@ -76,7 +76,7 @@ very organized single-account user, and free for everyone rather than a one-off 
   roughly a dozen variables, which then appears in the picker. No build step. Document it,
   and offer the describe-it-to-your-AI-tool path as an alternative rather than the main one.
 - ⚠️ **THE PILOT INSTALL'S PALETTE MUST NOT SHIP HERE.** It belongs in that product's own
-  repo as an install-level theme. Nothing about it, including its colour values, lands in
+  repo as an install-level theme. Nothing about it, including its color values, lands in
   this repo. This also means the theme system has to support an install providing a theme
   from outside the shipped set.
 
@@ -169,7 +169,7 @@ each is a small change.
   duplicates onto a canonical row; a stranger reading "blocked by #2 #3 #4" and
   concluding the project is stalled is a first impression you cannot take back.
   The prefilled titles are fixed strings, so duplicates land under one search.
-  **Implemented: no change.** If you ever want the other behaviour it is one line
+  **Implemented: no change.** If you ever want the other behavior it is one line
   per row in `src/components/NotBuilt.tsx` and the README table.
 - **`/tab` IS ABSORBED into the setup page. RECOMMENDED and DONE.** The tab seam
   is one step of setup, and two pages explaining one seam is two copies of the
@@ -237,7 +237,7 @@ markdown file an attention item links to, inside the hub, via
 `src/lib/markdown.ts`. Keeping it was the right call.
 
 **4. No icons, anywhere, on purpose.** The house rule is inline Lucide SVG and
-never emoji. The approved mock's hub screenshot uses coloured dots and no icons,
+never emoji. The approved mock's hub screenshot uses colored dots and no icons,
 and adding `lucide-react` would break the stated dependency philosophy of this
 repo. So slice 1 ships dots, matching the mock exactly. If you want real icons
 in the hub, that is a deliberate dependency decision, not something I should
@@ -256,7 +256,7 @@ in the same message vocabulary, and covered the agreement with tests
 (`test/serve-config.test.mjs` drives the real script as a process). The full
 extraction needs either `allowJs` (which loses strict checking inside the most
 safety-critical file in the repo) or a hand-written `.d.mts` (which trades one
-duplication for another). The behavioural hole is closed: the boot script no
+duplication for another). The behavioral hole is closed: the boot script no
 longer substitutes a default over a value you actually wrote, so it can no
 longer announce and bind a port you never asked for. Say the word if you want
 the full merge anyway.
@@ -422,7 +422,7 @@ only place the claim lives.
 options and no question mark is a REPORT, labelled REPORT, never "asks you", and a
 writer can declare it explicitly. (2) A non-http `link` is a file path and opens
 IN the hub. (3) The float window renders `.md` as markdown, frontmatter stripped,
-which is also `marked`'s first consumer. The one upstream behaviour NOT ported is
+which is also `marked`'s first consumer. The one upstream behavior NOT ported is
 "a notice never takes over the wall", because in this repo the toast stack is
 capped at three and dismissible and there is nothing for an item to take over.
 
@@ -535,8 +535,26 @@ only because `chrome/` was added to the gate's roots AFTER they were written, an
 gates scan staged additions, so nothing rescans an existing file. They would have
 blocked the next commit that touched them, with a confusing message, and the merge
 that widened the roots again is what surfaced it. Moved onto the code lines,
-reasons unchanged, nothing about the browser sidecar's behaviour touched. Worth
+reasons unchanged, nothing about the browser sidecar's behavior touched. Worth
 knowing generally: **widening a gate's scope does not audit what is already in
 the tree**, and `bash .githooks/release-check.sh` does not catch this class either,
 because the whole-tree scan is content, not reach. A one-off `git grep` for
 markers on their own line is the only sweep that finds it.
+
+**18. THE HUB HAS TOASTS AND NO WAY TO REACH YOU WHEN THE TAB IS NOT IN FRONT.**
+`AttentionToasts` renders on the page, which is the only surface that matters
+until you look away. The private build learned this the hard way on 2026-07-31
+and now delivers to the OS through one transport module: the embedded shell's
+message handler where there is one, otherwise the Web Notification API shown
+through the service worker (with `notificationclick` focusing the open window
+rather than spawning a second hub), plus the Badging API for the app icon.
+Three notes for whoever ports it, all of which cost time there:
+**(a)** it needs a severity model first, which this template does not have yet,
+so that is the real prerequisite rather than the delivery code.
+**(b)** register the service worker from a component that ALWAYS mounts. Tying
+it to an install button put it in a top bar, and the wall renders no top bar, so
+it silently never registered in the mode people actually use. The same mistake
+hid the alert component itself.
+**(c)** baseline the first snapshot (`useArrivals` already does) or every reload
+fires one banner per open item. Verify by counting what fires DURING a load, not
+by reading the notification center, which also holds leftovers.
