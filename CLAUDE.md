@@ -117,8 +117,19 @@ npm run typecheck        # tsc --noEmit
 npm run check            # no absolute paths, no hardcoded ports
 npm test                 # node:test, no dependencies
 npm run build            # or npm run build:check to leave a running hub alone
+npm run smoke            # needs a hub running; drives a real browser through every room
 bash .githooks/release-check.sh
 ```
+
+**`npm run smoke` is the only one of these that can tell you the app actually
+works.** Everything above it checks the code; smoke checks the product. It drives
+headless Chrome through every route in `smoke.json` and fails on a blank page, a
+missing load-bearing element, or any console error. It exists because three
+features in the build this hub came from were completely dead while typecheck,
+the production build and 207 unit tests were all green: nothing in `test/`
+renders a page, so nothing could have caught it. Read the header of
+`scripts/smoke.mjs` before changing what it asserts, and prove any change still
+fails when it should: `node scripts/smoke.mjs --plan <a plan you know is wrong>`.
 
 The pre-commit hook runs automatically once you have run
 `bash .githooks/install.sh` in this checkout. **Run it in every worktree**: the

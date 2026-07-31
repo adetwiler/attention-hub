@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit",
     "check": "node scripts/check-paths.mjs",
     "test": "node --test",
-    "release-check": "bash .githooks/release-check.sh"
+    "release-check": "bash .githooks/release-check.sh",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.10.0",
