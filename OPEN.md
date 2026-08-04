@@ -8,7 +8,39 @@ Last swept: 2026-07-29 (slice 8, the release slice).
 
 ## Needs a call from Andrew
 
-**0-Z. SETUP READS AS A CHORE LIST, AND THAT IS THE FIRST THING A STRANGER SEES (owner,
+**0-Z. PARTLY DONE 2026-08-04: THE FORM IS BUILT AND THE PROMPTS ARE FOLDED AWAY. Three of the
+five bullets below are landed, and the two that are not are named at the bottom of this row.**
+
+**What landed.** `/setup` now opens with a real form: hub name, data folder, port and AI tool,
+with your current values already in them, and Save writes `hub.config.json` (creating it from
+the example on a first save). No copying, no JSON, and no AI tool required to finish. Every
+step under it keeps its prompt and its by-hand instructions, both behind a disclosure rather
+than printed in full, so the page reads as a short list of switches with a status badge each.
+`src/lib/setup-config.ts` is the writer and its header carries the three rules: it EDITS rather
+than regenerates (every `$comment` and every section the form does not own survives a save),
+the picker can only choose between AI tools the config ALREADY declares (an adapter entry
+carries `bin`, so a form that could write a new one would be a route through which a local page
+picks a program the hub runs), and a config the loader refuses disables the form and names the
+file instead of offering blank defaults over it. Same-origin enforced, ledgered like every other
+mutation, `test/setup-config.test.mjs` covers it, and `smoke.json` now fails if the form stops
+mounting. Verified live against `npm run dev`: the four refusals, one real save on disk with
+every comment intact, and the ledger rows for all of them.
+
+**TWO THINGS ARE STILL OWED, and one of them is a call for you.**
+
+- **The philosophy paragraphs have NOT moved to the README.** The "Where this is going" card is
+  still on the page. Moving it means editing README copy that the release docs quote, so it is
+  a copy decision rather than a code one.
+- **SAVE DOES NOT RESTART THE HUB, and I did not build that. Your call whether it should.** The
+  form prints the command instead. The reason to leave it: the hub is the process that would
+  have to exit, and nothing necessarily brings it back, so a settings form that can leave
+  someone with no hub and no UI to fix it from is a worse bargain than a printed line. If you
+  want the button anyway, the honest version needs a supervisor that is already restarting the
+  hub (the `deploy/hub/` service), and it can only be offered when one is present.
+
+**The original row follows, because the wording is the specification.**
+
+**0-Z-orig. SETUP READS AS A CHORE LIST, AND THAT IS THE FIRST THING A STRANGER SEES (owner,
 2026-07-30).** Owner, looking at `/setup` for the first time: *"This set up looks like a holy
 shit chore list. Can you please make that a lot easier?"* He is right, and it is the highest
 priority item on this page, because /setup IS the onboarding for a free tool nobody has

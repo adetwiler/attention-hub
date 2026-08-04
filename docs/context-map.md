@@ -53,7 +53,9 @@ Front-loading every doc every session is the thing this file exists to avoid.
 | `src/lib/attention.ts` | The feed where it meets the machine: reading the file, appending the answer, the ledger rows. |
 | `src/lib/tabs.ts` | The extension seam: config into nav entries, and the one room behind a tab. Holds the containment rule that keeps a folder tab pointed where you pointed it. |
 | `src/lib/setup.ts` | The setup steps, the one-paste agent prompts, and what your config says about each. Pure: the config arrives as an argument. Reads `prompt.txt` for the one prompt it does not own. |
-| `src/app/setup/` | The setup page. Prompt first, manual underneath, the terminal warning in its own section. |
+| `src/lib/setup-config.ts` | The setup form's writer, and the ONLY code that edits `hub.config.json`. Read its header before touching it: it edits rather than regenerates, and the picker cannot name a new binary. |
+| `src/lib/same-origin.ts` | The one Origin check, shared by every route that changes something. Lives here because a security check with two copies has one that rots. |
+| `src/app/setup/` | The setup page. A form that DOES the setup first, the optional steps under it with their prompts folded away, the terminal warning in its own section. |
 | `src/lib/quiet.ts` | Quiet hours, pure. The midnight wrap lives here. |
 | `src/lib/settings.ts` | The settings table: live state that is not registry. |
 | `src/lib/markdown.ts` | Markdown to HTML for documents shown in place. Read its header before touching it. |

@@ -37,9 +37,13 @@
     },
     {
       "path": "/setup",
+      "$why": "The form is the page. Everything under it is optional, so if .setup-form stops mounting, /setup has silently gone back to being the reading assignment it was before, and every other assertion here would still pass.",
       "expect": [
         ".app",
-        "main.room"
+        "main.room",
+        ".setup-form",
+        "#setup-name",
+        "#setup-agent"
       ],
       "minText": 200
     },
