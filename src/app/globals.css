@@ -1316,6 +1316,68 @@ body {
   gap: 12px;
 }
 
+/* THE FORM, first on the page. It is styled to read as the thing you came for,
+   which is what stops the optional steps under it looking like a chore list. */
+.setup-form {
+  gap: 14px;
+}
+
+.setup-field {
+  display: grid;
+  gap: 5px;
+  max-width: 52ch;
+}
+
+.setup-field label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.setup-field select.answer-input {
+  /* The platform arrow, on the hub's own field styling. */
+  appearance: auto;
+}
+
+.answer-input.short {
+  max-width: 10ch;
+}
+
+.setup-help {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  line-height: 1.55;
+}
+
+.setup-saved {
+  font-size: 12px;
+  color: var(--st-done);
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+/* A step's prompt and its by-hand instructions, folded. Closed by default: the
+   page is a list of switches, and a screen of prompt text per switch is what
+   made it read as an afternoon of work. */
+.setup-fold > summary {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--hair);
+  padding-top: 10px;
+  cursor: pointer;
+}
+
+.setup-fold > summary:hover {
+  color: var(--ink-muted);
+}
+
+.setup-fold[open] > summary {
+  margin-bottom: 10px;
+}
+
 /* What your config says about this step right now. Never a guess: "unknown"
    means the config could not be read, and it reads as a problem rather than as
    a tidy nothing. */
@@ -1337,15 +1399,6 @@ body {
 .setup-badge.unknown {
   color: var(--st-need);
   border-color: color-mix(in srgb, var(--st-need) 45%, transparent);
-}
-
-.setup-sub {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  border-top: 1px solid var(--hair);
-  padding-top: 10px;
 }
 
 .setup-manual {

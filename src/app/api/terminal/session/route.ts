@@ -8,9 +8,11 @@
 //
 // SAME ORIGIN, ENFORCED. A page on any other site can POST to a loopback port
 // from your browser, and if this route answered it, that site would hold a shell
-// grant. It cannot forge an Origin header, so the check below is the thing that
-// stops it. Origin must be present and must match the host the request came in
-// on. That refusal is why this route, and not the sidecar, is the door.
+// grant. It cannot forge an Origin header, so the check is the thing that stops
+// it: Origin must be present and must match the host the request came in on.
+// That refusal is why this route, and not the sidecar, is the door. The check
+// itself now lives in src/lib/same-origin.ts, because the setup form needs the
+// same guarantee and a security check with two copies has one that rots.
 //
 // THE TOKEN IS RETURNED IN THE BODY AND NEVER PUT IN A URL. The client sends it
 // as the first WebSocket message. A URL is written to history, to proxy logs and
@@ -23,6 +25,7 @@
 import os from "node:os";
 import { loadConfig } from "@/lib/config";
 import { runThroughLedger } from "@/lib/ledger";
+import { sameOrigin } from "@/lib/same-origin";
 import { grantFor, GRANT_TTL_SECONDS, mintToken, sidecarUrl, TERMINAL_MODULE } from "@/lib/terminal";
 import { insertGrant, pruneGrants } from "@/lib/terminalGrants";
 
@@ -31,21 +34,6 @@ export const dynamic = "force-dynamic";
 /** A refusal a human can act on, in the same shape every time. */
 function no(status: number, problem: string): Response {
   return Response.json({ ok: false, problem }, { status });
-}
-
-/** Is this POST from the hub's own pages? Origin cannot be forged by a page, so
- * a mismatch is a cross-site attempt and gets nothing. A missing Origin is also
- * refused: browsers send it on every cross-origin POST, so its absence means the
- * caller is not the browser this route exists to serve. */
-function sameOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (origin === null || host === null) return false;
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
-  }
 }
 
 /** Could this pane open a shell, and if not, why? MINTS NOTHING.

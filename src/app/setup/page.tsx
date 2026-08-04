@@ -1,9 +1,18 @@
 // SETUP. The page that gets a stranger from "it is running" to "it is mine".
 //
-// It leads with AGENT INSTRUCTIONS, every time: a block of text you hand to the
-// AI command-line tool you already use, which does the step for you. The manual
-// version of the same step sits under it. That ordering is the product's own
-// premise applied to its own setup, and it is the bar this page was written to:
+// IT LEADS WITH A FORM, and that ordering is the whole design. The owner met the
+// first version of this page and called it a chore list: long prose, two full AI
+// prompts printed inline, and a hand-edit-the-JSON path offered as an equal
+// option. Nothing on it was false, it was simply a reading assignment where a
+// form belonged. So the top of the page now DOES the setup instead of explaining
+// it: four fields with working defaults, and Save writes hub.config.json.
+//
+// EVERYTHING BELOW THE FORM IS OPTIONAL, and each step still carries the AGENT
+// INSTRUCTIONS this page was built around: a block of text you hand to the AI
+// command-line tool you already use, which does that step for you. The prompt
+// and the by-hand version are both BEHIND A DISCLOSURE now rather than printed
+// in full, so the page reads as a short list of things you could switch on
+// rather than as an afternoon of work. That is the bar it was written to:
 // someone who does not know how to get things going should be able to get going.
 //
 // FOUR THINGS THIS PAGE OWES THE READER, and all four are here on purpose:
@@ -23,10 +32,13 @@
 // one step of setup, and two pages explaining the same seam is two copies of the
 // same words waiting to disagree. /tab now redirects here.
 import CopyBlock from "@/components/CopyBlock";
+import SetupForm from "@/components/SetupForm";
 import { loadConfig } from "@/lib/config";
 import type { HubConfig } from "@/lib/config";
 import { readSetupPrompt, setupStates, SETUP_STEPS } from "@/lib/setup";
 import type { SetupStep, StepId, StepState } from "@/lib/setup";
+import { CONFIG_FILE, readSetupValues } from "@/lib/setup-config";
+import type { SetupRead } from "@/lib/setup-config";
 import { tabsViewWith } from "@/lib/tabs";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +80,11 @@ interface StepProps {
   children?: React.ReactNode;
 }
 
+// THE PROMPT AND THE MANUAL STEPS ARE BOTH FOLDED AWAY. Printing a screen of
+// prompt text per step is what turned five optional switches into a page that
+// read like a chore list. Folded, the page is a list of things you could switch
+// on, each one sentence long with a badge saying whether it is on. The prompt is
+// one click away and nothing about it has changed.
 function Step({ step, state, prompt, children }: StepProps) {
   return (
     <section className="card setup-step" id={step.id}>
@@ -78,22 +95,26 @@ function Step({ step, state, prompt, children }: StepProps) {
       <Badge state={state} />
       <p className="empty">{step.lede}</p>
       {children}
-      <span className="setup-sub">Hand this to your AI tool</span>
-      {prompt === null ? (
-        <p className="empty">
-          The prompt file is missing from this install. It should be <code>prompt.txt</code> at the
-          top of the hub folder. A <code>git pull</code> puts it back, and the manual steps below do
-          the same job without it.
-        </p>
-      ) : (
-        <CopyBlock text={prompt} label="Copy the prompt" />
-      )}
-      <span className="setup-sub">Or do it yourself</span>
-      <ol className="setup-manual">
-        {step.manual.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ol>
+      <details className="setup-fold">
+        <summary>Hand this to your AI tool</summary>
+        {prompt === null ? (
+          <p className="empty">
+            The prompt file is missing from this install. It should be <code>prompt.txt</code> at the
+            top of the hub folder. A <code>git pull</code> puts it back, and the manual steps below
+            do the same job without it.
+          </p>
+        ) : (
+          <CopyBlock text={prompt} label="Copy the prompt" />
+        )}
+      </details>
+      <details className="setup-fold">
+        <summary>Or do it yourself</summary>
+        <ol className="setup-manual">
+          {step.manual.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ol>
+      </details>
     </section>
   );
 }
@@ -115,6 +136,26 @@ export default function SetupRoom() {
     platform === "darwin" ? "macOS" : platform === "linux" ? "Linux" : platform === "win32" ? "Windows" : platform;
 
   const tabs = tabsViewWith(loadConfig);
+
+  // THE FORM'S VALUES COME FROM THE RAW FILE, not from the loaded config, so a
+  // save round-trips what you actually wrote. A config saying "data" would
+  // otherwise come back as the absolute path it resolves to and get written that
+  // way, which is a change nobody asked for. The loaded config supplies only the
+  // fallbacks for keys the file does not set, so the documented defaults still
+  // live in exactly one place.
+  //
+  // A CONFIG THE LOADER REFUSES DISABLES THE FORM, matching what the save route
+  // does with the same case. Fields full of plausible defaults over a file the
+  // hub could not read is the one way this form could destroy something.
+  const setup: SetupRead =
+    config === null
+      ? { file: CONFIG_FILE, own: false, values: null, agents: [], problem }
+      : readSetupValues(process.cwd(), {
+          name: config.hub.name,
+          dataDir: config.dataDir,
+          port: config.bind.port,
+          agent: config.adapters.default,
+        });
 
   return (
     <>
@@ -158,6 +199,18 @@ export default function SetupRoom() {
           </p>
         ) : null}
       </section>
+
+      {/* THE FORM, first, because this page's job is to DO the setup rather
+          than to explain it. resolvedDataDir is only read when there is a config
+          to read it from; the form renders its refusal card otherwise. */}
+      <SetupForm
+        file={setup.file}
+        own={setup.own}
+        values={setup.values}
+        agents={setup.agents}
+        problem={setup.problem}
+        resolvedDataDir={config?.dataDir ?? ""}
+      />
 
       {/* THE ROADMAP, near the top rather than buried at the bottom, because
           what a product cannot do is the thing a stranger most needs to know
